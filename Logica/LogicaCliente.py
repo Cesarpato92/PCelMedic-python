@@ -7,8 +7,9 @@ class LogicaCliente:
     def __init__(self):
         self.cliente_dao = cliente_dao.ClienteDAO()
 
-    """En los metodos de la logica simplemente llamamos a los metodos del DAO correspondiente
-    en cada metodo realizamos las validaciones o reglas de negocio necesarias antes o despues de llamar al DAO
+    """En los metodos de la logica simplemente llamamos a los metodos del DAO 
+    correspondiente  en cada metodo realizamos las validaciones o reglas 
+    de negocio necesarias antes o despues de llamar al DAO
     Verificamos que los datos sean correctos antes de llamar al DAO, etc."""
 
     def agregar_cliente(self, modelo_cliente):
@@ -34,7 +35,8 @@ class LogicaCliente:
         if modelo_cliente.email and "@" not in modelo_cliente.email:
             messagebox.showerror("Error", "El correo electrónico no es válido.")
             return None
-        # Llamamos al DAO para agregar el cliente luego de pasar las validaciones
+        # Llamamos al DAO para agregar el cliente
+        #  luego de pasar las validaciones
         return self.cliente_dao.agregar_cliente(modelo_cliente)
 
     def obtener_cliente_por_cedula(self, modelo_cliente):

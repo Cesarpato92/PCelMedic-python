@@ -10,7 +10,7 @@ from Modelo.ModeloReparacion import ModeloReparacion
 #Prueba: Flujo completo cliente -> dispositivo -> reparación con cédula como FK
 
 cliente = ModeloCliente()
-cliente.cedula = "5555555555"
+cliente.cedula = "55464564565"
 cliente.nombre = "sadwewew"
 cliente.email = "ijasdoias@ikaskd.sd"
 cliente.celular = "3109389023"
