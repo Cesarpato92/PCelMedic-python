@@ -38,9 +38,7 @@ class VentanaReparacion(tk.Frame):
         cedula_frame.pack(pady=5, anchor="w")
         self.entrada_cedula = tk.Entry(cedula_frame, width=20)
         self.entrada_cedula.pack(side="left")
-        btn_buscar = tk.Button(cedula_frame, text="Buscar", command=self.buscar_cliente)
-        btn_buscar.pack(side="left", padx=5)
-
+        
         tk.Label(contenido_izquierda, text="Nombre", bg="white").pack(pady=(8, 0), anchor="w")
         self.entrada_nombre = tk.Entry(contenido_izquierda, width=30)
         self.entrada_nombre.pack(pady=3, anchor="w")
@@ -67,16 +65,16 @@ class VentanaReparacion(tk.Frame):
         self.entrada_modelo.pack(pady=3, anchor="w")
 
         tk.Label(contenido_derecha, text="Tipo de reparación", bg="white").pack(pady=(5, 0), anchor="w")
-        self.entrada_tipo_password = tk.Entry(contenido_derecha, width=30)
-        self.entrada_tipo_password.pack(pady=3, anchor="w")
+        self.entrada_tipo_rep = tk.Entry(contenido_derecha, width=30)
+        self.entrada_tipo_rep.pack(pady=3, anchor="w")
 
         tk.Label(contenido_derecha, text="Tipo de contraseña", bg="#f0f0f0").pack(pady=(5, 0), anchor="w")
-        self.entrada_password = tk.Entry(contenido_derecha, width=30)
-        self.entrada_password.pack(pady=3, anchor="w")
+        self.entrada_tipo_password = tk.Entry(contenido_derecha, width=30)
+        self.entrada_tipo_password.pack(pady=3, anchor="w")
         
         tk.Label(contenido_derecha, text="Contraseña del equipo", bg="white").pack(pady=(5, 0), anchor="w")
-        self.entrada_contrasena = tk.Entry(contenido_derecha, width=30, show='*')
-        self.entrada_contrasena.pack(pady=3, anchor="w")
+        self.entrada_password = tk.Entry(contenido_derecha, width=30, show='*')
+        self.entrada_password.pack(pady=3, anchor="w")
 
         tk.Label(contenido_derecha, text="Precio de reparación", bg="white").pack(pady=(5, 0), anchor="w")
         self.entrada_precio = tk.Entry(contenido_derecha, width=30)
@@ -89,4 +87,16 @@ class VentanaReparacion(tk.Frame):
 
 
 
-       
+    
+    def deshabilitar_entradas(self):
+        self.entrada_cedula.config(state="disabled") 
+        self.entrada_nombre.config(state="disabled") 
+        self.entrada_email.config(state="disabled") 
+        self.entrada_celular.config(state="disabled") 
+        self.entrada_modelo.config(state="disabled") 
+        self.entrada_marca.config(state="disabled") 
+        self.entrada_tipo_rep.config(state="disabled") 
+        self.entrada_tipo_password.config(state="disabled") 
+        self.entrada_password.config(state="disabled") 
+        self.entrada_precio.config(state="disabled") 
+        self.entrada_comentarios.config(state="disabled") 
