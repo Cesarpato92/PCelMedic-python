@@ -181,8 +181,8 @@ class VentanaRegistro(tk.Frame):
         extra = []
         if modelo:
             extra.append(f"Modelo: {modelo}")
-        if precio:
-            extra.append(f"Precio: {precio}")
+        if precio_rep:
+            extra.append(f"Precio: {precio_rep}")
         if extra:
             comentarios_disp = (comentarios_disp + "\n" + " | ".join(extra)).strip()
 
@@ -234,8 +234,8 @@ class VentanaRegistro(tk.Frame):
 
             self.entrada_marca.delete(0, tk.END)
             self.entrada_modelo.delete(0, tk.END)
-            self.entrada_tipo.set('')  # Combobox: usar set() en lugar de delete()
-            self.entrada_tipo_contrasena.set('')  # Limpiar tipo de contraseña
+            # self.entrada_tipo.set('')  # Combobox: usar set() en lugar de delete()
+            # self.var_tipo_contrasena.set('')  # Limpiar tipo de contraseña
             self.entrada_contrasena.delete(0, tk.END)  # Limpiar contraseña real
             self.entrada_precio.delete(0, tk.END)
             self.entrada_comentarios.delete('1.0', tk.END)

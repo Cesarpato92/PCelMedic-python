@@ -26,6 +26,15 @@ class VentanaReparacion(tk.Frame):
         subcontenedor = tk.Frame(contenedor, bg="#f0f0f0")
         subcontenedor.pack(fill="both", expand=True, padx=10, pady=10)
 
+        id_reparacion = tk.Frame(subcontenedor, bg="white")
+        id_reparacion.pack(pady=5, anchor="w")
+        self.entrada_cedula = tk.Entry(cedula_frame, width=20)
+        self.entrada_cedula.pack(side="left")
+        btn_buscar = tk.Button(cedula_frame, text="Buscar", command=self.buscar_dispositivo)
+        btn_buscar.pack(side="left", padx=5)
+        
+       
+
         # contenedor izquierda datos cliente
        # Columna izquierda - Datos del cliente
 
@@ -85,9 +94,41 @@ class VentanaReparacion(tk.Frame):
         self.entrada_comentarios = tk.Text(contenido_derecha, width=40, height=6)
         self.entrada_comentarios.pack(pady=3, anchor="w")
 
+        #Entrada donde recibimos el estado de reparacion
+        tk.Label(contenido_derecha, text="Estado", bg="white").pack(pady=(5,0) anchor="w")
+        self.entrada_estado = tk.Entry(contenido_derecha, width=30)
+        self.entrada_estado.pack(pady=3, anchor="w")
+
+        tk.Label(contenido_derecha, text="Comentarios del tecnico", bg="white").pack(pady=(5, 0), anchor="w")
+        self.entrada_comentarios_tec = tk.Text(contenido_derecha, width=40, height=6)
+        self.entrada_comentarios_tec.pack(pady=3, anchor="w")
+
+        tk.Label(contenido_derecha, text="Equipo reparado", bg="white").pack(pady=(5, 0), anchor="w")
+        opciones_rep = ["SI", "NO"]
+        self.var_tipo_rep = tk.StringVar(self)
+        self.var_tipo_rep.set(opciones_rep[0]) # Opción por defecto
+        self.entrada_tipo = tk.OptionMenu(contenido_derecha, self.var_tipo_rep, *opciones_rep)
+        self.entrada_tipo.config(width=25) # Ajustar ancho del widget OptionMenu
+        self.entrada_tipo.pack(pady=3, anchor="w")
+
+        # Botón de guardar centrado debajo de content_frame
+        btn_frame = tk.Frame(self, bg="white")
+        btn_frame.pack(fill="x", pady=10)
+        self.Btn_guardar = tk.Button(btn_frame, text="Guardar", command=self.guardar)
+        self.Btn_guardar.pack()
+        #Ejecutamos el metodo para deshabilitar las herramientas donde
+        #se guardaran los datos traidos de la base de datos de clientes, equipo y reparacion
+        self.deshabilitar_entradas()
 
 
-    
+    def guardar(self):
+        pass
+
+    def buscar_dispositivo(self):
+        pass
+
+
+
     def deshabilitar_entradas(self):
         self.entrada_cedula.config(state="disabled") 
         self.entrada_nombre.config(state="disabled") 
@@ -100,3 +141,8 @@ class VentanaReparacion(tk.Frame):
         self.entrada_password.config(state="disabled") 
         self.entrada_precio.config(state="disabled") 
         self.entrada_comentarios.config(state="disabled") 
+        self.entrada_estado.config(state="disabled") 
+        self.Btn_guardar.config(state="disabled")
+    
+    def habilitar_entrada(self):
+        self.Btn_guardar.config(state="normal")
