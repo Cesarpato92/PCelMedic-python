@@ -1,39 +1,45 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
-from Modelo.ModeloCliente import ModeloCliente
-from Modelo.ModeloDispositivo import ModeloDispositivo
-from Modelo.ModeloReparacion import ModeloReparacion
 
-from Logica.LogicaCliente import LogicaCliente
-from Logica.LogicaDispositivo import LogicaDispositivo
-from Logica.LogicaReparacion import LogicaReparacion
+# Importaciones comentadas (descomentar si los archivos existen en tu proyecto)
+# from Modelo.ModeloCliente import ModeloCliente
+# from Modelo.ModeloDispositivo import ModeloDispositivo
+# from Modelo.ModeloReparacion import ModeloReparacion
+# from Logica.LogicaCliente import LogicaCliente
+# from Logica.LogicaDispositivo import LogicaDispositivo
+# from Logica.LogicaReparacion import LogicaReparacion
 
-class VentanaReparacion(tk.Frame): # Hereda de tk.Frame
-    def __init__(self, parent, controller):
-        super().__init__(parent, bg="white" ) # Llama al constructor de tk.Frame
-        self.parent = parent
-        self.controller = controller
-        
-        # Configuración para que el frame se expanda dentro de su padre
-        self.columnconfigure(0, weight=1)
-        self.rowconfigure(0, weight=1) 
+class VentanaReparacion:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Gestión de Reparaciones")
+        self.root.geometry("1400x800")
+        #e Ejecucion en maximizada
+        self.root.state('zoomed') 
+        self.root.resizable(False, False)
+        #Forza el modo de pantalla completa (elimina bordes y barra de título, impidiendo el movimiento)
+        #self.root.attributes('-fullscreen', True)
+        # Configuración para que la ventana se expanda correctamente
+        self.root.columnconfigure(0, weight=1)
+        self.root.rowconfigure(0, weight=1) # Permite que el main_frame se expanda verticalmente
 
-        # --- Contenedor Principal de Contenido (usa self como padre) ---
-        contenedor = ttk.Frame(self, padding="10")
-        contenedor.grid(row=0, column=0, sticky="nsew")
+        # --- Contenedor Principal de Contenido ---
+        main_frame = ttk.Frame(self.root, padding="10")
+        main_frame.grid(row=0, column=0, sticky="nsew")
         
         # Configurar columnas de main_frame para que se expandan proporcionalmente
-        contenedor.columnconfigure(0, weight=1)
-        contenedor.columnconfigure(1, weight=1)
-        contenedor.columnconfigure(2, weight=1)
+        main_frame.columnconfigure(0, weight=1)
+        main_frame.columnconfigure(1, weight=1)
+        main_frame.columnconfigure(2, weight=1)
         
         # El título abarca las 3 columnas
-        tk.Label(contenedor, text="Gestión de reparaciones", font=("Helvetica", 16)).grid(row=0, column=0, columnspan=3, pady=10)
+        tk.Label(main_frame, text="Gestión de reparaciones", font=("Helvetica", 16)).grid(row=0, column=0, columnspan=3, pady=10)
 
         # ----------------------------------------------------
         # Sección de ID de Reparación y Búsqueda (Fila 1)
         # ----------------------------------------------------
-        id_rep_container_frame = ttk.Frame(contenedor)
+        id_rep_container_frame = ttk.Frame(main_frame)
+        # Se ubica en la fila 1 y abarca 3 columnas, alineado a la izquierda (sticky="w")
         id_rep_container_frame.grid(row=1, column=0, columnspan=3, pady=10, sticky="w")
         
         tk.Label(id_rep_container_frame, text="ID Reparacion:").pack(side=tk.LEFT, anchor="w")
@@ -48,19 +54,20 @@ class VentanaReparacion(tk.Frame): # Hereda de tk.Frame
         # ----------------------------------------------------
         # Columna izquierda - Datos del cliente (Fila 2, Columna 0)
         # ----------------------------------------------------
-        contenido_izquierda = ttk.Frame(contenedor, padding="10", relief="groove")
+        contenido_izquierda = ttk.Frame(main_frame, padding="10", relief="groove")
         contenido_izquierda.grid(row=2, column=0, sticky="nsew", padx=5, pady=5)
+        # Configurar expansión interna del frame
         contenido_izquierda.columnconfigure(0, weight=1)
 
         tk.Label(contenido_izquierda, text="Datos del Cliente", font=("Helvetica", 14, "bold")).grid(row=0, column=0, sticky="w", pady=(0, 5))
         
         tk.Label(contenido_izquierda, text="Cedula:").grid(row=1, column=0, sticky="w")
+        # El frame de cédula dentro de la columna izquierda
         cedula_frame = ttk.Frame(contenido_izquierda)
         cedula_frame.grid(row=2, column=0, sticky="w", pady=5)
         self.entrada_cedula = tk.Entry(cedula_frame, width=20)
         self.entrada_cedula.pack(side="left")
-        btn_buscar_cliente = tk.Button(cedula_frame, text="Buscar Cliente", command=self.buscar_dispositivo)
-        btn_buscar_cliente.pack(side="left", padx=5)
+        
         
         tk.Label(contenido_izquierda, text="Nombre").grid(row=3, column=0, sticky="w", pady=(8, 0))
         self.entrada_nombre = tk.Entry(contenido_izquierda)
@@ -77,26 +84,32 @@ class VentanaReparacion(tk.Frame): # Hereda de tk.Frame
         # ----------------------------------------------------
         # Columna central: datos del equipo (Fila 2, Columna 1)
         # ----------------------------------------------------
-        contenido_centro = ttk.Frame(contenedor, padding="10", relief="groove")
+        contenido_centro = ttk.Frame(main_frame, padding="10", relief="groove")
         contenido_centro.grid(row=2, column=1, sticky="nsew", padx=5, pady=5)
         contenido_centro.columnconfigure(0, weight=1)
 
         tk.Label(contenido_centro, text="Datos del equipo", font=("Helvetica", 14, "bold")).grid(row=0, column=0, sticky="w", pady=(0, 5))
+        
         tk.Label(contenido_centro, text="Marca").grid(row=1, column=0, sticky="w", pady=(5, 0))
         self.entrada_marca = tk.Entry(contenido_centro)
         self.entrada_marca.grid(row=2, column=0, sticky="ew", pady=3)
+
         tk.Label(contenido_centro, text="Modelo").grid(row=3, column=0, sticky="w", pady=(5, 0))
         self.entrada_modelo = tk.Entry(contenido_centro)
         self.entrada_modelo.grid(row=4, column=0, sticky="ew", pady=3)
+
         tk.Label(contenido_centro, text="Tipo de reparación").grid(row=5, column=0, sticky="w", pady=(5, 0))
         self.entrada_tipo_rep = tk.Entry(contenido_centro)
         self.entrada_tipo_rep.grid(row=6, column=0, sticky="ew", pady=3)
+
         tk.Label(contenido_centro, text="Tipo de contraseña").grid(row=7, column=0, sticky="w", pady=(5, 0))
         self.entrada_tipo_password = tk.Entry(contenido_centro)
         self.entrada_tipo_password.grid(row=8, column=0, sticky="ew", pady=3)
+        
         tk.Label(contenido_centro, text="Contraseña del equipo").grid(row=9, column=0, sticky="w", pady=(5, 0))
         self.entrada_password = tk.Entry(contenido_centro, show='*')
         self.entrada_password.grid(row=10, column=0, sticky="ew", pady=3)
+
         tk.Label(contenido_centro, text="Precio de reparación").grid(row=11, column=0, sticky="w", pady=(5, 0))
         self.entrada_precio = tk.Entry(contenido_centro)
         self.entrada_precio.grid(row=12, column=0, sticky="ew", pady=3)
@@ -104,7 +117,7 @@ class VentanaReparacion(tk.Frame): # Hereda de tk.Frame
         # ----------------------------------------------------
         # Columna derecha: comentarios y estado (Fila 2, Columna 2)
         # ----------------------------------------------------
-        contenido_derecha_der = ttk.Frame(contenedor, padding="10", relief="groove")
+        contenido_derecha_der = ttk.Frame(main_frame, padding="10", relief="groove")
         contenido_derecha_der.grid(row=2, column=2, sticky="nsew", padx=5, pady=5)
         contenido_derecha_der.columnconfigure(0, weight=1)
 
@@ -116,21 +129,18 @@ class VentanaReparacion(tk.Frame): # Hereda de tk.Frame
         self.entrada_estado = tk.Entry(contenido_derecha_der)
         self.entrada_estado.grid(row=3, column=0, sticky="ew", pady=3)
 
-        # Nueva ubicación para Precio refacción
         tk.Label(contenido_derecha_der, text="Precio refaccion").grid(row=4, column=0, sticky="w", pady=(5,0))
         self.entrada_refaccion = tk.Entry(contenido_derecha_der)
         self.entrada_refaccion.grid(row=5, column=0, sticky="ew", pady=3)
 
-        # Nueva ubicación para Comentarios del tecnico
         tk.Label(contenido_derecha_der, text="Comentarios del tecnico").grid(row=6, column=0, sticky="w", pady=(5, 0))
         self.entrada_comentarios_tec = tk.Text(contenido_derecha_der, height=6)
         self.entrada_comentarios_tec.grid(row=7, column=0, sticky="nsew", pady=3)
 
-        # Nueva ubicación para Equipo reparado
         tk.Label(contenido_derecha_der, text="Equipo reparado").grid(row=8, column=0, sticky="w", pady=(5, 0))
         opciones_rep = ["SI", "NO"]
-        self.var_tipo_rep = tk.StringVar(self.parent) # Usa self.parent aquí
-        self.var_tipo_rep.set(opciones_rep[0]) # Establece un valor inicial correcto
+        self.var_tipo_rep = tk.StringVar(self.root)
+        self.var_tipo_rep.set(opciones_rep[0]) 
         self.entrada_tipo = tk.OptionMenu(contenido_derecha_der, self.var_tipo_rep, *opciones_rep)
         self.entrada_tipo.config(width=8) 
         self.entrada_tipo.grid(row=9, column=0, sticky="w", pady=3)
@@ -138,52 +148,54 @@ class VentanaReparacion(tk.Frame): # Hereda de tk.Frame
         contenido_derecha_der.rowconfigure(1, weight=1) # Fila del primer Text
         contenido_derecha_der.rowconfigure(7, weight=1) # Fila del segundo Text
 
-
         # ----------------------------------------------------
         # --- Footer: Contenedor para los botones (Fila 3) ---
         # ----------------------------------------------------
-        footer_frame = ttk.Frame(contenedor, padding="10", relief="raised")
+        footer_frame = ttk.Frame(main_frame, padding="10", relief="raised")
+        # Ubicado en la fila 3, abarcando las 3 columnas, sticky nsew para llenar horizontalmente
         footer_frame.grid(row=3, column=0, columnspan=3, sticky="nsew", pady=(20, 0))
         
+        # Configuramos el footer_frame con 3 columnas que se expanden proporcionalmente
         footer_frame.columnconfigure(0, weight=1)
         footer_frame.columnconfigure(1, weight=1)
         footer_frame.columnconfigure(2, weight=1)
 
-        frame_btn_izquierda = ttk.Frame(footer_frame)
+        # --- Botones Izquierda ---
+        """frame_btn_izquierda = ttk.Frame(footer_frame)
         frame_btn_izquierda.grid(row=0, column=0, sticky="w")
         tk.Button(frame_btn_izquierda, text="Boton Izq 1").pack(side=tk.LEFT, padx=5, pady=5)
         tk.Button(frame_btn_izquierda, text="Boton Izq 2").pack(side=tk.LEFT, padx=5, pady=5)
-        
-        frame_btn_centro = ttk.Frame(footer_frame)
+        """
+        # --- Botones Centro ---
+        """frame_btn_centro = ttk.Frame(footer_frame)
         frame_btn_centro.grid(row=0, column=1, sticky="nsew")
         self.Btn_guardar = tk.Button(frame_btn_centro, text="Guardar", command=self.guardar)
+        # El botón del centro usa fill="x" y expand=True para ocupar el espacio central
         self.Btn_guardar.pack(fill="x", expand=True, padx=5, pady=5) 
-
+        """
+        # --- Botones Derecha ---
         frame_btn_derecha = ttk.Frame(footer_frame)
         frame_btn_derecha.grid(row=0, column=2, sticky="e")
-        tk.Button(frame_btn_derecha, text="Boton Der 1").pack(side=tk.RIGHT, padx=5, pady=5)
-        tk.Button(frame_btn_derecha, text="Cancelar", command=self.cancelar_accion).pack(side=tk.RIGHT, padx=5, pady=5)
+        tk.Button(frame_btn_derecha, text="Aceptar").pack(side=tk.RIGHT, padx=5, pady=5)
+        tk.Button(frame_btn_derecha, text="Cancelar").pack(side=tk.RIGHT, padx=5, pady=5)
 
 
+        # Ejecutamos el metodo para deshabilitar las entradas
         self.deshabilitar_entradas()
 
     # --- Métodos de la clase ---
+
     def guardar(self):
-        # Usamos parent=self.parent para que el messagebox se ancle a la ventana principal
-        messagebox.showinfo("Guardar", "Datos guardados (simulado)", parent=self.parent)
+        messagebox.showinfo("Guardar", "Datos guardados (simulado)")
 
     def buscar_dispositivo(self):
-        messagebox.showinfo("Buscar Cliente", f"Buscando...", parent=self.parent)
+        messagebox.showinfo("Buscar Cliente", f"Buscando dispositivo del cliente con cédula: {self.entrada_cedula.get()}")
 
     def buscar_id_reparacion(self):
-        messagebox.showinfo("Buscar ID", f"Buscando...", parent=self.parent)
-        
-    def cancelar_accion(self):
-        # Puedes definir una acción de cancelación aquí
-        self.parent.destroy() # Cierra la ventana principal
+        messagebox.showinfo("Buscar ID", f"Buscando reparación con ID: {self.entrada_id_reparacion.get()}")
 
     def deshabilitar_entradas(self):
-        self.entrada_id_reparacion.config(state="disabled")
+        
         self.entrada_cedula.config(state="disabled") 
         self.entrada_nombre.config(state="disabled") 
         self.entrada_email.config(state="disabled") 
@@ -194,11 +206,17 @@ class VentanaReparacion(tk.Frame): # Hereda de tk.Frame
         self.entrada_tipo_password.config(state="disabled") 
         self.entrada_password.config(state="disabled") 
         self.entrada_precio.config(state="disabled") 
-        self.entrada_comentarios.config(state="disabled") 
-        
+        self.entrada_comentarios.config(state="disabled")
         self.entrada_estado.config(state="disabled") 
         
-        self.entrada_tipo.config(state="disabled") 
+        
     
     def habilitar_entrada(self):
         self.Btn_guardar.config(state="normal")
+
+
+# --- Forma correcta de ejecutar la aplicación ---
+if __name__ == '__main__':
+    root = tk.Tk()
+    app = VentanaReparacion(root)
+    root.mainloop()

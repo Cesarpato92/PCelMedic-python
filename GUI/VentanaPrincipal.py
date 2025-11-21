@@ -63,7 +63,9 @@ class VentanaPrincipal(tk.Tk):
         self.logica = LogicaFacade(self)
         self.title("PCelMedic")
         self.geometry("900x700")
-
+        # no se pueda cambiar el tamaño y se ejecute en maximizada
+        self.state('zoomed') 
+        self.resizable(False, False)
         # Creamos la barra superior primero y luego los frames
         self.frames = {}
         self.create_sidebar()

@@ -18,6 +18,10 @@ class VentanaRegistro(tk.Frame):
         label = tk.Label(self, text="Registro de Clientes y Dispositivos", font=("Helvetica", 16))
         label.pack(pady=10, padx=10)
 
+        # Configuración para que el frame se expanda dentro de su padre
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1) 
+        
         # Contenedor primcipal
         contenedor = tk.Frame(self, bg="white")
         contenedor.pack(fill="both", expand=True, padx=20, pady=20)
