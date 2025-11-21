@@ -8,9 +8,9 @@ from Logica.LogicaCliente import LogicaCliente
 from Logica.LogicaDispositivo import LogicaDispositivo
 from Logica.LogicaReparacion import LogicaReparacion
 
-class VentanaReparacion(tk.Frame): # Hereda de tk.Frame
+class VentanaReparacion(tk.Frame):
     def __init__(self, parent, controller):
-        super().__init__(parent, bg="white" ) # Llama al constructor de tk.Frame
+        super().__init__(parent, bg="white" ) 
         self.parent = parent
         self.controller = controller
         

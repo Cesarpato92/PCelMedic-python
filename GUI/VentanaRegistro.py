@@ -78,8 +78,6 @@ class VentanaRegistro(tk.Frame):
         tk.Label(contenido_derecha, text="Tipo de reparación").grid(row=5, column=0, sticky="w", pady=(5, 0))
         opciones_rep = ["Display", "Puerto de carga", "Corto", "Sonido", "Cuenta", "Bloqueo", "Otro"]
         self.var_tipo_rep = tk.StringVar(self)
-        # self.var_tipo_rep.set(opciones_rep[0]) # Opción por defecto
-        # Corregimos para evitar error al instanciar StringVar con lista entera
         self.var_tipo_rep.set(opciones_rep[0]) 
         self.entrada_tipo = tk.OptionMenu(contenido_derecha, self.var_tipo_rep, *opciones_rep)
         self.entrada_tipo.config(width=25)
@@ -107,35 +105,32 @@ class VentanaRegistro(tk.Frame):
         contenido_derecha.rowconfigure(14, weight=1)
 
 
-        # ------------------------------------------------------------------
-        # Footer: Contenedor para los botones (Fila 2)
-        # Implementa la alineación Izquierda, Centro, Derecha
-        # ------------------------------------------------------------------
-        footer_frame = ttk.Frame(contenedor, padding="10", relief="raised")
-        footer_frame.grid(row=2, column=0, columnspan=2, sticky="nsew", pady=(20, 0))
+        
+        inferior_frame = ttk.Frame(contenedor, padding="10", relief="raised")
+        inferior_frame.grid(row=2, column=0, columnspan=2, sticky="nsew", pady=(20, 0))
         
         # Configuramos el footer_frame con 3 columnas que se expanden proporcionalmente
-        footer_frame.columnconfigure(0, weight=1)
-        footer_frame.columnconfigure(1, weight=1)
-        footer_frame.columnconfigure(2, weight=1)
+        inferior_frame.columnconfigure(0, weight=1)
+        inferior_frame.columnconfigure(1, weight=1)
+        inferior_frame.columnconfigure(2, weight=1)
 
         # --- Botones Izquierda ---
-        frame_btn_izquierda = ttk.Frame(footer_frame)
+        frame_btn_izquierda = ttk.Frame(inferior_frame)
         frame_btn_izquierda.grid(row=0, column=0, sticky="w")
         tk.Button(frame_btn_izquierda, text="Limpiar Campos", command=self.limpiar_campos).pack(side=tk.LEFT, padx=5, pady=5)
         
         # --- Botones Centro (Botón principal Guardar) ---
-        frame_btn_centro = ttk.Frame(footer_frame)
+        frame_btn_centro = ttk.Frame(inferior_frame)
         frame_btn_centro.grid(row=0, column=1, sticky="nsew")
         Btn_guardar = tk.Button(frame_btn_centro, text="Guardar Registro", command=self.guardar)
         Btn_guardar.pack(fill="x", expand=True, padx=5, pady=5) 
 
         # --- Botones Derecha ---
-        frame_btn_derecha = ttk.Frame(footer_frame)
+        """frame_btn_derecha = ttk.Frame(inferior_frame)
         frame_btn_derecha.grid(row=0, column=2, sticky="e")
         tk.Button(frame_btn_derecha, text="Cerrar", command=self.parent.destroy).pack(side=tk.RIGHT, padx=5, pady=5)
 
-
+        """
         self.on_tipo_contrasena_change()
     
     # --- Métodos de la clase ---
@@ -164,7 +159,7 @@ class VentanaRegistro(tk.Frame):
         self.var_tipo_rep.set(opciones_rep[0])
         self.var_tipo_contrasena.set(opciones_contra[0])
         self.on_tipo_contrasena_change() # Llama para asegurar que la contraseña se deshabilita/habilita correctamente
-
+        self.entrada_cedula.config(state=tk.NORMAL)
 
     def guardar(self):
         # Extrae datos de cliente
@@ -173,7 +168,7 @@ class VentanaRegistro(tk.Frame):
         email = self.entrada_email.get().strip()
         celular = self.entrada_celular.get().strip()
 
-        # Datos del dispositivo (leer antes de limpiar los widgets)
+        # Datos del dispositivo 
         marca = self.entrada_marca.get().strip()
         modelo = self.entrada_modelo.get().strip()
         tipo_rep = self.var_tipo_rep.get().strip() 
@@ -217,13 +212,11 @@ class VentanaRegistro(tk.Frame):
             messagebox.showerror("Error", f"Error al guardar/actualizar cliente: {e}")
             return
 
-        # Preparar comentarios del dispositivo: incluir modelo y precio si hay
-        # ... (Tu lógica original de comentarios) ...
+        
         extra = []
         if modelo:
             extra.append(f"Modelo: {modelo}")
-        if precio_rep:
-            extra.append(f"Precio: {precio_rep}")
+       
         if extra:
             comentarios_disp = (comentarios_disp + "\n" + " | ".join(extra)).strip()
 
@@ -243,8 +236,6 @@ class VentanaRegistro(tk.Frame):
             id_disp = self.dispositivo_logica.insertar_dispositivo(dispositivo_obj)
             
             if id_disp:
-                # messagebox.showinfo("Dispositivo", f"Dispositivo guardado con id {id_disp}")
-
                 # Guardar la reparación asociada al dispositivo
                 reparacion_obj = ModeloReparacion(
                     _id_dispositivo = id_disp,
@@ -299,8 +290,9 @@ class VentanaRegistro(tk.Frame):
             self.entrada_celular.delete(0, tk.END)
             self.entrada_celular.insert(0, resultado.celular)
             
-            # Opcional: Deshabilitar campos de cliente si ya existe?
-
+            # Deshabilitar campos de cliente si ya existe?
+            self.entrada_cedula.config(state=tk.DISABLED)
+            
         except Exception as e:
             messagebox.showerror("ERROR", f"Error al rellenar los campos: {e}")
             return
