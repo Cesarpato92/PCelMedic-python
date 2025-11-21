@@ -30,14 +30,14 @@ class VentanaReparacion(tk.Frame): # Hereda de tk.Frame
         # El título abarca las 3 columnas
         tk.Label(contenedor, text="Gestión de reparaciones", font=("Helvetica", 16)).grid(row=0, column=0, columnspan=3, pady=10)
 
-        # ----------------------------------------------------
-        # Sección de ID de Reparación y Búsqueda (Fila 1)
-        # ----------------------------------------------------
-        id_rep_container_frame = ttk.Frame(contenedor)
-        id_rep_container_frame.grid(row=1, column=0, columnspan=3, pady=10, sticky="w")
+       
+        # Sección de ID de Reparación y Búsqueda 
         
-        tk.Label(id_rep_container_frame, text="ID Reparacion:").pack(side=tk.LEFT, anchor="w")
-        id_rep_frame = ttk.Frame(id_rep_container_frame)
+        contenedor_id_reparacion = ttk.Frame(contenedor)
+        contenedor_id_reparacion.grid(row=1, column=0, columnspan=3, pady=10, sticky="w")
+        
+        tk.Label(contenedor_id_reparacion, text="ID Reparacion:").pack(side=tk.LEFT, anchor="w")
+        id_rep_frame = ttk.Frame(contenedor_id_reparacion)
         id_rep_frame.pack(side=tk.LEFT, pady=5, anchor="w", padx=10)
         
         self.entrada_id_reparacion = tk.Entry(id_rep_frame, width=20) 
