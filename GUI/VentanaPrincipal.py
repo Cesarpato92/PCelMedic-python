@@ -78,19 +78,20 @@ class VentanaPrincipal(tk.Tk):
     def validacion_admin(self):
         
         # Creacion de la ventana de autenticacion
-        login = tk.Toplevel(self)
+        login = tk.Toplevel(self) # Correcto, Toplevel es tk.
         login.title("Autenticación requerida")
         login.transient(self)
         login.grab_set()
         login.resizable(False, False)
 
-        tk.Label(login, text="Usuario:").grid(row=0, column=0, padx=8, pady=8)
-        user_var = tk.StringVar()
-        tk.Entry(login, textvariable=user_var).grid(row=0, column=1, padx=8, pady=8)
+        # Todos estos widgets ya son ttk, lo cual es correcto:
+        ttk.Label(login, text="Usuario:").grid(row=0, column=0, padx=8, pady=8)
+        user_var = tk.StringVar() # Usamos tk.StringVar o ttk.StringVar, ambos funcionan con ttk Entry
+        ttk.Entry(login, textvariable=user_var).grid(row=0, column=1, padx=8, pady=8)
 
-        tk.Label(login, text="Contraseña:").grid(row=1, column=0, padx=8, pady=8)
+        ttk.Label(login, text="Contraseña:").grid(row=1, column=0, padx=8, pady=8)
         pwd_var = tk.StringVar()
-        tk.Entry(login, textvariable=pwd_var, show="*").grid(row=1, column=1, padx=8, pady=8)
+        ttk.Entry(login, textvariable=pwd_var, show="*").grid(row=1, column=1, padx=8, pady=8)
 
         def on_ok():
             """Valida credenciales y abre VentanaFinanzas si son correctas."""
@@ -102,14 +103,17 @@ class VentanaPrincipal(tk.Tk):
             else:
                 messagebox.showerror("Acceso denegado", "Usuario o contraseña incorrectos")
                 pwd_var.set("")
+        
+        btn_ok = ttk.Button(login, text="Ingresar", command=on_ok)
+        btn_ok.grid(row=2, column=0, padx=8, pady=10)
 
         def on_cancel():
             """Cierra el diálogo sin autenticar."""
             login.destroy()
 
-        btn_ok = tk.Button(login, text="Ingresar", command=on_ok)
+        btn_ok = ttk.Button(login, text="Ingresar", command=on_ok)
         btn_ok.grid(row=2, column=0, padx=8, pady=10)
-        btn_cancel = tk.Button(login, text="Cancelar", command=on_cancel)
+        btn_cancel = ttk.Button(login, text="Cancelar", command=on_cancel)
         btn_cancel.grid(row=2, column=1, padx=8, pady=10)
 
         # Centrar el diálogo en el centro de la pantalla

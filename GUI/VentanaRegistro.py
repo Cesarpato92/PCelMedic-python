@@ -12,29 +12,27 @@ from datetime import datetime
 
 class VentanaRegistro(tk.Frame):
     def __init__(self, master, controller, **kwargs):
-        # super().__init__(parent, bg="white") # Eliminamos bg="white" porque ttk ignora bg
         super().__init__(master, **kwargs) 
         self.controller = controller
-        # self.cliente = LogicaCliente() # Asumo que esta clase funciona
+        
 
-        # Configuración para que el frame se expanda dentro de su padre (self, que es un tk.Frame)
+        # Configuración para que el frame se expanda dentro de su padre 
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1) 
 
-        # Contenedor principal usando ttk.Frame
+        # Contenedor principal 
         contenedor = ttk.Frame(self, padding=10)
         contenedor.grid(row=0, column=0, sticky="nsew")
-        contenedor.columnconfigure(0, weight=1) # Columna izquierda se expande
-        contenedor.columnconfigure(1, weight=1) # Columna derecha se expande
+        contenedor.columnconfigure(0, weight=1) 
+        contenedor.columnconfigure(1, weight=1) 
 
-        # Usamos ttk.Label
         label = ttk.Label(contenedor, text="Registro de Clientes y Dispositivos", font=("Helvetica", 16))
         label.grid(row=0, column=0, columnspan=2, pady=10)
 
         # Columna izquierda - Datos del cliente (Fila 1, Columna 0)
         contenido_izquierda = ttk.Frame(contenedor, padding=10, relief="groove")
         contenido_izquierda.grid(row=1, column=0, sticky="nsew", padx=5, pady=5)
-        contenido_izquierda.columnconfigure(0, weight=1) # Permite expansión interna
+        contenido_izquierda.columnconfigure(0, weight=1) 
 
         ttk.Label(contenido_izquierda, text="Datos del Cliente", font=("Helvetica", 14)).grid(row=0, column=0, sticky="w", pady=(0, 5))
         
@@ -108,15 +106,15 @@ class VentanaRegistro(tk.Frame):
         self.menu_contrasena.grid(row=8, column=0, sticky="w", pady=3) 
 
         ttk.Label(contenido_derecha, text="Contraseña del equipo").grid(row=9, column=0, sticky="w", pady=(5, 0))
-        self.entrada_contrasena = ttk.Entry(contenido_derecha) # Usamos ttk.Entry
-        self.entrada_contrasena.grid(row=10, column=0, sticky="ew", pady=3) # sticky="ew" para expandir el entry
+        self.entrada_contrasena = ttk.Entry(contenido_derecha) 
+        self.entrada_contrasena.grid(row=10, column=0, sticky="ew", pady=3)
 
         ttk.Label(contenido_derecha, text="Precio de reparación").grid(row=11, column=0, sticky="w", pady=(5, 0))
-        self.entrada_precio = ttk.Entry(contenido_derecha) # Usamos ttk.Entry
+        self.entrada_precio = ttk.Entry(contenido_derecha) 
         self.entrada_precio.grid(row=12, column=0, sticky="ew", pady=3)
        
         ttk.Label(contenido_derecha, text="Comentarios").grid(row=13, column=0, sticky="w", pady=(5, 0))
-        self.entrada_comentarios = tk.Text(contenido_derecha, height=6) # Text no tiene equivalente ttk, se usa tk.Text
+        self.entrada_comentarios = tk.Text(contenido_derecha, height=6) 
         self.entrada_comentarios.grid(row=14, column=0, sticky="nsew", pady=3)
 
         # Habilitar expansión vertical del Text widget
@@ -139,9 +137,9 @@ class VentanaRegistro(tk.Frame):
         # Botones Centro 
         frame_btn_centro = ttk.Frame(inferior_frame)
         frame_btn_centro.grid(row=0, column=1, sticky="nsew")
-        frame_btn_centro.columnconfigure(0, weight=1) # Expandir el botón central
+        frame_btn_centro.columnconfigure(0, weight=1) 
         Btn_guardar = ttk.Button(frame_btn_centro, text="Guardar Registro", command=self.guardar)
-        Btn_guardar.grid(row=0, column=0, sticky="ew", padx=5, pady=5) # Usamos grid y sticky="ew"
+        Btn_guardar.grid(row=0, column=1, sticky="w", padx=5, pady=5) 
 
        
         self.on_tipo_contrasena_change()
