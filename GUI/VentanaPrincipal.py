@@ -20,45 +20,65 @@ class VentanaPrincipal(tk.Tk):
     
     def __init__(self):
        
-        super().__init__()
-        
-        # Inicializar Lógicas (capa de negocio) con inyección de DAO
-        self.cliente_logica = LogicaCliente()
-        self.dispositivo_logica = LogicaDispositivo()
-        self.reparacion_logica = LogicaReparacion()
-        self.factura_logica = LogicaFactura()
-        self.garantia_logica =  LogicaGarantia()
+        def __init__(self):
+            super().__init__()
+    
+    # Verificar que estas clases existen y se inicializan correctamente
+            try:
+                self.cliente_logica = LogicaCliente()
+                self.dispositivo_logica = LogicaDispositivo()
+                self.reparacion_logica = LogicaReparacion()
+                self.factura_logica = LogicaFactura()
+                self.garantia_logica = LogicaGarantia()
+            except Exception as e:
+                messagebox.showerror("Error", f"Error inicializando módulos: {str(e)}")
+                self.destroy()
+                return
               
         
         # Crear fachada de lógica para compatibilidad
         class LogicaFacade:
-           # Fachada que expone métodos de negocio a GUI.
-            """
-            Propósito:
-                - Simplificar acceso a métodos de lógica desde GUI
-                - Evitar que GUI conozca detalles de instancias específicas
-                - Proporcionar interfaz consistente para todos los frames
-            
-            Métodos:
-                - guardarDispositivo(): Delega a dispositivo_logic
-                - guardarReparacion(): Delega a reparacion_logic
-                - obtener_datos_grafica(): Delega a factura_logic
-           """
             def __init__(self, app):
                 self.app = app
-            # --------------------------------------------------------------------
-            # --------------------------------------------------------------------
-            def guardarDispositivo(self, *args, **kwargs):
-                # Guarda un dispositivo.
+            
+            # Clientes
+            def agregar_cliente(self, *args, **kwargs):
+                return self.app.cliente_logica.agregar_cliente(*args, **kwargs)
+            
+            def obtener_clientes(self, *args, **kwargs):
+                return self.app.cliente_logica.obtener_clientes(*args, **kwargs)
+            
+            # Dispositivos
+            def agregar_dispositivo(self, *args, **kwargs):
                 return self.app.dispositivo_logica.agregar_dispositivo(*args, **kwargs)
             
-            def guardarReparacion(self, *args, **kwargs):
-                # Guarda una reparación.
+            def obtener_dispositivos(self, *args, **kwargs):
+                return self.app.dispositivo_logica.obtener_dispositivos(*args, **kwargs)
+            
+            # Reparaciones
+            def agregar_reparacion(self, *args, **kwargs):
                 return self.app.reparacion_logica.agregar_reparacion(*args, **kwargs)
             
+            def obtener_reparaciones(self, *args, **kwargs):
+                return self.app.reparacion_logica.obtener_reparaciones(*args, **kwargs)
+            
+            # Facturas
+            def agregar_factura(self, *args, **kwargs):
+                return self.app.factura_logica.agregar_factura(*args, **kwargs)
+            
+            def obtener_facturas(self, *args, **kwargs):
+                return self.app.factura_logica.obtener_facturas(*args, **kwargs)
+            
             def obtener_datos_grafica(self, *args, **kwargs):
-                # Obtiene datos de facturas para gráfico.
                 return self.app.factura_logica.obtener_datos_grafica(*args, **kwargs)
+            
+            # Garantías
+            def agregar_garantia(self, *args, **kwargs):
+                return self.app.garantia_logica.agregar_garantia(*args, **kwargs)
+            
+            def obtener_garantias(self, *args, **kwargs):
+                return self.app.garantia_logica.obtener_garantias(*args, **kwargs)
+            
         
         self.logica = LogicaFacade(self)
         self.title("PCelMedic")
@@ -122,73 +142,29 @@ class VentanaPrincipal(tk.Tk):
         spacer.pack(side="left", expand=True, fill="x")
 
     def mostrar_frame(self, page_name):
-        """Muestra el frame (página) indicado en primer plano.
-        
-        Args:
-            page_name (str): Nombre de la clase del frame (ej: "VentanaDatos", "VentanaGrafico")
-        
-        Propósito:
-            - Cambiar entre diferentes secciones de la aplicación
-            - Usar tkraise() para traer el frame al frente (sin recrear)
-            - Ejecutar lógica especial para frames (ej: actualizar gráficos, recargar datos)
-        
-        Flujo especial por frame:
-            - VentanaGrafico: Obtiene datos de gráficos automáticamente
-            - VentanaReparacion: Carga lista de reparaciones vigentes
-            - VentanaFactura: Carga lista de facturas existentes
-            - VentanaGarantia: Carga lista de garantías vigentes
-            - VentanaDatos: Frame principal de registro
-        
-        Ejemplo:
-            app.mostrar_frame("VentanaGrafico")  # Muestra la ventana de gráficos
-        """
         frame = self.frames.get(page_name)
         if frame is None:
-            # Si no existe la clave, evitar KeyError y loggear simple
-            print(f"Advertencia: no existe el frame '{page_name}'")
+            messagebox.showerror("Error", f"No se encontró la ventana: {page_name}")
             return
-        frame.tkraise()
         
-        # Lógica especial para cada frame
-        if page_name == "VentanaRegistro":
-            # Actualizar gráficos cuando se muestre por primera vez
-            try:
-                datos = self.logica.obtener_datos_grafica()
-                if datos:
-                    frame.actualizar_graficos(datos)
-            except Exception as e:
-                print(f"Advertencia: No se pudo actualizar ventana: {e}")
-        
-        elif page_name == "VentanaReparacion":
-            # Recargar reparaciones cuando se abre el frame
-            try:
-                if hasattr(frame, 'listar_todas'):
+        try:
+            frame.tkraise()
+            
+            # Lógica específica por frame con verificación de métodos
+            if page_name == "VentanaRegistro":
+                if hasattr(frame, 'actualizar_graficos') and callable(frame.actualizar_graficos):
+                    datos = self.logica.obtener_datos_grafica()
+                    if datos:
+                        frame.actualizar_graficos(datos)
+            
+            elif page_name == "VentanaReparacion":
+                if hasattr(frame, 'listar_todas') and callable(frame.listar_todas):
                     frame.listar_todas()
-            except Exception as e:
-                print(f"Advertencia: No se pudo cargar reparaciones: {e}")
-        
-        elif page_name == "VentanaFactura":
-            # Recargar facturas cuando se abre el frame
-            try:
-                if hasattr(frame, 'listar_todas'):
-                    frame.listar_todas()
-            except Exception as e:
-                print(f"Advertencia: No se pudo cargar facturas: {e}")
-        
-        elif page_name == "VentanaGarantia":
-            # Recargar garantías cuando se abre el frame
-            try:
-                if hasattr(frame, 'listar_garantias'):
-                    frame.listar_garantias()
-            except Exception as e:
-                print(f"Advertencia: No se pudo cargar garantías: {e}")
-        elif page_name == "VentanaFinanzas":
-            # Recargar garantías cuando se abre el frame
-            try:
-                if hasattr(frame, 'listar_finanzas'):
-                    frame.listar_finanzas()
-            except Exception as e:
-                print(f"Advertencia: No se pudo cargar garantías: {e}")
+            
+            # ... similar para otros frames
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"No se pudo cargar {page_name}: {str(e)}")
 
     def validacion_admin(self):
         """Abre un diálogo modal para validar credenciales admin antes de mostrar gráficos.

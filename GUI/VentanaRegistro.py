@@ -125,12 +125,7 @@ class VentanaRegistro(tk.Frame):
         Btn_guardar = tk.Button(frame_btn_centro, text="Guardar Registro", command=self.guardar)
         Btn_guardar.pack(fill="x", expand=True, padx=5, pady=5) 
 
-        # --- Botones Derecha ---
-        """frame_btn_derecha = ttk.Frame(inferior_frame)
-        frame_btn_derecha.grid(row=0, column=2, sticky="e")
-        tk.Button(frame_btn_derecha, text="Cerrar", command=self.parent.destroy).pack(side=tk.RIGHT, padx=5, pady=5)
-
-        """
+       
         self.on_tipo_contrasena_change()
     
     # --- Métodos de la clase ---
