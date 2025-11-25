@@ -39,9 +39,9 @@ class LogicaCliente:
         #  luego de pasar las validaciones
         return self.cliente_dao.agregar_cliente(modelo_cliente)
 
-    def obtener_cliente_por_cedula(self, modelo_cliente):
-        if self.validacionCedula(modelo_cliente.cedula) is True:
-            return self.cliente_dao.obtener_cliente_por_cedula(modelo_cliente)
+    def obtener_cliente_por_cedula(self, cedula):
+        if self.validacionCedula(cedula) is True:
+            return self.cliente_dao.obtener_cliente_por_cedula(cedula)
         else:
             return False
 

@@ -1,8 +1,7 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, ttk
 
-# Importar clases de GUI (Mantienes tus importaciones absolutas)
-# Asegúrate que estas clases (VentanaRegistro, etc.) estén definidas en sus respectivos archivos.
+# Importar clases de GUI 
 from GUI.VentanaRegistro import VentanaRegistro
 from GUI.VentanaReparacion import VentanaReparacion
 from GUI.VentanaGarantia import VentanaGarantia
@@ -17,11 +16,15 @@ class VentanaPrincipal(tk.Tk):
         self.title("PCelMedic")
         self.geometry("900x700")
         self.state('zoomed') 
-        # NOTA: resizable(False, False) entra en conflicto con state('zoomed') 
-        # si quieres que se maximice al inicio, es mejor permitir el resize.
+       
         self.resizable(True, True) 
+        
+        # Define un estilo para la navbar 
+        style = ttk.Style()
+        style.configure("Navbar.TFrame", background="#f0f0f0")
+        style.configure("Navbar.TLabel", background="#f0f0f0", font=("Helvetica", 12, "bold"))
 
-        # --- Configuración del Layout Principal (Usando GRID consistentemente) ---
+        # --- Configuración del Layout Principal 
         # Fila 0 para la navbar, Fila 1 para el contenido principal
         self.grid_rowconfigure(1, weight=1)       # La fila de contenido se expande verticalmente
         self.grid_columnconfigure(0, weight=1)    # La única columna se expande horizontalmente
@@ -50,21 +53,19 @@ class VentanaPrincipal(tk.Tk):
 
     def crear_navbar(self):
         
-        # Creamos una barra superior (navbar) con los botones en fila
-        navbar = tk.Frame(self, bg="#f0f0f0", height=50)
-        # Usamos GRID para ubicar la navbar en la Fila 0, que se estira horizontalmente (ew)
+        # Usamos el estilo definido
+        navbar = ttk.Frame(self, height=50, style="Navbar.TFrame") 
         navbar.grid(row=0, column=0, sticky="ew")
 
-        # Título pequeño a la izquierda (usando PACK dentro de la navbar)
-        tk.Label(navbar, text="PCelMedic", font=("Helvetica", 12, "bold"), bg="#f0f0f0").pack(side="left", padx=(8, 12))
+        # Usamos el estilo definido para la etiqueta
+        ttk.Label(navbar, text="PCelMedic", style="Navbar.TLabel").pack(side="left", padx=(8, 12))
 
-        # Botones de los requerimientos (usando PACK dentro de la navbar para orden horizontal)
-        tk.Button(navbar, text="Registro clientes", command=lambda: self.mostrar_frame("VentanaRegistro")).pack(side="left", padx=6, pady=8)
-        tk.Button(navbar, text="Registro reparaciones", command=lambda: self.mostrar_frame("VentanaReparacion")).pack(side="left", padx=6, pady=8)
-        tk.Button(navbar, text="Gestión garantías", command=lambda: self.mostrar_frame("VentanaGarantia")).pack(side="left", padx=6, pady=8)
-        tk.Button(navbar, text="Gestión facturas", command=lambda: self.mostrar_frame("VentanaFactura")).pack(side="left", padx=6, pady=8)
-        tk.Button(navbar, text="Finanzas", command=lambda: self.validacion_admin()).pack(side="left", padx=6, pady=8)
-
+        # Botones de los requerimientos (están bien con pack y ttk.Button)
+        ttk.Button(navbar, text="Registro clientes", command=lambda: self.mostrar_frame("VentanaRegistro")).pack(side="left", padx=6, pady=8)
+        ttk.Button(navbar, text="Registro reparaciones", command=lambda: self.mostrar_frame("VentanaReparacion")).pack(side="left", padx=6, pady=8)
+        ttk.Button(navbar, text="Gestión garantías", command=lambda: self.mostrar_frame("VentanaGarantia")).pack(side="left", padx=6, pady=8)
+        ttk.Button(navbar, text="Gestión facturas", command=lambda: self.mostrar_frame("VentanaFactura")).pack(side="left", padx=6, pady=8)
+        ttk.Button(navbar, text="Finanzas", command=lambda: self.validacion_admin()).pack(side="left", padx=6, pady=8)
 
     def mostrar_frame(self, page_name):
         # Muestra el frame para le nombre de la pagina dado
@@ -75,10 +76,8 @@ class VentanaPrincipal(tk.Tk):
             messagebox.showerror("Error de navegación", f"No se encontró el frame: {page_name}")
 
     def validacion_admin(self):
-        # ... (Todo tu código de validacion_admin() se mantiene igual) ...
-        # Solo asegúrate de que VentanaFinanzas sea el nombre de la clase
-       
-        # Crear diálogo modal
+        
+        # Creacion de la ventana de autenticacion
         login = tk.Toplevel(self)
         login.title("Autenticación requerida")
         login.transient(self)

@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
+# Importaciones de tu lógica y modelos
 from Modelo.ModeloCliente import ModeloCliente
 from Modelo.ModeloDispositivo import ModeloDispositivo
 from Modelo.ModeloReparacion import ModeloReparacion
@@ -10,126 +11,142 @@ from datetime import datetime
 
 
 class VentanaRegistro(tk.Frame):
-    def __init__(self, parent, controller):
-        # Usamos ttk.Frame para un estilo moderno y padding
-        super().__init__(parent, bg="white") 
+    def __init__(self, master, controller, **kwargs):
+        # super().__init__(parent, bg="white") # Eliminamos bg="white" porque ttk ignora bg
+        super().__init__(master, **kwargs) 
         self.controller = controller
-        self.cliente = LogicaCliente()
-        
-        # Configuración para que el frame se expanda dentro de su padre
+        # self.cliente = LogicaCliente() # Asumo que esta clase funciona
+
+        # Configuración para que el frame se expanda dentro de su padre (self, que es un tk.Frame)
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1) 
 
-        # --- Contenedor principal usando grid ---
+        # Contenedor principal usando ttk.Frame
         contenedor = ttk.Frame(self, padding=10)
         contenedor.grid(row=0, column=0, sticky="nsew")
         contenedor.columnconfigure(0, weight=1) # Columna izquierda se expande
         contenedor.columnconfigure(1, weight=1) # Columna derecha se expande
 
-        label = tk.Label(contenedor, text="Registro de Clientes y Dispositivos", font=("Helvetica", 16))
+        # Usamos ttk.Label
+        label = ttk.Label(contenedor, text="Registro de Clientes y Dispositivos", font=("Helvetica", 16))
         label.grid(row=0, column=0, columnspan=2, pady=10)
 
-        # ------------------------------------------------------------------
         # Columna izquierda - Datos del cliente (Fila 1, Columna 0)
-        # ------------------------------------------------------------------
         contenido_izquierda = ttk.Frame(contenedor, padding=10, relief="groove")
         contenido_izquierda.grid(row=1, column=0, sticky="nsew", padx=5, pady=5)
         contenido_izquierda.columnconfigure(0, weight=1) # Permite expansión interna
 
-        tk.Label(contenido_izquierda, text="Datos del Cliente", font=("Helvetica", 14)).grid(row=0, column=0, sticky="w", pady=(0, 5))
+        ttk.Label(contenido_izquierda, text="Datos del Cliente", font=("Helvetica", 14)).grid(row=0, column=0, sticky="w", pady=(0, 5))
         
-        tk.Label(contenido_izquierda, text="Cedula:").grid(row=1, column=0, sticky="w")
+        ttk.Label(contenido_izquierda, text="Cedula:").grid(row=1, column=0, sticky="w")
         cedula_frame = ttk.Frame(contenido_izquierda)
         cedula_frame.grid(row=2, column=0, sticky="ew", pady=5)
-        self.entrada_cedula = tk.Entry(cedula_frame, width=20)
-        self.entrada_cedula.grid(row=0, column=0, sticky="ew")
-        btn_buscar = tk.Button(cedula_frame, text="Buscar", command=self.buscar_cliente)
-        btn_buscar.grid(row=0, column=1, padx=5)
+        cedula_frame.columnconfigure(0, weight=1) # 
+        self.entrada_cedula = ttk.Entry(cedula_frame, width=20) 
+        self.entrada_cedula.grid(row=0, column=0, sticky="ew") 
+        btn_buscar = ttk.Button(cedula_frame, text="Buscar", command=self.buscar_cliente) 
+        btn_buscar.grid(row=0, column=1, padx=5) 
 
-        tk.Label(contenido_izquierda, text="Nombre").grid(row=3, column=0, sticky="w", pady=(8, 0))
-        self.entrada_nombre = tk.Entry(contenido_izquierda)
+        ttk.Label(contenido_izquierda, text="Nombre").grid(row=3, column=0, sticky="w", pady=(8, 0))
+        self.entrada_nombre = ttk.Entry(contenido_izquierda) 
         self.entrada_nombre.grid(row=4, column=0, sticky="ew", pady=3)
 
-        tk.Label(contenido_izquierda, text="Email").grid(row=5, column=0, sticky="w", pady=(8, 0))
-        self.entrada_email = tk.Entry(contenido_izquierda)
+        ttk.Label(contenido_izquierda, text="Email").grid(row=5, column=0, sticky="w", pady=(8, 0))
+        self.entrada_email = ttk.Entry(contenido_izquierda) 
         self.entrada_email.grid(row=6, column=0, sticky="ew", pady=3)
 
-        tk.Label(contenido_izquierda, text="Celular").grid(row=7, column=0, sticky="w", pady=(8, 0))
-        self.entrada_celular = tk.Entry(contenido_izquierda)
+        ttk.Label(contenido_izquierda, text="Celular").grid(row=7, column=0, sticky="w", pady=(8, 0))
+        self.entrada_celular = ttk.Entry(contenido_izquierda) 
         self.entrada_celular.grid(row=8, column=0, sticky="ew", pady=3)
 
-        # ------------------------------------------------------------------
         # Columna derecha - Datos del equipo (Fila 1, Columna 1)
-        # ------------------------------------------------------------------
         contenido_derecha = ttk.Frame(contenedor, padding=10, relief="groove")
         contenido_derecha.grid(row=1, column=1, sticky="nsew", padx=5, pady=5)
-        contenido_derecha.columnconfigure(0, weight=1) # Permite expansión interna
+        contenido_derecha.columnconfigure(0, weight=1) 
 
-        tk.Label(contenido_derecha, text="Datos del equipo", font=("Helvetica", 14, "bold")).grid(row=0, column=0, sticky="w", pady=(0, 5))
+        ttk.Label(contenido_derecha, text="Datos del equipo", font=("Helvetica", 14, "bold")).grid(row=0, column=0, sticky="w", pady=(0, 5))
         
-        tk.Label(contenido_derecha, text="Marca").grid(row=1, column=0, sticky="w", pady=(5, 0))
-        self.entrada_marca = tk.Entry(contenido_derecha)
+        ttk.Label(contenido_derecha, text="Marca").grid(row=1, column=0, sticky="w", pady=(5, 0))
+        self.entrada_marca = ttk.Entry(contenido_derecha)
         self.entrada_marca.grid(row=2, column=0, sticky="ew", pady=3)
 
-        tk.Label(contenido_derecha, text="Modelo").grid(row=3, column=0, sticky="w", pady=(5, 0))
-        self.entrada_modelo = tk.Entry(contenido_derecha)
+        ttk.Label(contenido_derecha, text="Modelo").grid(row=3, column=0, sticky="w", pady=(5, 0))
+        self.entrada_modelo = ttk.Entry(contenido_derecha) 
         self.entrada_modelo.grid(row=4, column=0, sticky="ew", pady=3)
 
-        tk.Label(contenido_derecha, text="Tipo de reparación").grid(row=5, column=0, sticky="w", pady=(5, 0))
+        ttk.Label(contenido_derecha, text="Tipo de reparación").grid(row=5, column=0, sticky="w", pady=(5, 0))
         opciones_rep = ["Display", "Puerto de carga", "Corto", "Sonido", "Cuenta", "Bloqueo", "Otro"]
+        
         self.var_tipo_rep = tk.StringVar(self)
         self.var_tipo_rep.set(opciones_rep[0]) 
-        self.entrada_tipo = tk.OptionMenu(contenido_derecha, self.var_tipo_rep, *opciones_rep)
-        self.entrada_tipo.config(width=25)
-        self.entrada_tipo.grid(row=6, column=0, sticky="ew", pady=3)
 
-        tk.Label(contenido_derecha, text="Tipo de contraseña").grid(row=7, column=0, sticky="w", pady=(5, 0))
-        opciones_contra = ["Sin contraseña", "Patrón", "Texto/Números"]
-        self.var_tipo_contrasena = tk.StringVar(self)
-        self.var_tipo_contrasena.set(opciones_contra[0])
-        self.var_tipo_contrasena.trace_add("write", self.on_tipo_contrasena_change)
+        self.entrada_tipo = ttk.Combobox(contenido_derecha, 
+                                         textvariable=self.var_tipo_rep, 
+                                         values=opciones_rep,
+                                         state="readonly", 
+                                         width=20) 
+
         
-        tk.Label(contenido_derecha, text="Contraseña del equipo").grid(row=9, column=0, sticky="w", pady=(5, 0))
-        self.entrada_contrasena = tk.Entry(contenido_derecha, show='*')
-        self.entrada_contrasena.grid(row=10, column=0, sticky="ew", pady=3)
+        self.entrada_tipo.grid(row=6, column=0, sticky="w", pady=3) 
 
-        tk.Label(contenido_derecha, text="Precio de reparación").grid(row=11, column=0, sticky="w", pady=(5, 0))
-        self.entrada_precio = tk.Entry(contenido_derecha)
+        ttk.Label(contenido_derecha, text="Tipo de contraseña").grid(row=7, column=0, sticky="w", pady=(5, 0))
+        opciones_contra = ["Sin contraseña", "Patrón", "Texto/Números"]
+        
+        self.var_tipo_contrasena = tk.StringVar(self)
+        self.var_tipo_contrasena.set(opciones_contra[0]) 
+        
+        
+        self.var_tipo_contrasena.trace_add("write", self.on_tipo_contrasena_change)
+
+      
+        self.menu_contrasena = ttk.Combobox(contenido_derecha, 
+                                            textvariable=self.var_tipo_contrasena, 
+                                            values=opciones_contra,
+                                            state="readonly", 
+                                            width=20) 
+
+        self.menu_contrasena.grid(row=8, column=0, sticky="w", pady=3) 
+
+        ttk.Label(contenido_derecha, text="Contraseña del equipo").grid(row=9, column=0, sticky="w", pady=(5, 0))
+        self.entrada_contrasena = ttk.Entry(contenido_derecha) # Usamos ttk.Entry
+        self.entrada_contrasena.grid(row=10, column=0, sticky="ew", pady=3) # sticky="ew" para expandir el entry
+
+        ttk.Label(contenido_derecha, text="Precio de reparación").grid(row=11, column=0, sticky="w", pady=(5, 0))
+        self.entrada_precio = ttk.Entry(contenido_derecha) # Usamos ttk.Entry
         self.entrada_precio.grid(row=12, column=0, sticky="ew", pady=3)
        
-        tk.Label(contenido_derecha, text="Comentarios").grid(row=13, column=0, sticky="w", pady=(5, 0))
-        self.entrada_comentarios = tk.Text(contenido_derecha, height=6)
+        ttk.Label(contenido_derecha, text="Comentarios").grid(row=13, column=0, sticky="w", pady=(5, 0))
+        self.entrada_comentarios = tk.Text(contenido_derecha, height=6) # Text no tiene equivalente ttk, se usa tk.Text
         self.entrada_comentarios.grid(row=14, column=0, sticky="nsew", pady=3)
 
         # Habilitar expansión vertical del Text widget
         contenido_derecha.rowconfigure(14, weight=1)
-
-
         
+        # creacion de frame del medio (footer)
         inferior_frame = ttk.Frame(contenedor, padding="10", relief="raised")
         inferior_frame.grid(row=2, column=0, columnspan=2, sticky="nsew", pady=(20, 0))
         
-        # Configuramos el footer_frame con 3 columnas que se expanden proporcionalmente
+        # Configuramos el footer con 3 columnas que se expanden proporcionalmente
         inferior_frame.columnconfigure(0, weight=1)
         inferior_frame.columnconfigure(1, weight=1)
         inferior_frame.columnconfigure(2, weight=1)
 
-        # --- Botones Izquierda ---
+        # Botones Izquierda 
         frame_btn_izquierda = ttk.Frame(inferior_frame)
         frame_btn_izquierda.grid(row=0, column=0, sticky="w")
-        tk.Button(frame_btn_izquierda, text="Limpiar Campos", command=self.limpiar_campos).pack(side=tk.LEFT, padx=5, pady=5)
+        ttk.Button(frame_btn_izquierda, text="Limpiar Campos", command=self.limpiar_campos).grid(row=0, column=0, padx=5, pady=5)
         
-        # --- Botones Centro (Botón principal Guardar) ---
+        # Botones Centro 
         frame_btn_centro = ttk.Frame(inferior_frame)
         frame_btn_centro.grid(row=0, column=1, sticky="nsew")
-        Btn_guardar = tk.Button(frame_btn_centro, text="Guardar Registro", command=self.guardar)
-        Btn_guardar.pack(fill="x", expand=True, padx=5, pady=5) 
+        frame_btn_centro.columnconfigure(0, weight=1) # Expandir el botón central
+        Btn_guardar = ttk.Button(frame_btn_centro, text="Guardar Registro", command=self.guardar)
+        Btn_guardar.grid(row=0, column=0, sticky="ew", padx=5, pady=5) # Usamos grid y sticky="ew"
 
        
         self.on_tipo_contrasena_change()
     
-    # --- Métodos de la clase ---
-
+    # Métodos de la clase 
     def on_tipo_contrasena_change(self, *args):
         if self.var_tipo_contrasena.get() == "Sin contraseña":
             self.entrada_contrasena.config(state=tk.DISABLED)
@@ -172,7 +189,7 @@ class VentanaRegistro(tk.Frame):
         comentarios_disp = (self.entrada_comentarios.get('1.0', tk.END) or "").strip()
 
         # Datos de la reparacion
-        estado = "Pendiente"
+        estado = "Pendiente".upper()
         fecha_ingreso = datetime.now().date()
         costo_repuesto = 0
         precio_rep = self.entrada_precio.get().strip()
@@ -186,12 +203,11 @@ class VentanaRegistro(tk.Frame):
         # Decidir insertar o actualizar según exista el cliente
         try:
             existente = self.cliente.obtener_cliente_por_cedula(cedula)
-            cliente_obj = ModeloCliente(
-                _cedula = cedula,
-                _nombre = nombre,
-                _email = email,
-                _celular = celular
-            )
+            cliente_obj = ModeloCliente()
+            cliente_obj.cedula = cedula
+            cliente_obj.nombre = nombre
+            cliente_obj.email = email
+            cliente_obj.celular = celular
 
             if existente:
                 messagebox.showinfo("CLIENTE REGISTRADO", f"Se actualizarán los datos del cliente {nombre}")
@@ -199,7 +215,7 @@ class VentanaRegistro(tk.Frame):
                 if not actualizado:
                     messagebox.showwarning("Aviso", "No se realizaron cambios al cliente")
             else:
-                insertado = self.cliente.insertar_cliente(cliente_obj) # Método corregido a insertar_cliente
+                insertado = self.cliente.insertar_cliente(cliente_obj) 
                 if not insertado:
                     messagebox.showerror("Error", "Error al guardar el usuario")
                     return
@@ -217,33 +233,28 @@ class VentanaRegistro(tk.Frame):
 
         # Guardar dispositivo y reparación
         try:
-            dispositivo_obj = ModeloDispositivo(
-                _cedula_cliente=cedula, # Usar _cedula_cliente como en el código previo que te dí
-                _marca=marca or '',
-                _modelo=modelo or '',
-                _tipo_reparacion=tipo_rep or '',
-                _tipo_contrasena=tipo_contra or None, # Corregido typo en 'contrasena'
-                _contrasena=contra or None,
-                _comentarios=comentarios_disp or None
-            )
+            dispositivo_obj = ModeloDispositivo()
+            dispositivo_obj.id_cliente=cedula
+            dispositivo_obj.marca=marca
+            dispositivo_obj.modelo=modelo
+            dispositivo_obj.tipo_reparacion=tipo_rep
+            dispositivo_obj.tipo_contrasena=tipo_contra
+            dispositivo_obj.contrasena=contra or None
+            dispositivo_obj.comentarios=comentarios_disp or None
+            
 
-            # Asumimos que la lógica de negocio está instanciada en self.dispositivo_logica
             id_disp = LogicaDispositivo.agregar_dispositivo(dispositivo_obj)
             
             if id_disp:
                 # Guardar la reparación asociada al dispositivo
-                reparacion_obj = ModeloReparacion(
-                    _id_dispositivo = id_disp,
-                    _fecha_ingreso = fecha_ingreso,
-                    _estado = estado,
-                    _costo_repuesto = costo_repuesto,
-                    _precio_reparacion = float(precio_rep), # Convertir a float
-                    _comentarios_tecnicos = comentarios_rep # Corregido typo en 'tecnicos'
-                )
-                
-                # Asumimos que la lógica de negocio está instanciada en self.reparacion_logica
+                reparacion_obj = ModeloReparacion()
+                reparacion_obj.id_dispositivo = id_disp,
+                reparacion_obj.fecha_ingreso = fecha_ingreso,
+                reparacion_obj.estado = estado,
+                reparacion_obj.costo_repuesto = costo_repuesto,
+                reparacion_obj.precio_reparacion = float(precio_rep), # Convertimos a float
+                reparacion_obj.comentarios_tecnicos = comentarios_rep 
                 id_rep = LogicaReparacion.agregar_reparacion(reparacion_obj)
-                
                 
                 if id_rep:
                     messagebox.showinfo("Registro Exitoso", f"Reparación registrada con ID {id_rep}.")

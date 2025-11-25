@@ -44,7 +44,7 @@ class ClienteDAO:
             
 
 
-    def obtener_cliente_por_cedula(self, modelo_cliente):
+    def obtener_cliente_por_cedula(self, cedula):
         conexion = None
         cursor = None
         cliente_encontrado = None
@@ -54,7 +54,7 @@ class ClienteDAO:
 
             sql = "SELECT nombre, email, celular FROM cliente WHERE cedula = %s"
             #Ingresar primero la cedula al objeto modelo_cliente antes de llamar a este metodo
-            valores = (modelo_cliente.cedula,)
+            valores = (cedula,)
             
             cursor.execute(sql, valores)
 
@@ -68,7 +68,7 @@ class ClienteDAO:
                 cliente_encontrado.nombre = nombre
                 cliente_encontrado.email = email
                 cliente_encontrado.celular = celular
-                #print(modelo_cliente.cedula, cliente_encontrado.nombre, cliente_encontrado.email, cliente_encontrado.celular)
+               
             
         except mysql.connector.Error as e:
             messagebox.showerror("Error", f"Error SQL: {e}")
