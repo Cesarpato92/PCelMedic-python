@@ -32,24 +32,14 @@ class VentanaGarantia(tk.Frame):
         # Entrada garantia y Salida Garantia
         frame_btn_izquierda = ttk.Frame(contenedor_garantia)
         frame_btn_izquierda.grid(row=0, column=0, sticky="w")
-        tk.Button(frame_btn_izquierda, text="Entrada Garantia").pack(side=tk.LEFT, padx=5, pady=5)
+        tk.Button(frame_btn_izquierda, text="Entrada Garantia", command=self.abrir_ventana_entrada).pack(side=tk.LEFT, padx=5, pady=5)
         
         frame_btn_derecha = ttk.Frame(contenedor_garantia)
         frame_btn_derecha.grid(row=0, column=2, sticky="e")
-        tk.Button(frame_btn_derecha, text="Entrega Garantia").pack(side=tk.RIGHT, padx=5, pady=5)
-        
-
-        """ tk.Label( contenedor_id_garantia, text="ID Reparacion:").pack(side=tk.LEFT, anchor="w")
-        id_rep_frame = ttk.Frame(contenedor_id_garantia)
-        id_rep_frame.pack(side=tk.LEFT, pady=5, anchor="w", padx=10)
-        
-        self.entrada_id_reparacion = tk.Entry(id_rep_frame, width=20) 
-        self.entrada_id_reparacion.pack(side="left")
-        btn_buscar_id = tk.Button(id_rep_frame, text="Buscar ID reparacion", command=self.buscar_id_reparacion)
-        btn_buscar_id.pack(side="left", padx=5)"""
+        tk.Button(frame_btn_derecha, text="Entrega Garantia", command=self.abrir_ventana_entrega).pack(side=tk.RIGHT, padx=5, pady=5)
         
     def abrir_ventana_entrada(self):
         pass
 
-    def abrir_ventana_salida(self):
+    def abrir_ventana_entrega(self):
         pass
