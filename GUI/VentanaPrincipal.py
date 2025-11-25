@@ -1,189 +1,83 @@
 import tkinter as tk
 from tkinter import messagebox
 
-# Importar clases de GUI
+# Importar clases de GUI (Mantienes tus importaciones absolutas)
+# Asegúrate que estas clases (VentanaRegistro, etc.) estén definidas en sus respectivos archivos.
 from GUI.VentanaRegistro import VentanaRegistro
-from GUI.VentanaFinanzas import VentanaFinanzas
-from GUI.VentanaFactura import VentanaFactura
 from GUI.VentanaReparacion import VentanaReparacion
 from GUI.VentanaGarantia import VentanaGarantia
-
-from Logica.LogicaCliente import LogicaCliente
-from Logica.LogicaDispositivo import LogicaDispositivo
-from Logica.LogicaReparacion import LogicaReparacion
-from Logica.LogicaFactura import LogicaFactura
-from Logica.LogicaGarantia import LogicaGarantia
-
+from GUI.VentanaFactura import VentanaFactura
+from GUI.VentanaFinanzas import VentanaFinanzas
 
 class VentanaPrincipal(tk.Tk):
    
-    
     def __init__(self):
-       
-        def __init__(self):
-            super().__init__()
-    
-    # Verificar que estas clases existen y se inicializan correctamente
-            try:
-                self.cliente_logica = LogicaCliente()
-                self.dispositivo_logica = LogicaDispositivo()
-                self.reparacion_logica = LogicaReparacion()
-                self.factura_logica = LogicaFactura()
-                self.garantia_logica = LogicaGarantia()
-            except Exception as e:
-                messagebox.showerror("Error", f"Error inicializando módulos: {str(e)}")
-                self.destroy()
-                return
-              
+        super().__init__()
         
-        # Crear fachada de lógica para compatibilidad
-        class LogicaFacade:
-            def __init__(self, app):
-                self.app = app
-            
-            # Clientes
-            def agregar_cliente(self, *args, **kwargs):
-                return self.app.cliente_logica.agregar_cliente(*args, **kwargs)
-            
-            def obtener_clientes(self, *args, **kwargs):
-                return self.app.cliente_logica.obtener_clientes(*args, **kwargs)
-            
-            # Dispositivos
-            def agregar_dispositivo(self, *args, **kwargs):
-                return self.app.dispositivo_logica.agregar_dispositivo(*args, **kwargs)
-            
-            def obtener_dispositivos(self, *args, **kwargs):
-                return self.app.dispositivo_logica.obtener_dispositivos(*args, **kwargs)
-            
-            # Reparaciones
-            def agregar_reparacion(self, *args, **kwargs):
-                return self.app.reparacion_logica.agregar_reparacion(*args, **kwargs)
-            
-            def obtener_reparaciones(self, *args, **kwargs):
-                return self.app.reparacion_logica.obtener_reparaciones(*args, **kwargs)
-            
-            # Facturas
-            def agregar_factura(self, *args, **kwargs):
-                return self.app.factura_logica.agregar_factura(*args, **kwargs)
-            
-            def obtener_facturas(self, *args, **kwargs):
-                return self.app.factura_logica.obtener_facturas(*args, **kwargs)
-            
-            def obtener_datos_grafica(self, *args, **kwargs):
-                return self.app.factura_logica.obtener_datos_grafica(*args, **kwargs)
-            
-            # Garantías
-            def agregar_garantia(self, *args, **kwargs):
-                return self.app.garantia_logica.agregar_garantia(*args, **kwargs)
-            
-            def obtener_garantias(self, *args, **kwargs):
-                return self.app.garantia_logica.obtener_garantias(*args, **kwargs)
-            
-        
-        self.logica = LogicaFacade(self)
         self.title("PCelMedic")
         self.geometry("900x700")
-        # no se pueda cambiar el tamaño y se ejecute en maximizada
         self.state('zoomed') 
-        self.resizable(False, False)
-        # Creamos la barra superior primero y luego los frames
-        self.frames = {}
-        self.create_sidebar()
+        # NOTA: resizable(False, False) entra en conflicto con state('zoomed') 
+        # si quieres que se maximice al inicio, es mejor permitir el resize.
+        self.resizable(True, True) 
+
+        # --- Configuración del Layout Principal (Usando GRID consistentemente) ---
+        # Fila 0 para la navbar, Fila 1 para el contenido principal
+        self.grid_rowconfigure(1, weight=1)       # La fila de contenido se expande verticalmente
+        self.grid_columnconfigure(0, weight=1)    # La única columna se expande horizontalmente
+
+        # Creamos la barra superior (navbar) usando grid
+        self.crear_navbar()
 
         # Contenedor principal para los frames de contenido
-        contenedor = tk.Frame(self)
-        contenedor.pack(side="top", fill="both", expand=True)
-        contenedor.grid_rowconfigure(0, weight=1)
-        contenedor.grid_columnconfigure(0, weight=1)
-
-        # importamos y registramos las clases de los frames
+        self.contenedor = tk.Frame(self, bg="white")
+        # Ubicamos el contenedor en la Fila 1, Columna 0, expandiéndose en todas direcciones
+        self.contenedor.grid(row=1, column=0, sticky="nsew")
+        self.contenedor.grid_rowconfigure(0, weight=1)
+        self.contenedor.grid_columnconfigure(0, weight=1)
+        
+        self.frames = {}
         for F in (VentanaRegistro, VentanaReparacion, VentanaGarantia, VentanaFactura, VentanaFinanzas):
             page_name = F.__name__
-            frame = F(parent=contenedor, controller=self)
+            # Usamos argumento posicional para el maestro, como se indicó en la solución anterior
+            frame = F(self.contenedor, controller=self) 
             self.frames[page_name] = frame
+            # Apilamos todos los frames en la misma celda del grid del contenedor
             frame.grid(row=0, column=0, sticky="nsew")
+        
         # mostrar el frame inicial 
         self.mostrar_frame("VentanaRegistro")
 
-    def create_sidebar(self):
-        """Crea la barra superior (toolbar) con botones de navegación.
+    def crear_navbar(self):
         
-        Componentes:
-            - Etiqueta "PCelMedic" a la izquierda
-            - Botones: Clientes, Reparaciones, Garantías, Facturas, Finanzas
-            - Botón "Finanzas" requiere autenticación (admin/admin123)
-        
-        Propósito:
-            - Permitir navegación entre secciones
-            - Mostrar vista general de funcionalidades
-            - Restringir acceso a gráficos mediante login
-        """
-        # Creamos una barra superior (toolbar) con los botones en fila
-        toolbar = tk.Frame(self, bg="#f0f0f0")
-        toolbar.pack(side="top", fill="x")
+        # Creamos una barra superior (navbar) con los botones en fila
+        navbar = tk.Frame(self, bg="#f0f0f0", height=50)
+        # Usamos GRID para ubicar la navbar en la Fila 0, que se estira horizontalmente (ew)
+        navbar.grid(row=0, column=0, sticky="ew")
 
-        # Título pequeño a la izquierda
-        tk.Label(toolbar, text="PCelMedic", font=("Helvetica", 12, "bold"), bg="#f0f0f0").pack(side="left", padx=(8, 12))
+        # Título pequeño a la izquierda (usando PACK dentro de la navbar)
+        tk.Label(navbar, text="PCelMedic", font=("Helvetica", 12, "bold"), bg="#f0f0f0").pack(side="left", padx=(8, 12))
 
-        # Botones de los requerimientos
-        btn_clientes = tk.Button(toolbar, text="Registro clientes", command=lambda: self.mostrar_frame("VentanaRegistro"))
-        btn_clientes.pack(side="left", padx=6, pady=8)
-        btn_reparacion = tk.Button(toolbar, text="Registro reparaciones", command=lambda: self.mostrar_frame("VentanaReparacion"))
-        btn_reparacion.pack(side="left", padx=6, pady=8)
-        btn_garantias = tk.Button(toolbar, text="Gestión garantías", command=lambda: self.mostrar_frame("VentanaGarantia"))
-        btn_garantias.pack(side="left", padx=6, pady=8)
-        btn_facturas = tk.Button(toolbar, text="Gestión facturas", command=lambda: self.mostrar_frame("VentanaFactura"))
-        btn_facturas.pack(side="left", padx=6, pady=8)
-        btn_graficos = tk.Button(toolbar, text="Finanzas", command=lambda: self.validacion_admin())
-        btn_graficos.pack(side="left", padx=6, pady=8)
+        # Botones de los requerimientos (usando PACK dentro de la navbar para orden horizontal)
+        tk.Button(navbar, text="Registro clientes", command=lambda: self.mostrar_frame("VentanaRegistro")).pack(side="left", padx=6, pady=8)
+        tk.Button(navbar, text="Registro reparaciones", command=lambda: self.mostrar_frame("VentanaReparacion")).pack(side="left", padx=6, pady=8)
+        tk.Button(navbar, text="Gestión garantías", command=lambda: self.mostrar_frame("VentanaGarantia")).pack(side="left", padx=6, pady=8)
+        tk.Button(navbar, text="Gestión facturas", command=lambda: self.mostrar_frame("VentanaFactura")).pack(side="left", padx=6, pady=8)
+        tk.Button(navbar, text="Finanzas", command=lambda: self.validacion_admin()).pack(side="left", padx=6, pady=8)
 
-        # Relleno para empujar el contenido principal hacia abajo si fuera necesario
-        spacer = tk.Frame(toolbar, bg="#f0f0f0")
-        spacer.pack(side="left", expand=True, fill="x")
 
     def mostrar_frame(self, page_name):
+        # Muestra el frame para le nombre de la pagina dado
         frame = self.frames.get(page_name)
-        if frame is None:
-            messagebox.showerror("Error", f"No se encontró la ventana: {page_name}")
-            return
-        
-        try:
+        if frame:
             frame.tkraise()
-            
-            # Lógica específica por frame con verificación de métodos
-            if page_name == "VentanaRegistro":
-                if hasattr(frame, 'actualizar_graficos') and callable(frame.actualizar_graficos):
-                    datos = self.logica.obtener_datos_grafica()
-                    if datos:
-                        frame.actualizar_graficos(datos)
-            
-            elif page_name == "VentanaReparacion":
-                if hasattr(frame, 'listar_todas') and callable(frame.listar_todas):
-                    frame.listar_todas()
-            
-            # ... similar para otros frames
-            
-        except Exception as e:
-            messagebox.showerror("Error", f"No se pudo cargar {page_name}: {str(e)}")
+        else:
+            messagebox.showerror("Error de navegación", f"No se encontró el frame: {page_name}")
 
     def validacion_admin(self):
-        """Abre un diálogo modal para validar credenciales admin antes de mostrar gráficos.
-        
-        Propósito:
-            - Restringir acceso al módulo de finanzas (gráficos)
-            - Requerir autenticación básica (usuario/contraseña)
-            - Mostrar VentanaGrafico solo si credenciales son correctas
-        
-        Credenciales:
-            - Usuario: "admin"
-            - Contraseña: "admin123"
-        
-        Flujo:
-            1. Crear diálogo modal (Toplevel)
-            2. Campos de entrada para usuario y contraseña
-            3. Si credenciales correctas: cerrar diálogo + mostrar VentanaFinanzas
-            4. Si incorrectas: mostrar error + limpiar campo contraseña
-        """
+        # ... (Todo tu código de validacion_admin() se mantiene igual) ...
+        # Solo asegúrate de que VentanaFinanzas sea el nombre de la clase
+       
         # Crear diálogo modal
         login = tk.Toplevel(self)
         login.title("Autenticación requerida")
@@ -230,13 +124,6 @@ class VentanaPrincipal(tk.Tk):
             y = (sh // 2) - (h // 2)
             login.geometry(f"{w}x{h}+{x}+{y}")
         except Exception:
-            # Si algo falla al centrar, no bloqueamos la ventana
             pass
 
-        # Esperar a que se cierre el diálogo (modal)
         self.wait_window(login)
-
-
-if __name__ == "__main__":
-    app = VentanaPrincipal()
-    app.mainloop()

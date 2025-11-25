@@ -1,17 +1,18 @@
 """
-Script principal para ejecutar PCelMedic
-Debe ejecutarse desde la raíz del proyecto
+Script principal para ejecutar PCelMedic.
+Debe ejecutarse desde la raíz del proyecto.
 """
 import sys
 import os
 
-# Agregar la raíz del proyecto al path de Python
+# Esto ayuda a garantizar que el directorio actual esté en la ruta de Python si es necesario
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-# Ahora se pueden importar los módulos
-if __name__ == "__main__":
-    # Las pruebas pueden ejecutarse aquí
-    # Por ahora es un placeholder para validar imports
-    print("PCelMedic - Sistema de gestión de reparaciones")
-    print("Estructura de importaciones validada correctamente")
+# Importar la clase principal desde el paquete GUI
+from GUI.VentanaPrincipal import VentanaPrincipal
 
+if __name__ == "__main__":
+    print("Iniciando PCelMedic...")
+    # Crear e iniciar la aplicación
+    app = VentanaPrincipal()
+    app.mainloop()

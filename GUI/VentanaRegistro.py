@@ -12,7 +12,7 @@ from datetime import datetime
 class VentanaRegistro(tk.Frame):
     def __init__(self, parent, controller):
         # Usamos ttk.Frame para un estilo moderno y padding
-        super().__init__(parent, padding=10) 
+        super().__init__(parent, bg="white") 
         self.controller = controller
         self.cliente = LogicaCliente()
         
@@ -42,9 +42,9 @@ class VentanaRegistro(tk.Frame):
         cedula_frame = ttk.Frame(contenido_izquierda)
         cedula_frame.grid(row=2, column=0, sticky="ew", pady=5)
         self.entrada_cedula = tk.Entry(cedula_frame, width=20)
-        self.entrada_cedula.pack(side="left", fill="x", expand=True)
+        self.entrada_cedula.grid(row=0, column=0, sticky="ew")
         btn_buscar = tk.Button(cedula_frame, text="Buscar", command=self.buscar_cliente)
-        btn_buscar.pack(side="left", padx=5)
+        btn_buscar.grid(row=0, column=1, padx=5)
 
         tk.Label(contenido_izquierda, text="Nombre").grid(row=3, column=0, sticky="w", pady=(8, 0))
         self.entrada_nombre = tk.Entry(contenido_izquierda)
@@ -228,7 +228,7 @@ class VentanaRegistro(tk.Frame):
             )
 
             # Asumimos que la lógica de negocio está instanciada en self.dispositivo_logica
-            id_disp = self.dispositivo_logica.insertar_dispositivo(dispositivo_obj)
+            id_disp = LogicaDispositivo.agregar_dispositivo(dispositivo_obj)
             
             if id_disp:
                 # Guardar la reparación asociada al dispositivo
@@ -242,7 +242,8 @@ class VentanaRegistro(tk.Frame):
                 )
                 
                 # Asumimos que la lógica de negocio está instanciada en self.reparacion_logica
-                id_rep = self.reparacion_logica.insertar_reparacion(reparacion_obj)
+                id_rep = LogicaReparacion.agregar_reparacion(reparacion_obj)
+                
                 
                 if id_rep:
                     messagebox.showinfo("Registro Exitoso", f"Reparación registrada con ID {id_rep}.")
