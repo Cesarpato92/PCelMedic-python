@@ -13,7 +13,7 @@ class VentanaPrincipal(tk.Tk):
     def __init__(self):
         super().__init__()
         
-        self.title("PCelMedic")
+        self.title("SGI PCelMedic")
         self.geometry("900x700")
         self.state('zoomed') 
        

@@ -193,27 +193,34 @@ class VentanaRegistro(tk.Frame):
         precio_rep = self.entrada_precio.get().strip()
         comentarios_rep = ""
 
-        # Validación básica
+        # Validación básica datos cliente, dispositivo y reparacion
         if not (cedula and nombre and email and celular):
             messagebox.showwarning("Atención", "Rellene todos los datos del cliente")
             return
-
+        if not (marca and modelo and tipo_rep and comentarios_disp):
+            messagebox.showwarning("Atención", "Rellene todos los datos del cliente")
+            return
+        if not(precio_rep):
+            messagebox.showwarning("Atención", "Campo de precio de reparacion obligatorio")
+            return
         # Decidir insertar o actualizar según exista el cliente
         try:
-            existente = self.cliente.obtener_cliente_por_cedula(cedula)
+            existente = LogicaCliente.obtener_cliente_por_cedula(cedula)
             cliente_obj = ModeloCliente()
             cliente_obj.cedula = cedula
             cliente_obj.nombre = nombre
             cliente_obj.email = email
             cliente_obj.celular = celular
 
+            # Validacion de campos segundo nivel
+
             if existente:
                 messagebox.showinfo("CLIENTE REGISTRADO", f"Se actualizarán los datos del cliente {nombre}")
-                actualizado = self.cliente.actualizar_cliente(cliente_obj)
+                actualizado = LogicaCliente.actualizar_cliente(cliente_obj)
                 if not actualizado:
                     messagebox.showwarning("Aviso", "No se realizaron cambios al cliente")
             else:
-                insertado = self.cliente.insertar_cliente(cliente_obj) 
+                insertado = LogicaCliente.agregar_cliente(cliente_obj) 
                 if not insertado:
                     messagebox.showerror("Error", "Error al guardar el usuario")
                     return
