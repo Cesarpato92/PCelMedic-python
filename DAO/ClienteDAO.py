@@ -16,7 +16,7 @@ class ClienteDAO:
            
             conexion = conexion_bd.Conexion.get_conexion()
             cursor = conexion.cursor()
-            if self.verificar_existencia_cliente(modelo_cliente):
+            if self.verificar_existencia_cliente(modelo_cliente.cedula):
                 messagebox.showwarning("Advertencia", "Se actualizaran los datos del cliente existente.")
                 self.actualizar_cliente(modelo_cliente)
                 return None
@@ -25,7 +25,6 @@ class ClienteDAO:
             cursor.execute(sql, valores)
             conexion.commit()
             if cursor.rowcount > 0:
-                messagebox.showinfo("Éxito", "Cliente agregado exitosamente.")
                 return modelo_cliente.cedula  # Retornar la cedula
             else:
                 messagebox.showwarning("Advertencia", "No se pudo agregar el cliente.")
@@ -88,7 +87,7 @@ class ClienteDAO:
             cursor = conexion.cursor()
 
             sql = "UPDATE cliente SET nombre = %s, email = %s, celular = %s WHERE cedula = %s"
-            valores = (modelo_cliente.nombre, modelo_cliente.email, modelo_cliente.celular, modelo_cliente.cedula)
+            valores = (modelo_cliente.nombre, modelo_cliente.email, modelo_cliente.celular, str(modelo_cliente.cedula))
             cursor.execute(sql, valores)
             conexion.commit()
             
@@ -108,9 +107,10 @@ class ClienteDAO:
         finally:
             if cursor:
                 cursor.close()
+        return True
            
 
-    def verificar_existencia_cliente(self, modelo_cliente):
+    def verificar_existencia_cliente(self, cedula):
         conexion = None
         cursor = None
         existe = False
@@ -119,7 +119,7 @@ class ClienteDAO:
             cursor = conexion.cursor()
 
             sql = "SELECT COUNT(*) FROM cliente WHERE cedula = %s"
-            valores = (modelo_cliente.cedula,)
+            valores = (str(cedula),)
             cursor.execute(sql, valores)
 
             resultado = cursor.fetchone()

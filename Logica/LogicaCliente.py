@@ -13,17 +13,25 @@ class LogicaCliente:
     Verificamos que los datos sean correctos antes de llamar al DAO, etc."""
 
     def agregar_cliente(self, modelo_cliente):
-        if(self.validacion_datos()):
+        if self.validacion_datos(modelo_cliente):
             return self.cliente_dao.agregar_cliente(modelo_cliente)
-
+        else:
+            return None 
+        
     def obtener_cliente_por_cedula(self, cedula):
-        if self.validacionCedula(cedula) is True:
+        if self.validacion_cedula(cedula):
             return self.cliente_dao.obtener_cliente_por_cedula(cedula)
         else:
             return False
-
+        
+    def verificacion_existencia_cliente(self, cedula):
+        return self.cliente_dao.verificar_existencia_cliente(cedula)
+    
     def actualizar_cliente(self, modelo_cliente):
-        self.cliente_dao.actualizar_cliente(modelo_cliente)
+        if self.validacion_datos(modelo_cliente):
+            return self.cliente_dao.actualizar_cliente(modelo_cliente)
+        else:
+            return None
 
     def validacion_datos(self, modelo_cliente):
          # Validaciones básicas
@@ -51,16 +59,24 @@ class LogicaCliente:
         return True
 
     def validacion_cedula(self, cedula):
-        # Verificamos que la cédula no esté vacía y contenga solo dígitos
-        if not cedula or cedula.strip() == "" or not cedula.isdigit() and len(cedula)>20:
-            messagebox.showerror(
-                "Error", "La cédula no puede estar vacía y debe contener solo dígitos y maximo 20 digitos."
-            )
+    # Verificamos que la cédula no esté vacía
+        if not cedula or cedula.strip() == "":
+            messagebox.showerror("Error", "La cédula no puede estar vacía.")
             return False
         
-        # Verificamos que la cédula tenga menos de 10 dígitos
-        if len(cedula.strip()) < 10:
-            messagebox.showerror("Error", "La cédula debe tener menos de 10 dígitos.")
+        # Verificamos que contenga solo dígitos
+        if not cedula.isdigit():
+            messagebox.showerror("Error", "La cédula debe contener solo dígitos.")
+            return False
+        
+        # Verificamos que la cédula tenga máximo 20 dígitos (consistente con VARCHAR(20))
+        if len(cedula.strip()) > 20:
+            messagebox.showerror("Error", "La cédula debe tener máximo 20 dígitos.")
+            return False
+        
+        # Validación de 10 dígitos para la cedula
+        if len(cedula.strip()) > 20:
+            messagebox.showerror("Error", "El cambo cedula no puede tener mas de 20 digitos")
             return False
         
         return True

@@ -26,14 +26,16 @@ class LogicaDispositivo:
         if not modelo_dispositivo.marca or modelo_dispositivo.marca.strip() == "":
             messagebox.showerror("Error", "La marca es obligatoria.")
             return False
-        if not modelo_dispositivo.modelo  or modelo_dispositivo.modelo.strip() == "":
-            messagebox.showerror("Error", "El modelo es obligatoria.")
-            return False
+        
         if not modelo_dispositivo.tipo_reparacion or modelo_dispositivo.tipo_reparacion.strip() == "":
             messagebox.showerror("Error", "El tipo de reparación es obligatorio.")
             return False
+        
         if modelo_dispositivo.tipo_password in ["PIN", "Contraseña", "Patrón"]:
             if not modelo_dispositivo.password or modelo_dispositivo.password.strip() == "":
                 messagebox.showerror("Error", f"La contraseña para el tipo {modelo_dispositivo.tipo_password} es obligatoria.")
                 return False
+        if not modelo_dispositivo.comentarios or modelo_dispositivo.comentarios.strip() == "":
+            messagebox.showerror("Error", "Debe dejar comentarios para la reparacion.")
+            return False
         return True

@@ -117,10 +117,11 @@ class VentanaReparacion(tk.Frame):
         self.entrada_comentarios_tec = tk.Text(contenido_derecha_der, height=6) 
         self.entrada_comentarios_tec.grid(row=7, column=0, sticky="nsew", pady=3)
         
-        ttk.Label(contenido_derecha_der, text="Equipo reparado").grid(row=8, column=0, sticky="w", pady=(5, 0))
+        ttk.Label(contenido_derecha_der, text="¿Equipo reparado?").grid(row=8, column=0, sticky="w", pady=(5, 0))
         opciones_rep = ["SI", "NO"]
         self.var_tipo_rep = tk.StringVar(self) 
         self.var_tipo_rep.set(opciones_rep) 
+        self.var_tipo_rep.set(opciones_rep[0])
 
         self.entrada_tipo = ttk.Combobox(contenido_derecha_der, 
                                          textvariable=self.var_tipo_rep,
@@ -166,10 +167,13 @@ class VentanaReparacion(tk.Frame):
 
         self.deshabilitar_entradas()
 
+    # Metodo de verificacion de id reparacion
+
+    def verificar_id_reparacion(self):
+        pass
     # Métodos de la clase 
     def guardar(self):
-        # Usamos parent=self.parent para que el messagebox se ancle a la ventana principal
-        messagebox.showinfo("Guardar", "Datos guardados (simulado)", parent=self.parent)
+       pass
 
     def buscar_dispositivo(self):
         messagebox.showinfo("Buscar Cliente", f"Buscando...", parent=self.parent)

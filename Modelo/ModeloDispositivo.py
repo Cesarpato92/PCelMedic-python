@@ -7,6 +7,7 @@ class ModeloDispositivo:
         self._password = None
         self._comentarios = None
         self._id_cliente = None
+        self._version = None
 
     #Método especial para representación en string 
     def __str__(self):
@@ -68,3 +69,10 @@ class ModeloDispositivo:
     @id_cliente.setter
     def id_cliente(self, id_cliente):
         self._id_cliente = id_cliente
+
+    @property
+    def version(self):
+        return self._version
+    @version.setter
+    def version(self, version):
+        self._version = version

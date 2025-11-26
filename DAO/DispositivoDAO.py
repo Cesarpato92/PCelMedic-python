@@ -16,16 +16,17 @@ class DispositivoDAO:
             conexion = conexion_bd.Conexion.get_conexion()
             cursor = conexion.cursor()
 
-            sql = """INSERT INTO dispositivo (marca, tipo_reparacion, tipo_contraseña, contraseña, comentarios, id_cliente) 
-                     VALUES (%s, %s, %s, %s, %s, %s)"""
+            sql = """INSERT INTO dispositivo (marca, tipo_reparacion, tipo_contraseña, contraseña, comentarios, id_cliente, version ) 
+                     VALUES (%s, %s, %s, %s, %s, %s, %s)"""
             valores = (modelo_dispositivo.marca, modelo_dispositivo.tipo_reparacion,
                        modelo_dispositivo.tipo_password, modelo_dispositivo.password,
-                       modelo_dispositivo.comentarios, modelo_dispositivo.id_cliente)
+                       modelo_dispositivo.comentarios, modelo_dispositivo.id_cliente,
+                       modelo_dispositivo.version)
             cursor.execute(sql, valores)
             conexion.commit()
             if cursor.rowcount > 0:
                 id_dispositivo = cursor.lastrowid  # Obtener el ID auto-generado
-                messagebox.showinfo("Éxito", "Dispositivo agregado exitosamente.")
+                
             else:
                 messagebox.showwarning("Advertencia", "No se pudo agregar el dispositivo.")
 
@@ -40,7 +41,7 @@ class DispositivoDAO:
                 cursor.close()
         return id_dispositivo
 
-    def obtener_dispositivo_por_id(self, id_cliente):
+    def obtener_dispositivo_por_id(self, id_dispositivo):
         conexion = None
         cursor = None
         dispositivo_encontrado = None
@@ -48,9 +49,9 @@ class DispositivoDAO:
             conexion = conexion_bd.Conexion.get_conexion()
             cursor = conexion.cursor()
 
-            sql = "SELECT marca, tipo_reparacion, tipo_contraseña, contraseña, comentarios, id_cliente FROM dispositivo WHERE id_dispositivo = %s"
+            sql = "SELECT marca, tipo_reparacion, tipo_contraseña, contraseña, comentarios, id_cliente, version FROM dispositivo WHERE id_dispositivo = %s"
             #Ingresar primero el id_dispositivo al objeto modelo_dispositivo antes de llamar a este metodo
-            valores = (id_cliente,)
+            valores = (id_dispositivo,)
             
             cursor.execute(sql, valores)
 
@@ -58,14 +59,15 @@ class DispositivoDAO:
             resultado = cursor.fetchone()
             if resultado:
                 dispositivo_encontrado = ModeloDispositivo()
-                
-                dispositivo_encontrado.marca = resultado[0]
-                dispositivo_encontrado.tipo_reparacion = resultado[1]
-                dispositivo_encontrado.tipo_password = resultado[2]
-                dispositivo_encontrado.password = resultado[3]
-                dispositivo_encontrado.comentarios = resultado[4]
-                dispositivo_encontrado.id_cliente = resultado[5]
-                
+                dispositivo_encontrado.id_dispositivo = resultado[0]  
+                dispositivo_encontrado.marca = resultado[1]
+                dispositivo_encontrado.tipo_reparacion = resultado[2]
+                dispositivo_encontrado.tipo_password = resultado[3]
+                dispositivo_encontrado.password = resultado[4]
+                dispositivo_encontrado.comentarios = resultado[5]
+                dispositivo_encontrado.id_cliente = resultado[6]
+                dispositivo_encontrado.version = resultado[7]
+                    
 
         except mysql.connector.Error as e:
             messagebox.showerror("Error", f"Error SQL: {e}")
