@@ -52,9 +52,9 @@ class LogicaCliente:
 
     def validacion_cedula(self, cedula):
         # Verificamos que la cédula no esté vacía y contenga solo dígitos
-        if not cedula or cedula.strip() == "" or not cedula.isdigit():
+        if not cedula or cedula.strip() == "" or not cedula.isdigit() and len(cedula)>20:
             messagebox.showerror(
-                "Error", "La cédula no puede estar vacía y debe contener solo dígitos."
+                "Error", "La cédula no puede estar vacía y debe contener solo dígitos y maximo 20 digitos."
             )
             return False
         
