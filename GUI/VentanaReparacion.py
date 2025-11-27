@@ -179,6 +179,8 @@ class VentanaReparacion(tk.Frame):
         ttk.Button(frame_btn_derecha, text="Cancelar", command=lambda: self.btn_cancelar()).grid(row=0, column=2, padx=5, pady=5)
 
         self.deshabilitar_entradas()
+        
+        
 
 
     # Metodo de verificacion de id reparacion
@@ -190,8 +192,55 @@ class VentanaReparacion(tk.Frame):
         return True
 
     # Métodos de la clase 
-    def guardar(self):
-       pass
+    def btn_guardar(self):
+        try:
+            id_reparacion = self.entrada_id_reparacion.get().strip()
+            comen_tec = self.entrada_comentarios_tec.get("1.0", tk.END).strip()
+            costo_refaccion = self.entrada_refaccion.get().strip()
+
+                            
+            # Validaciones mejoradas
+            if not comen_tec:  # Esto cubre None, "" y strings vacíos
+                messagebox.showwarning("Advertencia", "El campo de comentarios es obligatorio y no puede estar vacío")
+                return
+                
+            if not costo_refaccion:  # Esto cubre None, "" y strings vacíos
+                messagebox.showwarning("Advertencia", "El campo de costo de repuestos es obligatorio y no puede estar vacío")
+                return
+            
+            # Validar que el costo sea numérico
+            try:
+                costo_float = float(costo_refaccion)
+                if costo_float < 0:
+                    messagebox.showwarning("Advertencia", "El costo de repuestos no puede ser negativo")
+                    return
+            except ValueError:
+                messagebox.showwarning("Advertencia", "El campo de costo de repuestos debe ser un número válido")
+                return
+            if self.var_tipo_rep.get() == "NO":
+                messagebox.showwarning("Advertencia", "Debe seleccionar si el equipo fue reparado o no")
+                return
+            else:
+                # Crear y configurar el objeto
+                reparacion_obj = ModeloReparacion()
+                reparacion_obj.id_reparacion = id_reparacion
+                reparacion_obj.comentarios = comen_tec
+                reparacion_obj.costo_repuestos = costo_float
+                reparacion_obj.estado = "Completada"
+                
+                # Llamar al método de actualización
+                resultado = self.reparacion.actualizar_estado_reparacion(reparacion_obj)
+                print(resultado)
+                if resultado:
+                    
+                    messagebox.showinfo("Éxito", "Reparación actualizada exitosamente.")
+                    self.btn_limpiar()
+                    self.deshabilitar_entradas()
+                else:
+                    messagebox.showwarning("Advertencia", "el erro viene de aca")
+                    
+        except Exception as e:
+            messagebox.showerror("Error", f"No se pudo actualizar la reparación. Error: {str(e)}")
 
 
     def buscar_id_reparacion(self):
@@ -346,8 +395,7 @@ class VentanaReparacion(tk.Frame):
 
     def habilitar_entrada(self):
         """Habilita los campos después de cargar los datos"""
-        # Aquí defines qué campos quieres que permanezcan habilitados para edición
-        # Por ejemplo, quizás solo quieres habilitar algunos campos:
+        
         campos_habilitados = [
             self.entrada_refaccion,
             self.entrada_comentarios_tec,
