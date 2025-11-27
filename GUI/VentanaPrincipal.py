@@ -18,13 +18,12 @@ class VentanaPrincipal(tk.Tk):
         self.state('zoomed') 
        
         self.resizable(True, True) 
-        
+        messagebox.showinfo("PCELMEDIC", "Bienvenido al Sistema de Gestion de Información ")
         # Define un estilo para la navbar 
         style = ttk.Style()
         style.configure("Navbar.TFrame", background="#f0f0f0")
         style.configure("Navbar.TLabel", background="#f0f0f0", font=("Helvetica", 12, "bold"))
 
-        # --- Configuración del Layout Principal 
         # Fila 0 para la navbar, Fila 1 para el contenido principal
         self.grid_rowconfigure(1, weight=1)       # La fila de contenido se expande verticalmente
         self.grid_columnconfigure(0, weight=1)    # La única columna se expande horizontalmente

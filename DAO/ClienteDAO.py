@@ -64,6 +64,7 @@ class ClienteDAO:
                 #Si encuentra el cliente, se crea un objeto ModeloCliente con los datos
                 nombre, email, celular = resultado
                 cliente_encontrado = ModeloCliente()
+                cliente_encontrado.cedula = cedula
                 cliente_encontrado.nombre = nombre
                 cliente_encontrado.email = email
                 cliente_encontrado.celular = celular

@@ -58,15 +58,16 @@ class DispositivoDAO:
             #se obtiene el primer resultado
             resultado = cursor.fetchone()
             if resultado:
+                
                 dispositivo_encontrado = ModeloDispositivo()
-                dispositivo_encontrado.id_dispositivo = resultado[0]  
-                dispositivo_encontrado.marca = resultado[1]
-                dispositivo_encontrado.tipo_reparacion = resultado[2]
-                dispositivo_encontrado.tipo_password = resultado[3]
-                dispositivo_encontrado.password = resultado[4]
-                dispositivo_encontrado.comentarios = resultado[5]
-                dispositivo_encontrado.id_cliente = resultado[6]
-                dispositivo_encontrado.version = resultado[7]
+                dispositivo_encontrado.marca = resultado[0]
+                dispositivo_encontrado.tipo_reparacion = resultado[1]
+                dispositivo_encontrado.tipo_password = resultado[2]
+                dispositivo_encontrado.password = resultado[3]
+                dispositivo_encontrado.comentarios = resultado[4]
+                dispositivo_encontrado.id_cliente = resultado[5]
+                dispositivo_encontrado.version = resultado[6]
+                
                     
 
         except mysql.connector.Error as e:

@@ -75,7 +75,7 @@ class ReparacionDAO:
             conexion = conexion_bd.Conexion.get_conexion()
             cursor = conexion.cursor()
 
-            sql = """SELECT id_reparacion, fecha_ingreso, estado, costo_repuesto, precio_reparacion, comentarios 
+            sql = """SELECT fecha_ingreso, estado, costo_repuesto, precio_reparacion, comentarios, id_dispositivo 
                      FROM reparacion WHERE id_reparacion = %s"""
             valores = (id_reparacion,)
             
@@ -85,14 +85,14 @@ class ReparacionDAO:
             
             if resultado:
                 reparacion_encontrada = ModeloReparacion()
-                reparacion_encontrada.id_reparacion = resultado[0]
-                reparacion_encontrada.fecha_ingreso = resultado[1]
-                reparacion_encontrada.estado = resultado[2]
-                reparacion_encontrada.costo_repuestos = resultado[3]
-                reparacion_encontrada.precio_reparacion = resultado[4]
-                reparacion_encontrada.comentarios = resultado[5]
-                reparacion_encontrada.id_dispositivo = resultado[6]
-            
+                
+                reparacion_encontrada.fecha_ingreso = resultado[0]
+                reparacion_encontrada.estado = resultado[1]
+                reparacion_encontrada.costo_repuestos = resultado[2]
+                reparacion_encontrada.precio_reparacion = resultado[3]
+                reparacion_encontrada.comentarios = resultado[4]
+                reparacion_encontrada.id_dispositivo = resultado[5]
+                
         except mysql.connector.Error as e:
             messagebox.showerror("Error", f"Error SQL: {e}")
         except Exception as e:

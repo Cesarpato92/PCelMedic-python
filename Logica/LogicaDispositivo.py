@@ -15,8 +15,8 @@ class LogicaDispositivo:
             # Llamamos al DAO para agregar el dispositivo luego de pasar las validaciones
             return self.dispositivo_dao.agregar_dispositivo(modelo_dispositivo)
 
-    def obtener_dispositivo_por_id(self, modelo_dispositivo):
-        return self.dispositivo_dao.obtener_dispositivo_por_id(modelo_dispositivo)
+    def obtener_dispositivo_por_id(self, id_disp):
+        return self.dispositivo_dao.obtener_dispositivo_por_id(id_disp)
     
     def actualizar_dispositivo(self, modelo_dispositivo):
         self.dispositivo_dao.actualizar_dispositivo(modelo_dispositivo)
