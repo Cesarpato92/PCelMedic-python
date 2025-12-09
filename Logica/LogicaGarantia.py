@@ -10,3 +10,6 @@ class LogicaGarantia:
     
     def obtener_garantia_por_id(self, id_garantia):
         return self.garantia_dao.obtener_garantia_por_id(id_garantia)
+
+    def actualizar_garantia(self, modelo_garantia):
+        return self.garantia_dao.actualizar_garantia(modelo_garantia)

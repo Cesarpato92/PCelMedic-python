@@ -179,7 +179,7 @@ class VentanaReparacion(tk.Frame):
         ttk.Button(frame_btn_derecha, text="Cancelar", command=lambda: self.btn_cancelar()).grid(row=0, column=2, padx=5, pady=5)
 
         self.deshabilitar_entradas()
-        
+        self.entrada_id_reparacion.focus()
         
 
 
@@ -230,7 +230,7 @@ class VentanaReparacion(tk.Frame):
                 
                 # Llamar al método de actualización
                 resultado = self.reparacion.actualizar_estado_reparacion(reparacion_obj)
-                print(resultado)
+                
                 if resultado:
                     
                     messagebox.showinfo("Éxito", "Reparación actualizada exitosamente.")

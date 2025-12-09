@@ -57,7 +57,7 @@ class GeneradorPDF:
         datos_dispositivo = [
             ("ID Dispositivo", str(dispositivo.id_dispositivo)),
             ("Marca", str(dispositivo.marca)),
-            ("Modelo", str(dispositivo.modelo)),
+            ("Modelo", str(dispositivo.version)),
             ("Tipo Reparación", str(dispositivo.tipo_reparacion)),
             ("Tipo Seguridad", str(dispositivo.tipo_password)),
             ("Contraseña", str(dispositivo.password) if dispositivo.password else "N/A"),
@@ -98,3 +98,5 @@ class GeneradorPDF:
         
         pdf.output(ruta_archivo)
         return ruta_archivo
+
+    

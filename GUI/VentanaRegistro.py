@@ -150,6 +150,7 @@ class VentanaRegistro(tk.Frame):
 
        
         self.on_tipo_contrasena_change()
+        self.entrada_cedula.focus()
     
     # Métodos de la clase 
     def on_tipo_contrasena_change(self, *args):

@@ -18,7 +18,6 @@ class VentanaPrincipal(tk.Tk):
         self.state('zoomed') 
        
         self.resizable(True, True) 
-        messagebox.showinfo("PCELMEDIC", "Bienvenido al Sistema de Gestion de Información ")
         # Define un estilo para la navbar 
         style = ttk.Style()
         style.configure("Navbar.TFrame", background="#f0f0f0")
