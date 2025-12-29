@@ -64,7 +64,7 @@ class VentanaSalidaGarantia(tk.Frame):
         self.lbl_fecha_inicio.grid(row=2, column=1, sticky="w", pady=2)
         
         ttk.Label(frame_info, text="Estado Actual:").grid(row=3, column=0, sticky="w", pady=2)
-        self.lbl_estado = ttk.Label(frame_info, text="---", font=("Helvetica", 10, "bold"))
+        self.lbl_estado = ttk.Label(frame_info, text="---", font=("Helvetica", 12, "bold"), foreground="blue")
         self.lbl_estado.grid(row=3, column=1, sticky="w", pady=2)
         
         ttk.Label(frame_info, text="Observaciones Entrada:").grid(row=4, column=0, sticky="nw", pady=2)

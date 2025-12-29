@@ -1,16 +1,13 @@
 import tkinter
 from tkinter import messagebox, ttk
 from datetime import datetime # Added for btn_guardar
-
-from Modelo.ModeloCliente import ModeloCliente
-from Modelo.ModeloDispositivo import ModeloDispositivo
-from Modelo.ModeloReparacion import ModeloReparacion
+import os
 from Modelo.ModeloGarantia import ModeloGarantia
-
 from Logica.LogicaCliente import LogicaCliente
 from Logica.LogicaDispositivo import LogicaDispositivo
 from Logica.LogicaReparacion import LogicaReparacion
 from Logica.LogicaGarantia import LogicaGarantia
+from Logica.GeneradorPDF import GeneradorPDF
 
 class VentanaEntradaGarantia(tkinter.Frame):
 
@@ -23,6 +20,12 @@ class VentanaEntradaGarantia(tkinter.Frame):
         self.reparacion = LogicaReparacion()
         self.dispositivo = LogicaDispositivo()
         self.garantia = LogicaGarantia()
+        self.generador_pdf = GeneradorPDF()
+        
+        # Objetos para almacenar los modelos actuales
+        self.cliente_obj = None
+        self.dispositivo_obj = None
+        self.reparacion_obj = None
 
         # Contenedor principal del frame
         contenedor = ttk.Frame(self, padding="10")
@@ -231,6 +234,11 @@ class VentanaEntradaGarantia(tkinter.Frame):
             # Llenar campos
             self.btn_limpiar(mantener_id=True)
             
+            # Guardar objetos en variables de instancia para uso posterior (PDF)
+            self.cliente_obj = cliente_obj
+            self.dispositivo_obj = dispositivo_obj
+            self.reparacion_obj = reparacion_obj
+            
             # Cliente
             self.entrada_cedula.config(state="normal")
             self.entrada_cedula.insert(0, cliente_obj.cedula)
@@ -327,8 +335,18 @@ class VentanaEntradaGarantia(tkinter.Frame):
             id_garantia = self.garantia.agregar_garantia(modelo_garantia)
             
             if id_garantia:
+                modelo_garantia.id_garantia = id_garantia
                 messagebox.showinfo("Éxito", f"Garantía registrada con ID: {id_garantia}")
+                
+                # Verificar asegurarnos que tenemos los objetos necesarios
+                if self.cliente_obj and self.dispositivo_obj and self.reparacion_obj:
+                    ruta = self.generador_pdf.generar_reporte_garantia(self.cliente_obj, self.dispositivo_obj, self.reparacion_obj, modelo_garantia)
+                    os.startfile(ruta)
+                else:
+                    print("Error: Objetos de datos faltantes para generar PDF")
+                
                 self.btn_limpiar()
+
             else:
                 messagebox.showerror("Error", "No se pudo registrar la garantía, error ocurrido")
 
@@ -338,6 +356,9 @@ class VentanaEntradaGarantia(tkinter.Frame):
     def btn_limpiar(self, mantener_id=False):
         if not mantener_id:
             self.entrada_id_reparacion.delete(0, "end")
+            self.cliente_obj = None
+            self.dispositivo_obj = None
+            self.reparacion_obj = None
         
         campos_entry = [
             self.entrada_cedula, self.entrada_nombre, self.entrada_email, self.entrada_celular,
