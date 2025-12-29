@@ -64,7 +64,7 @@ class VentanaSalidaGarantia(tk.Frame):
         self.lbl_fecha_inicio.grid(row=2, column=1, sticky="w", pady=2)
         
         ttk.Label(frame_info, text="Estado Actual:").grid(row=3, column=0, sticky="w", pady=2)
-        self.lbl_estado = ttk.Label(frame_info, text="---")
+        self.lbl_estado = ttk.Label(frame_info, text="---", font=("Helvetica", 10, "bold"))
         self.lbl_estado.grid(row=3, column=1, sticky="w", pady=2)
         
         ttk.Label(frame_info, text="Observaciones Entrada:").grid(row=4, column=0, sticky="nw", pady=2)
@@ -158,15 +158,16 @@ class VentanaSalidaGarantia(tk.Frame):
                 messagebox.showwarning("Atención", "El precio de insumos debe ser un número válido positivo")
                 return
             
+            if not observaciones_finales:
+                messagebox.showwarning("Atención", "Debe ingresar observaciones finales")
+                return
+            
             # Actualizar objeto
             self.garantia_actual.estado = estado_final
             self.garantia_actual.fecha_fin = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             self.garantia_actual.precio_insumos = precio_float
-            
-            # Concatenar observaciones si hay nuevas
-            if observaciones_finales:
-                self.garantia_actual.observaciones += f"\n[Salida]: {observaciones_finales}"
-            
+            self.garantia_actual.comentarios_finales = observaciones_finales
+    
             exito = self.garantia.actualizar_garantia(self.garantia_actual)
             
             if exito:

@@ -36,7 +36,7 @@ class VentanaEntradaGarantia(tkinter.Frame):
         contenedor.columnconfigure(2, weight=1)
 
         # El título abarca las 3 columnas 
-        ttk.Label(contenedor, text="Registro de garantia", font=("Helvetica", 16)).grid(row=0, column=0, columnspan=3, pady=10)
+        ttk.Label(contenedor, text="Registro", font=("Helvetica", 16)).grid(row=0, column=0, columnspan=3, pady=10)
 
         # Seccion de busqueda de ID de reparacion 
         contenedor_id_reparacion = ttk.Frame(contenedor)
@@ -117,29 +117,25 @@ class VentanaEntradaGarantia(tkinter.Frame):
         ttk.Label(contenido_centro, text="Fecha ingreso").grid(row=13, column=0, sticky="w", pady=(5, 0))
         self.entrada_ingreso = ttk.Entry(contenido_centro) 
         self.entrada_ingreso.grid(row=14, column=0, sticky="ew", pady=3)
+        
+        ttk.Label(contenido_centro, text="Comentarios de ingreso", font=("Helvetica", 12, "bold")).grid(row=15, column=0, sticky="w", pady=(5, 0))
+        self.entrada_comentarios = tkinter.Text(contenido_centro, height=6) 
+        self.entrada_comentarios.grid(row=16, column=0, sticky="nsew", pady=3)
 
         # Columna derecha: comentarios y estado (Fila 2, Columna 2)
         contenido_derecha_der = ttk.Frame(contenedor, padding="10", relief="groove")
         contenido_derecha_der.grid(row=2, column=2, sticky="nsew", padx=5, pady=5)
         contenido_derecha_der.columnconfigure(0, weight=1)
 
-        ttk.Label(contenido_derecha_der, text="Comentarios al recibir el equipo", font=("Helvetica", 12)).grid(row=0, column=0, sticky="w", pady=(5, 0))
-        self.entrada_comentarios = tkinter.Text(contenido_derecha_der, height=6) 
-        self.entrada_comentarios.grid(row=1, column=0, sticky="nsew", pady=3)
+        ttk.Label(contenido_derecha_der, text="Comentarios de tecnico de reparacion", font=("Helvetica", 12, "bold")).grid(row=0, column=0, sticky="w", pady=(5, 0))
+        self.entrada_comentarios_tec = tkinter.Text(contenido_derecha_der, height=6) 
+        self.entrada_comentarios_tec.grid(row=1, column=0, sticky="nsew", pady=3)
 
         ttk.Label(contenido_derecha_der, text="Estado").grid(row=2, column=0, sticky="w", pady=(5,0))
         self.entrada_estado = ttk.Entry(contenido_derecha_der)       
         self.entrada_estado.grid(row=3, column=0, sticky="w", pady=3)
         
-        ttk.Label(contenido_derecha_der, text="Precio refaccion").grid(row=4, column=0, sticky="w", pady=(5,0))
-        self.entrada_refaccion = ttk.Entry(contenido_derecha_der)
-        self.entrada_refaccion.grid(row=5, column=0, sticky="w", pady=3)
-       
-        ttk.Label(contenido_derecha_der, text="Comentarios del tecnico").grid(row=6, column=0, sticky="w", pady=(5, 0))
-        self.entrada_comentarios_tec = tkinter.Text(contenido_derecha_der, height=6) 
-        self.entrada_comentarios_tec.grid(row=7, column=0, sticky="nsew", pady=3)
-        
-        ttk.Label(contenido_derecha_der, text="¿Equipo reparado?").grid(row=8, column=0, sticky="w", pady=(5, 0))
+        ttk.Label(contenido_derecha_der, text="¿Equipo reparado?").grid(row=4, column=0, sticky="w", pady=(5, 0))
         opciones_rep = ["SI", "NO"]
         self.var_tipo_rep = tkinter.StringVar(self) 
         self.var_tipo_rep.set(opciones_rep[0]) # Set initial value to "SI"
@@ -149,7 +145,17 @@ class VentanaEntradaGarantia(tkinter.Frame):
                                          values=opciones_rep,
                                          state="readonly",
                                          width=8)
-        self.entrada_tipo.grid(row=9, column=0, sticky="w", pady=3)
+        self.entrada_tipo.grid(row=5, column=0, sticky="w", pady=3)
+       
+        ttk.Label(contenido_derecha_der, text="Precio refaccion").grid(row=6, column=0, sticky="w", pady=(5,0))
+        self.entrada_refaccion = ttk.Entry(contenido_derecha_der)
+        self.entrada_refaccion.grid(row=7, column=0, sticky="w", pady=3)
+       
+        ttk.Label(contenido_derecha_der, text="Comentarios de garantia", font=("Helvetica", 14, "bold")).grid(row=8, column=0, sticky="w", pady=(5, 0))
+        self.entrada_comentarios_gar = tkinter.Text(contenido_derecha_der, height=6) 
+        self.entrada_comentarios_gar.grid(row=9, column=0, sticky="nsew", pady=3)
+        
+        
         
         contenido_derecha_der.rowconfigure(1, weight=1) 
         contenido_derecha_der.rowconfigure(7, weight=1) 
@@ -165,20 +171,21 @@ class VentanaEntradaGarantia(tkinter.Frame):
         footer_frame.columnconfigure(2, weight=1)
         
         # Botones Izquierda 
-        frame_btn_izquierda = ttk.Frame(footer_frame)
-        frame_btn_izquierda.grid(row=0, column=0, sticky="w")        
+        #frame_btn_izquierda = ttk.Frame(footer_frame)
+        #frame_btn_izquierda.grid(row=0, column=0, sticky="w")        
         
-        ttk.Button(frame_btn_izquierda, text="Limpiar", command=lambda: self.btn_limpiar()).grid(row=0, column=0, padx=5, pady=5)
+       # ttk.Button(frame_btn_izquierda, text="Limpiar", command=lambda: self.btn_limpiar()).grid(row=0, column=0, padx=5, pady=5)
         
         # Botones Centro 
         frame_btn_centro = ttk.Frame(footer_frame)
         frame_btn_centro.grid(row=0, column=1, sticky="nsew")
         
         frame_btn_centro.columnconfigure(0, weight=1)
-        self.Btn_guardar = ttk.Button(frame_btn_centro, text="Guardar", command=lambda: self.btn_guardar())
+        self.Btn_guardar = ttk.Button(frame_btn_centro, text="Insertar", command=lambda: self.btn_guardar())
         self.Btn_guardar.grid(row=0, column=0, sticky="ew", padx=5, pady=5) 
         
         # Botones Derecha 
+
         frame_btn_derecha = ttk.Frame(footer_frame)
         frame_btn_derecha.grid(row=0, column=2, sticky="e")        
        
@@ -262,6 +269,10 @@ class VentanaEntradaGarantia(tkinter.Frame):
             self.entrada_password.insert(0, dispositivo_obj.password or "N/A")
             self.entrada_password.config(state="disabled")
 
+            self.entrada_comentarios.config(state="normal")
+            self.entrada_comentarios.insert("1.0", dispositivo_obj.comentarios)
+            self.entrada_comentarios.config(state="disabled")
+
             # Reparacion
             self.entrada_precio.config(state="normal")
             self.entrada_precio.insert(0, reparacion_obj.precio_reparacion)
@@ -271,9 +282,9 @@ class VentanaEntradaGarantia(tkinter.Frame):
             self.entrada_ingreso.insert(0, reparacion_obj.fecha_ingreso)
             self.entrada_ingreso.config(state="disabled")
             
-            self.entrada_comentarios.config(state="normal")
-            self.entrada_comentarios.insert("1.0", reparacion_obj.comentarios)
-            self.entrada_comentarios.config(state="disabled")
+            self.entrada_comentarios_tec.config(state="normal")
+            self.entrada_comentarios_tec.insert("1.0", reparacion_obj.comentarios)
+            self.entrada_comentarios_tec.config(state="disabled")
             
             self.entrada_estado.config(state="normal")
             self.entrada_estado.insert(0, reparacion_obj.estado)
@@ -282,10 +293,11 @@ class VentanaEntradaGarantia(tkinter.Frame):
             self.entrada_refaccion.config(state="normal")
             self.entrada_refaccion.insert(0, reparacion_obj.costo_repuestos)
             self.entrada_refaccion.config(state="disabled")
-
+            
+            self.entrada_tipo.config(state="disabled")
+            
             # Habilitar campos de entrada de garantía
-            self.entrada_comentarios_tec.config(state="normal")
-            self.entrada_tipo.config(state="readonly")
+            self.entrada_comentarios_gar.config(state="normal")
             self.Btn_guardar.config(state="normal")
 
         except Exception as e:
@@ -297,30 +309,28 @@ class VentanaEntradaGarantia(tkinter.Frame):
             messagebox.showwarning("Atención", "Debe buscar una reparación primero")
             return
 
-        comentarios_tec = self.entrada_comentarios_tec.get("1.0", "end-1c").strip()
+        comentarios_gar = self.entrada_comentarios_gar.get("1.0", "end-1c").strip()
         equipo_reparado = self.var_tipo_rep.get()
 
-        if not comentarios_tec:
-            messagebox.showwarning("Atención", "Debe ingresar comentarios del técnico")
+        if not comentarios_gar:
+            messagebox.showwarning("Atención", "Debe ingresar comentarios de la garantia")
             return
 
         try:
             modelo_garantia = ModeloGarantia()
             modelo_garantia.id_reparacion = id_rep
             modelo_garantia.fecha_inicio = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            modelo_garantia.observaciones = comentarios_tec
-            modelo_garantia.estado = "En Garantía" if equipo_reparado == "SI" else "Rechazada"
+            modelo_garantia.observaciones = comentarios_gar
+            modelo_garantia.estado = "En Garantia" if equipo_reparado == "SI" else "Rechazada"
             
-            # Aquí asumimos que si entra a garantía, se crea un registro nuevo
-            # Podríamos necesitar validar si ya existe garantía para esta reparación
-            
+                        
             id_garantia = self.garantia.agregar_garantia(modelo_garantia)
             
             if id_garantia:
                 messagebox.showinfo("Éxito", f"Garantía registrada con ID: {id_garantia}")
                 self.btn_limpiar()
             else:
-                messagebox.showerror("Error", "No se pudo registrar la garantía")
+                messagebox.showerror("Error", "No se pudo registrar la garantía, error ocurrido")
 
         except Exception as e:
             messagebox.showerror("Error", f"Error al guardar garantía: {e}")
@@ -345,18 +355,21 @@ class VentanaEntradaGarantia(tkinter.Frame):
         self.entrada_comentarios.delete("1.0", "end")
         self.entrada_comentarios.config(state="disabled")
         
-        self.entrada_comentarios_tec.config(state="normal") # Enable to clear
+        self.entrada_comentarios_tec.config(state="normal") 
         self.entrada_comentarios_tec.delete("1.0", "end")
-        self.entrada_comentarios_tec.config(state="disabled") # Disable after clearing
+        self.entrada_comentarios_tec.config(state="disabled") 
+
+        self.entrada_comentarios_gar.config(state="normal") 
+        self.entrada_comentarios_gar.delete("1.0", "end")
+        self.entrada_comentarios_gar.config(state="disabled") 
 
         self.var_tipo_rep.set("SI")
-        self.entrada_tipo.config(state="disabled") # Disable combobox
-        self.Btn_guardar.config(state="disabled") # Disable save button
+        self.entrada_tipo.config(state="disabled") 
+        self.Btn_guardar.config(state="disabled") 
         
     def btn_cancelar(self):
         self.btn_limpiar()
-        # Opcional: Cerrar ventana o volver a principal si fuera necesario, 
-        # pero como es un frame dentro de VentanaGarantia, limpiar es suficiente.
+        
 
     def deshabilitar_entradas(self):
         self.entrada_cedula.config(state="disabled") 
@@ -373,6 +386,6 @@ class VentanaEntradaGarantia(tkinter.Frame):
         self.entrada_estado.config(state="disabled")
         self.entrada_ingreso.config(state="disabled")
         self.entrada_refaccion.config(state="disabled")
-        self.entrada_comentarios_tec.config(state="disabled") # Disable technician comments
-        self.entrada_tipo.config(state="disabled") # Disable combobox
-        self.Btn_guardar.config(state="disabled") # Disable save button
+        self.entrada_comentarios_tec.config(state="disabled") 
+        self.entrada_tipo.config(state="disabled") 
+        self.Btn_guardar.config(state="disabled") 

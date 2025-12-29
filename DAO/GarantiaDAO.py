@@ -14,6 +14,7 @@ class GarantiaDAO:
         try:
             conexion = conexion_bd.Conexion.get_conexion()
             cursor = conexion.cursor()
+            id_garantia = None
             # debemos verificar si la carantia existe
 
 
@@ -24,7 +25,8 @@ class GarantiaDAO:
             conexion.commit()
             if cursor.rowcount > 0:
                 messagebox.showinfo("Exito", "Garantia agregada exitosamente")
-                return modelo_garantia.id_garantia # Retorna el Id de la garantia
+                id_garantia = cursor.lastrowid
+                
             else: 
                 messagebox.showwarning("Advertencia", "No se pudo agregar la garantia")
                 return None
@@ -37,7 +39,7 @@ class GarantiaDAO:
         finally:
             if cursor:
                 cursor.close()
-        return None
+        return id_garantia
     
     def obtener_garantia_por_id(self, id_garantia):
         conexion = None
@@ -48,7 +50,7 @@ class GarantiaDAO:
             conexion = conexion_bd.Conexion.get_conexion()
             cursor = conexion.cursor()
 
-            sql = "SELECT id_garantia, estado, observaciones, fecha_inicio, fecha_fin, id_reparacion, precio_insumos FROM garantia WHERE id_garantia = %s"
+            sql = "SELECT id_garantia, estado, observaciones, fecha_inicio, fecha_fin, id_reparacion, precio_insumos, comentarios_finales FROM garantia WHERE id_garantia = %s"
             valores = (id_garantia,)
 
             cursor.execute(sql, valores)
@@ -64,7 +66,7 @@ class GarantiaDAO:
                 garantia_encontrada.fecha_fin = resultado[4]
                 garantia_encontrada.id_reparacion = resultado[5]
                 garantia_encontrada.precio_insumos = resultado[6]
-                
+                garantia_encontrada.comentarios_finales = resultado[7]                
         except mysql.connector.Error as e:
             messagebox.showerror("Error", f"Error SQL: {e}")
         except Exception as e:
@@ -81,8 +83,8 @@ class GarantiaDAO:
             conexion = conexion_bd.Conexion.get_conexion()
             cursor = conexion.cursor()
 
-            sql = "UPDATE garantia SET estado = %s, observaciones = %s, fecha_fin = %s, precio_insumos = %s WHERE id_garantia = %s"
-            valores = (modelo_garantia.estado, modelo_garantia.observaciones, modelo_garantia.fecha_fin, modelo_garantia.precio_insumos, modelo_garantia.id_garantia)
+            sql = "UPDATE garantia SET estado = %s, fecha_fin = %s, precio_insumos = %s, comentarios_finales = %s WHERE id_garantia = %s"
+            valores = (modelo_garantia.estado, modelo_garantia.fecha_fin, modelo_garantia.precio_insumos, modelo_garantia.comentarios_finales, modelo_garantia.id_garantia)
             
             cursor.execute(sql, valores)
             conexion.commit()
