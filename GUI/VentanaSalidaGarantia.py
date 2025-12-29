@@ -2,15 +2,13 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 from datetime import datetime
 
-from Modelo.ModeloCliente import ModeloCliente
-from Modelo.ModeloDispositivo import ModeloDispositivo
-from Modelo.ModeloReparacion import ModeloReparacion
-from Modelo.ModeloGarantia import ModeloGarantia
-
 from Logica.LogicaCliente import LogicaCliente
 from Logica.LogicaDispositivo import LogicaDispositivo
 from Logica.LogicaReparacion import LogicaReparacion
 from Logica.LogicaGarantia import LogicaGarantia
+from Logica.GeneradorPDF import GeneradorPDF
+import os
+
 
 class VentanaSalidaGarantia(tk.Frame):
     
@@ -22,6 +20,13 @@ class VentanaSalidaGarantia(tk.Frame):
         self.reparacion = LogicaReparacion()
         self.dispositivo = LogicaDispositivo()
         self.cliente = LogicaCliente()
+        self.GeneradorPDF = GeneradorPDF()
+        
+        # Objetos de modelo para el reporte
+        self.cliente_model = None
+        self.dispositivo_model = None
+        self.reparacion_model = None
+        
         
         # Configuración del grid principal
         self.columnconfigure(0, weight=1)
@@ -33,8 +38,6 @@ class VentanaSalidaGarantia(tk.Frame):
         contenedor.columnconfigure(0, weight=1)
         contenedor.columnconfigure(1, weight=1)
         
-        # Título
-        ttk.Label(contenedor, text="Entrega de Garantía", font=("Helvetica", 16)).grid(row=0, column=0, columnspan=2, pady=10)
         
         # Buscador
         frame_busqueda = ttk.Frame(contenedor)
@@ -119,6 +122,11 @@ class VentanaSalidaGarantia(tk.Frame):
             dispositivo = self.dispositivo.obtener_dispositivo_por_id(reparacion.id_dispositivo)
             cliente = self.cliente.obtener_cliente_por_cedula(dispositivo.id_cliente)
             
+            # Guardar modelos para el reporte
+            self.reparacion_model = reparacion
+            self.dispositivo_model = dispositivo
+            self.cliente_model = cliente
+            
             # Mostrar datos
             self.lbl_cliente.config(text=f"{cliente.nombre} ({cliente.cedula})")
             self.lbl_dispositivo.config(text=f"{dispositivo.marca} {dispositivo.version}")
@@ -171,10 +179,28 @@ class VentanaSalidaGarantia(tk.Frame):
             exito = self.garantia.actualizar_garantia(self.garantia_actual)
             
             if exito:
+                self.generar_pdf_salida()
+
                 self.limpiar_campos()
+               
                 
         except Exception as e:
             messagebox.showerror("Error", f"Error al actualizar garantía: {e}")
+
+    def generar_pdf_salida(self):
+        if self.cliente_model and self.dispositivo_model and self.reparacion_model:
+            try:
+                ruta = self.GeneradorPDF.generar_reporte_garantia(
+                    self.cliente_model,
+                    self.dispositivo_model, 
+                    self.reparacion_model, 
+                    self.garantia_actual
+                )
+                os.startfile(ruta)
+            except Exception as e:
+                messagebox.showerror("Error", f"Error al generar PDF: {e}")
+        else:
+            messagebox.showwarning("Advertencia", "No se pudo generar el PDF: datos faltantes")
 
     def limpiar_campos(self):
         self.entrada_id_garantia.delete(0, tk.END)
@@ -194,3 +220,6 @@ class VentanaSalidaGarantia(tk.Frame):
         
         self.btn_entregar.config(state="disabled")
         self.garantia_actual = None
+        self.cliente_model = None
+        self.dispositivo_model = None
+        self.reparacion_model = None

@@ -8,6 +8,7 @@ class ModeloGarantia:
         self._fecha_fin = None
         self._id_reparacion = None
         self._precio_insumos = None
+        self._comentarios_finales = None
 
     #Método especial para representación en string 
     def __str__(self):
@@ -68,4 +69,12 @@ class ModeloGarantia:
     @precio_insumos.setter
     def precio_insumos(self, precio_insumos):
         self._precio_insumos = precio_insumos
+
+    @property
+    def comentarios_finales(self):
+        return self._comentarios_finales
+    
+    @comentarios_finales.setter
+    def comentarios_finales(self, comentarios_finales):
+        self._comentarios_finales = comentarios_finales
     
