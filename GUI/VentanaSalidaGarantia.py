@@ -26,7 +26,7 @@ class VentanaSalidaGarantia(tk.Frame):
         self.cliente_model = None
         self.dispositivo_model = None
         self.reparacion_model = None
-        
+        self.garantia_actual = None
         
         # Configuración del grid principal
         self.columnconfigure(0, weight=1)
@@ -80,9 +80,9 @@ class VentanaSalidaGarantia(tk.Frame):
         frame_salida.columnconfigure(1, weight=1)
         
         ttk.Label(frame_salida, text="Estado Final:").grid(row=0, column=0, sticky="w", pady=5)
-        self.combo_estado_final = ttk.Combobox(frame_salida, values=["Entregada", "Rechazada", "En Proceso"], state="readonly")
+        self.combo_estado_final = ttk.Combobox(frame_salida, values=["Completada", "Rechazada", "En Proceso"], state="readonly")
         self.combo_estado_final.grid(row=0, column=1, sticky="w", pady=5)
-        self.combo_estado_final.set("Entregada")
+        self.combo_estado_final.set("Completada")
         
         ttk.Label(frame_salida, text="Precio Insumos ($):").grid(row=1, column=0, sticky="w", pady=5)
         self.entrada_precio_insumos = ttk.Entry(frame_salida)
@@ -101,7 +101,7 @@ class VentanaSalidaGarantia(tk.Frame):
         self.btn_entregar = ttk.Button(frame_botones, text="Confirmar Entrega", command=self.entregar_garantia, state="disabled")
         self.btn_entregar.pack(side=tk.RIGHT, padx=5)
         
-        self.garantia_actual = None
+        
 
     def buscar_garantia(self):
         id_garantia = self.entrada_id_garantia.get().strip()
@@ -140,11 +140,8 @@ class VentanaSalidaGarantia(tk.Frame):
             
             self.btn_entregar.config(state="normal")
             
-            # Si ya tiene precio insumos, mostrarlo
-            if garantia.precio_insumos:
-                self.entrada_precio_insumos.delete(0, tk.END)
-                self.entrada_precio_insumos.insert(0, garantia.precio_insumos)
-                
+            
+            
         except Exception as e:
             messagebox.showerror("Error", f"Error al buscar garantía: {e}")
 

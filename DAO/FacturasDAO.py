@@ -11,6 +11,7 @@ class FacturasDAO:
         
         conexion = None
         cursor = None
+        id_factura = None
         
         try:
             conexion = conexion_bd.Conexion.get_conexion()
@@ -21,7 +22,8 @@ class FacturasDAO:
             conexion.commit()
             if cursor.rowcount > 0:
                 messagebox.showinfo("Exito", "Factura agregada correctamente")
-                return modelo_factura.id_factura
+                id_factura = cursor.lastrowid
+                
             else:
                 messagebox.showwarning("Advertencia", "No se pudo agregar la factura")
                 return None
@@ -34,7 +36,7 @@ class FacturasDAO:
         finally:
             if cursor:
                 cursor.close()
-        return None
+        return id_factura
     
     # Obtiene la informacion de la factura
     def obtener_factura_por_id(self, id_factura):
@@ -47,6 +49,36 @@ class FacturasDAO:
 
             sql = "SELECT fecha, total, id_reparacion WHERE id_factura = %s"
             valores = (id_factura)
+            cursor.execute(sql, valores)
+
+            # Obtiene el primer resultado
+            resultado = cursor.fetchone()
+
+            if resultado:
+                factura_encontrada = ModeloFactura()
+                factura_encontrada.fecha = resultado[0]
+                factura_encontrada.total = resultado[1]
+                factura_encontrada.id_reparacion = resultado[2]
+        except mysql.connector.Error as e:
+            messagebox.showerror("Error", f"Error SQL: {e}")
+        except Exception as e:
+            messagebox.showerror("Error", f"Error inesperado: {e}")
+        finally:
+            if cursor:
+                cursor.close()
+        return factura_encontrada
+
+
+    def obtener_factura_por_id_reparacion(self, id_reparacion):
+        conexion = None
+        cursor = None
+        factura_encontrada = None
+        try:
+            conexion = conexion_bd.Conexion.get_conexion()
+            cursor = conexion.cursor()
+
+            sql = "SELECT fecha, total, id_reparacion FROM factura WHERE id_reparacion = %s"
+            valores = (id_reparacion,)
             cursor.execute(sql, valores)
 
             # Obtiene el primer resultado

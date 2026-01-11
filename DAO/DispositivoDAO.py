@@ -60,6 +60,7 @@ class DispositivoDAO:
             if resultado:
                 
                 dispositivo_encontrado = ModeloDispositivo()
+                dispositivo_encontrado.id_dispositivo = id_dispositivo
                 dispositivo_encontrado.marca = resultado[0]
                 dispositivo_encontrado.tipo_reparacion = resultado[1]
                 dispositivo_encontrado.tipo_password = resultado[2]

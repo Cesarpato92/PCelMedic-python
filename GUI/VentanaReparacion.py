@@ -236,8 +236,7 @@ class VentanaReparacion(tk.Frame):
                     messagebox.showinfo("Éxito", "Reparación actualizada exitosamente.")
                     self.btn_limpiar()
                     self.deshabilitar_entradas()
-                else:
-                    messagebox.showwarning("Advertencia", "el erro viene de aca")
+                
                     
         except Exception as e:
             messagebox.showerror("Error", f"No se pudo actualizar la reparación. Error: {str(e)}")

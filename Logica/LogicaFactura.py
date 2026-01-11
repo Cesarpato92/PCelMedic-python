@@ -10,3 +10,6 @@ class LogicaFactura:
     
     def obtener_garantia_por_id(self, id_factura):
         return self.factura_dao.obtener_factura_por_id(id_factura)
+
+    def obtener_factura_por_id_reparacion(self, id_reparacion):
+        return self.factura_dao.obtener_factura_por_id_reparacion(id_reparacion)

@@ -13,12 +13,11 @@ class LogicaReparacion:
        return self.reparacion_dao.actualizar_estado_reparacion(modelo_reparacion)
 
     def obtener_reparacion_por_id(self, id_reparacion):
-        # eliminar la validación incorrecta
         return self.reparacion_dao.obtener_reparacion_por_id(id_reparacion)
+
+   
     
     def validacion_datos_para_agregar(self, modelo_reparacion):
-        # Validaciones básicas
-        # validar números correctamente
         if modelo_reparacion.precio_reparacion is None or modelo_reparacion.precio_reparacion <= 0:
             messagebox.showerror("Error", "El precio de reparación debe ser mayor a 0.")
             return False

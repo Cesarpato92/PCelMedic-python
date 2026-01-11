@@ -93,7 +93,7 @@ class ReparacionDAO:
             
             if resultado:
                 reparacion_encontrada = ModeloReparacion()
-                
+                reparacion_encontrada.id_reparacion = id_reparacion
                 reparacion_encontrada.fecha_ingreso = resultado[0]
                 reparacion_encontrada.estado = resultado[1]
                 reparacion_encontrada.costo_repuestos = resultado[2]
