@@ -14,7 +14,7 @@ class VentanaPrincipal(tk.Tk):
         super().__init__()
         
         self.title("SGI PCelMedic")
-        self.geometry("900x700")
+        self.geometry("1200x800")
         self.state('zoomed') 
        
         self.resizable(True, True) 
@@ -37,6 +37,7 @@ class VentanaPrincipal(tk.Tk):
         self.contenedor.grid_rowconfigure(0, weight=1)
         self.contenedor.grid_columnconfigure(0, weight=1)
         
+        # Diccionario para almacenar los frames
         self.frames = {}
         for F in (VentanaRegistro, VentanaReparacion, VentanaGarantia, VentanaFactura, VentanaFinanzas):
             page_name = F.__name__
@@ -84,7 +85,7 @@ class VentanaPrincipal(tk.Tk):
 
         # Todos estos widgets ya son ttk, lo cual es correcto:
         ttk.Label(login, text="Usuario:").grid(row=0, column=0, padx=8, pady=8)
-        user_var = tk.StringVar() # Usamos tk.StringVar o ttk.StringVar, ambos funcionan con ttk Entry
+        user_var = tk.StringVar() 
         ttk.Entry(login, textvariable=user_var).grid(row=0, column=1, padx=8, pady=8)
 
         ttk.Label(login, text="Contraseña:").grid(row=1, column=0, padx=8, pady=8)

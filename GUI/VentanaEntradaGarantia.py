@@ -34,9 +34,9 @@ class VentanaEntradaGarantia(tkinter.Frame):
         #Configuraciones de expacion para el frame principal y el contenedor
         self.columnconfigure(0, weight=1) 
         self.rowconfigure(0, weight=1)
-        contenedor.columnconfigure(0, weight=1)
-        contenedor.columnconfigure(1, weight=1)
-        contenedor.columnconfigure(2, weight=1)
+        contenedor.columnconfigure(0, weight=1, uniform="equal_columns")
+        contenedor.columnconfigure(1, weight=1, uniform="equal_columns")
+        contenedor.columnconfigure(2, weight=1, uniform="equal_columns")
 
         # El título abarca las 3 columnas 
         ttk.Label(contenedor, text="Registro", font=("Helvetica", 16)).grid(row=0, column=0, columnspan=3, pady=10)
