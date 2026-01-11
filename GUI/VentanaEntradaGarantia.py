@@ -1,6 +1,6 @@
 import tkinter
 from tkinter import messagebox, ttk
-from datetime import datetime # Added for btn_guardar
+from datetime import datetime 
 import os
 from Modelo.ModeloGarantia import ModeloGarantia
 from Logica.LogicaCliente import LogicaCliente
