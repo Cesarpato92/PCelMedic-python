@@ -1,18 +1,21 @@
 import tkinter as tk
-from tkinter import messagebox, ttk
+from tkinter import messagebox, ttk, filedialog
 from tkcalendar import DateEntry
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from Logica.LogicaFactura import LogicaFactura
+import DAO.ClienteDAO as ClienteDAO
+from openpyxl import Workbook
 import datetime
 
 class VentanaFinanzas(tk.Frame):
 
     def __init__(self, master, controller, **kwargs): 
-        # Pasamos 'master' como argumento posicional al super constructor
+        
         super().__init__(master, **kwargs) 
         self.controller = controller
         self.logica_factura = LogicaFactura()
+        self.cliente_dao = ClienteDAO.ClienteDAO()
         
         # Config grid
         self.columnconfigure(0, weight=1)
@@ -26,6 +29,7 @@ class VentanaFinanzas(tk.Frame):
         self.frame_controles.columnconfigure(0, weight=1)
         self.frame_controles.columnconfigure(1, weight=1)
         self.frame_controles.columnconfigure(2, weight=1)
+        self.frame_controles.columnconfigure(3, weight=1)
 
         # Fecha Inicio
         tk.Label(self.frame_controles, text="Fecha Inicio:", bg='plum').grid(row=0, column=0, padx=5, pady=(5,0))
@@ -39,7 +43,7 @@ class VentanaFinanzas(tk.Frame):
                                          foreground='white', borderwidth=2, date_pattern='y-mm-dd')
         self.entry_fecha_fin.grid(row=1, column=1, padx=5, pady=(0,5))
 
-        # Valores por defecto
+        
         try:
             hoy = datetime.date.today()
             inicio_mes = hoy.replace(day=1)
@@ -48,9 +52,13 @@ class VentanaFinanzas(tk.Frame):
         except Exception:
             pass 
 
-        # Botón
+        
         self.btn_generar = ttk.Button(self.frame_controles, text="Generar Gráfico", command=self.generar_grafico)
         self.btn_generar.grid(row=0, column=2, rowspan=2, padx=10, pady=10)
+        
+        # Botón Exportar Excel
+        self.btn_exportar = ttk.Button(self.frame_controles, text="Exportar Clientes (Excel)", command=self.exportar_excel)
+        self.btn_exportar.grid(row=0, column=3, rowspan=2, padx=10, pady=10)
 
         # --- Frame Gráfico ---
         self.frame_grafico = tk.Frame(self)
@@ -69,7 +77,7 @@ class VentanaFinanzas(tk.Frame):
             messagebox.showwarning("Campos vacíos", "Por favor ingrese ambas fechas.")
             return
 
-        # Limpiar gráfico anterior si existe
+        # Limpiar gráfico 
         if self.canvas:
             self.canvas.get_tk_widget().destroy()
             self.canvas = None
@@ -86,11 +94,9 @@ class VentanaFinanzas(tk.Frame):
             return
 
         # Procesar datos
-        # datos es una lista de tuplas [(dia, total), ...]
         dias = [str(x[0]) for x in datos]
         montos = [x[1] for x in datos]
 
-        # Crear figura más pequeña
         fig = Figure(figsize=(6, 4), dpi=100)
         ax = fig.add_subplot(111)
         
@@ -102,18 +108,46 @@ class VentanaFinanzas(tk.Frame):
         
         fig.tight_layout()
 
-        # Dibujar en Canvas (sin expandir para respetar tamaño definido)
         self.canvas = FigureCanvasTkAgg(fig, master=self.frame_grafico)
         self.canvas.draw()
         self.canvas.get_tk_widget().pack(side=tk.TOP, padx=10, pady=10)
         
-        # Generar Labels con datos
+        
         tk.Label(self.frame_datos, text="Detalle de Ventas:", font=("Arial", 10, "bold")).pack(anchor="center", pady=(10, 5))
         
-        # Frame scrollable o lista simple? Lista simple centrada por ahora
+      
         frame_lista = tk.Frame(self.frame_datos)
         frame_lista.pack(anchor="center")
         
         for dia, total in datos:
             lbl = tk.Label(frame_lista, text=f"Fecha: {dia}  |  Total: ${total:,.0f}")
             lbl.pack(anchor="w")
+
+    def exportar_excel(self):
+        clientes = self.cliente_dao.obtener_todos_clientes()
+        if not clientes:
+            messagebox.showinfo("Cero datos", "No hay clientes registrados para exportar.")
+            return
+
+        filename = filedialog.asksaveasfilename(defaultextension=".xlsx", 
+                                                filetypes=[("Excel files", "*.xlsx"), ("All files", "*.*")],
+                                                title="Guardar archivo de clientes")
+        if not filename:
+            return
+
+        try:
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Clientes"
+            
+           
+            ws.append(["Nombre", "Email", "Celular"])
+            
+          
+            for cliente in clientes:
+                ws.append([cliente[0], cliente[1], cliente[2]])
+                
+            wb.save(filename)
+            messagebox.showinfo("Éxito", f"Archivo exportado correctamente en:\n{filename}")
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al generar Excel: {e}")
