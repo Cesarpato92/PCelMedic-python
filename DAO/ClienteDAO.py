@@ -136,3 +136,22 @@ class ClienteDAO:
             if cursor:
                 cursor.close()
         return existe
+
+    def obtener_todos_clientes(self):
+        conexion = None
+        cursor = None
+        clientes = []
+        try:
+            conexion = conexion_bd.Conexion.get_conexion()
+            cursor = conexion.cursor()
+            sql = "SELECT nombre, email, celular FROM cliente"
+            cursor.execute(sql)
+            clientes = cursor.fetchall() # Lista de tuplas
+        except mysql.connector.Error as e:
+            messagebox.showerror("Error", f"Error SQL: {e}")
+        except Exception as e:
+            messagebox.showerror("Error", f"Error inesperado: {e}")
+        finally:
+            if cursor:
+                cursor.close()
+        return clientes

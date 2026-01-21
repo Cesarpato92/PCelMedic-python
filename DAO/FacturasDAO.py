@@ -97,3 +97,36 @@ class FacturasDAO:
             if cursor:
                 cursor.close()
         return factura_encontrada
+
+    def obtener_ventas_por_rango(self, fecha_inicio, fecha_fin):
+        conexion = None
+        cursor = None
+        resultados = []
+        try:
+            conexion = conexion_bd.Conexion.get_conexion()
+            cursor = conexion.cursor()
+
+            # Agrupa por fecha (sin hora si es datetime) y suma los totales
+            sql = """
+                SELECT DATE(fecha) as dia, SUM(total) as total_dia
+                FROM factura
+                WHERE DATE(fecha) BETWEEN %s AND %s
+                GROUP BY dia
+                    ORDER BY dia
+            """
+            valores = (fecha_inicio, fecha_fin)
+            cursor.execute(sql, valores)
+
+            resultados = cursor.fetchall()
+            
+        except mysql.connector.Error as e:
+            messagebox.showerror("Error", f"Error SQL: {e}")
+        except Exception as e:
+            messagebox.showerror("Error", f"Error inesperado: {e}")
+        finally:
+            if cursor:
+                cursor.close()
+        return resultados
+
+
+        

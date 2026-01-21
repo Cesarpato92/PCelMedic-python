@@ -13,3 +13,6 @@ class LogicaFactura:
 
     def obtener_factura_por_id_reparacion(self, id_reparacion):
         return self.factura_dao.obtener_factura_por_id_reparacion(id_reparacion)
+        
+    def obtener_ventas_por_rango(self, fecha_inicio, fecha_fin):
+        return self.factura_dao.obtener_ventas_por_rango(fecha_inicio, fecha_fin)
