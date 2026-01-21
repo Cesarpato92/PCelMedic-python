@@ -4,7 +4,7 @@ from tkcalendar import DateEntry
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from Logica.LogicaFactura import LogicaFactura
-import DAO.ClienteDAO as ClienteDAO
+from Logica.LogicaCliente import LogicaCliente
 from openpyxl import Workbook
 import datetime
 
@@ -15,7 +15,7 @@ class VentanaFinanzas(tk.Frame):
         super().__init__(master, **kwargs) 
         self.controller = controller
         self.logica_factura = LogicaFactura()
-        self.cliente_dao = ClienteDAO.ClienteDAO()
+        self.logica_cliente = LogicaCliente()
         
         # Config grid
         self.columnconfigure(0, weight=1)
@@ -124,7 +124,7 @@ class VentanaFinanzas(tk.Frame):
             lbl.pack(anchor="w")
 
     def exportar_excel(self):
-        clientes = self.cliente_dao.obtener_todos_clientes()
+        clientes = self.logica_cliente.obtener_todos_clientes()
         if not clientes:
             messagebox.showinfo("Cero datos", "No hay clientes registrados para exportar.")
             return

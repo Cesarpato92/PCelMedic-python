@@ -80,3 +80,6 @@ class LogicaCliente:
             return False
         
         return True
+
+    def obtener_todos_clientes(self):
+        return self.cliente_dao.obtener_todos_clientes()
