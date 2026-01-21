@@ -27,13 +27,45 @@ class VentanaEntradaGarantia(tkinter.Frame):
         self.dispositivo_obj = None
         self.reparacion_obj = None
 
-        # Contenedor principal del frame
-        contenedor = ttk.Frame(self, padding="10")
-        contenedor.grid(row=0, column=0, sticky="nsew")
-
-        #Configuraciones de expacion para el frame principal y el contenedor
-        self.columnconfigure(0, weight=1) 
+        # Configuración principal del frame
+        self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
+
+        # Crear canvas y scrollbar
+        canvas = tkinter.Canvas(self)
+        scrollbar = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
+        
+        # Frame desplazable dentro del canvas
+        contenedor = ttk.Frame(canvas, padding="10")
+        
+        # Configurar el canvas para que el frame se ajuste al ancho
+        contenedor.bind(
+            "<Configure>",
+            lambda e: canvas.configure(
+                scrollregion=canvas.bbox("all")
+            )
+        )
+
+        canvas.create_window((0, 0), window=contenedor, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        # Layout del canvas y scrollbar
+        canvas.grid(row=0, column=0, sticky="nsew")
+        scrollbar.grid(row=0, column=1, sticky="ns")
+
+        # Configurar eventos para scroll con mouse
+        def _on_mousewheel(event):
+            canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        
+        canvas.bind_all("<MouseWheel>", _on_mousewheel)
+
+        # Configurar expansión del frame interno
+        def on_canvas_configure(event):
+            canvas.itemconfig(canvas.create_window((0, 0), window=contenedor, anchor="nw", width=event.width))
+        
+        canvas.bind("<Configure>", on_canvas_configure)
+
+        # Configuraciones de expansión para el frame contenedor
         contenedor.columnconfigure(0, weight=1, uniform="equal_columns")
         contenedor.columnconfigure(1, weight=1, uniform="equal_columns")
         contenedor.columnconfigure(2, weight=1, uniform="equal_columns")
