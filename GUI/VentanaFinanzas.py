@@ -17,12 +17,37 @@ class VentanaFinanzas(tk.Frame):
         self.logica_factura = LogicaFactura()
         self.logica_cliente = LogicaCliente()
         
-        # Config grid
+        # Config grid principal
         self.columnconfigure(0, weight=1)
-        self.rowconfigure(1, weight=1) # weight para que expande el gráfico infinitamente
+        self.rowconfigure(0, weight=1)
+
+        # --- Canvas y Scrollbar ---
+        self.canvas = tk.Canvas(self)
+        self.scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        self.scrollable_frame = tk.Frame(self.canvas)
+
+        self.scrollable_frame.bind(
+            "<Configure>",
+            lambda e: self.canvas.configure(
+                scrollregion=self.canvas.bbox("all")
+            )
+        )
+
+        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+
+        self.canvas.pack(side="left", fill="both", expand=True)
+        self.scrollbar.pack(side="right", fill="y")
+        
+        def _on_mousewheel(event):
+            self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+
+        self.canvas.bind_all("<MouseWheel>", _on_mousewheel)
+
+        parent_frame = self.scrollable_frame
 
         # --- Frame Controles ---
-        self.frame_controles = tk.Frame(self, bg='plum')
+        self.frame_controles = tk.Frame(parent_frame, bg='plum')
         self.frame_controles.grid(row=0, column=0, sticky="ew", padx=10, pady=10)
 
         # Configurar columnas para centrar
@@ -51,7 +76,6 @@ class VentanaFinanzas(tk.Frame):
             self.entry_fecha_fin.set_date(hoy)
         except Exception:
             pass 
-
         
         self.btn_generar = ttk.Button(self.frame_controles, text="Generar Gráfico", command=self.generar_grafico)
         self.btn_generar.grid(row=0, column=2, rowspan=2, padx=10, pady=10)
@@ -61,12 +85,12 @@ class VentanaFinanzas(tk.Frame):
         self.btn_exportar.grid(row=0, column=3, rowspan=2, padx=10, pady=10)
 
         # --- Frame Gráfico ---
-        self.frame_grafico = tk.Frame(self)
-        self.frame_grafico.grid(row=1, column=0, pady=10) # sticky removido para centrar y no estirar
-        self.canvas = None
+        self.frame_grafico = tk.Frame(parent_frame)
+        self.frame_grafico.grid(row=1, column=0, pady=10) 
+        self.canvas_grafico = None # Renamed to avoid conflict with self.canvas
         
         # --- Frame Datos ---
-        self.frame_datos = tk.Frame(self)
+        self.frame_datos = tk.Frame(parent_frame)
         self.frame_datos.grid(row=2, column=0, sticky="nsew", padx=10, pady=10)
 
     def generar_grafico(self):
@@ -78,9 +102,9 @@ class VentanaFinanzas(tk.Frame):
             return
 
         # Limpiar gráfico 
-        if self.canvas:
-            self.canvas.get_tk_widget().destroy()
-            self.canvas = None
+        if self.canvas_grafico:
+            self.canvas_grafico.get_tk_widget().destroy()
+            self.canvas_grafico = None
             
         # Limpiar datos anteriores
         for widget in self.frame_datos.winfo_children():
@@ -125,9 +149,9 @@ class VentanaFinanzas(tk.Frame):
         
         fig.tight_layout()
 
-        self.canvas = FigureCanvasTkAgg(fig, master=self.frame_grafico)
-        self.canvas.draw()
-        self.canvas.get_tk_widget().pack(side=tk.TOP, padx=10, pady=10)
+        self.canvas_grafico = FigureCanvasTkAgg(fig, master=self.frame_grafico)
+        self.canvas_grafico.draw()
+        self.canvas_grafico.get_tk_widget().pack(side=tk.TOP, padx=10, pady=10)
         
         
         tk.Label(self.frame_datos, text="Detalle de Movimientos:", font=("Arial", 10, "bold")).pack(anchor="center", pady=(10, 5))
