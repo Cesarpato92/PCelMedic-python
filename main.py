@@ -1,7 +1,3 @@
-"""
-Script principal para ejecutar PCelMedic.
-Debe ejecutarse desde la raíz del proyecto.
-"""
 import sys
 import os
 

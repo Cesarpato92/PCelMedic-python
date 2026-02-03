@@ -93,17 +93,34 @@ class VentanaFinanzas(tk.Frame):
             messagebox.showinfo("Info", "No se encontraron datos en el rango seleccionado.")
             return
 
-        # Procesar datos
-        dias = [str(x[0]) for x in datos]
-        montos = [x[1] for x in datos]
+        #mostrar formato sin hora
+        def format_date(d):
+            if hasattr(d, 'strftime'):
+                return d.strftime('%Y-%m-%d')
+            return str(d).split()[0] 
+
+        dias = [format_date(x[0]) for x in datos]
+        ventas = [x[1] if x[1] else 0 for x in datos]
+        repuestos = [x[2] if x[2] else 0 for x in datos]
 
         fig = Figure(figsize=(6, 4), dpi=100)
         ax = fig.add_subplot(111)
         
-        ax.bar(dias, montos, color='#4CAF50')
-        ax.set_title(f"Ventas por Día ({fecha_inicio} a {fecha_fin})")
-        ax.set_ylabel("Total Ventas")
+        # Configurar indices para barras agrupadas
+        import numpy as np
+        x = np.arange(len(dias))
+        width = 0.35
+
+        rects1 = ax.bar(x - width/2, ventas, width, label='Ventas', color='#4CAF50') # Verde
+        rects2 = ax.bar(x + width/2, repuestos, width, label='Repuestos', color='red') # Rojo
+
+        ax.set_title(f"Finanzas ({fecha_inicio} a {fecha_fin})")
+        ax.set_ylabel("Monto ($)")
         ax.set_xlabel("Fecha")
+        ax.set_xticks(x)
+        ax.set_xticklabels(dias)
+        ax.legend()
+        
         ax.tick_params(axis='x', rotation=45)
         
         fig.tight_layout()
@@ -113,14 +130,20 @@ class VentanaFinanzas(tk.Frame):
         self.canvas.get_tk_widget().pack(side=tk.TOP, padx=10, pady=10)
         
         
-        tk.Label(self.frame_datos, text="Detalle de Ventas:", font=("Arial", 10, "bold")).pack(anchor="center", pady=(10, 5))
+        tk.Label(self.frame_datos, text="Detalle de Movimientos:", font=("Arial", 10, "bold")).pack(anchor="center", pady=(10, 5))
         
       
         frame_lista = tk.Frame(self.frame_datos)
         frame_lista.pack(anchor="center")
         
-        for dia, total in datos:
-            lbl = tk.Label(frame_lista, text=f"Fecha: {dia}  |  Total: ${total:,.0f}")
+        # Headers
+        tk.Label(frame_lista, text=f"{'Fecha':<12} | {'Ventas':>12} | {'Repuestos':>12}", font=("Consolas", 9, "bold")).pack(anchor="w")
+
+        for dia, venta, repuesto in datos:
+            v = venta if venta else 0
+            r = repuesto if repuesto else 0
+            d_str = format_date(dia)
+            lbl = tk.Label(frame_lista, text=f"{d_str:<12} | ${v:>11,.0f} | ${r:>11,.0f}", font=("Consolas", 9))
             lbl.pack(anchor="w")
 
     def exportar_excel(self):

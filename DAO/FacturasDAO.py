@@ -106,13 +106,13 @@ class FacturasDAO:
             conexion = conexion_bd.Conexion.get_conexion()
             cursor = conexion.cursor()
 
-            # Agrupa por fecha (sin hora si es datetime) y suma los totales
-            sql = """
-                SELECT DATE(fecha) as dia, SUM(total) as total_dia
-                FROM factura
-                WHERE DATE(fecha) BETWEEN %s AND %s
-                GROUP BY dia
-                    ORDER BY dia
+            sql =  """
+                SELECT f.fecha, SUM(f.total) as total_ventas, SUM(r.costo_repuesto) as total_repuestos
+                FROM factura f
+                JOIN reparacion r ON f.id_reparacion = r.id_reparacion
+                where f.fecha BETWEEN %s AND %s
+                GROUP BY f.fecha
+                ORDER BY f.fecha ASC
             """
             valores = (fecha_inicio, fecha_fin)
             cursor.execute(sql, valores)
