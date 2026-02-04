@@ -205,11 +205,6 @@ class VentanaEntradaGarantia(tkinter.Frame):
         footer_frame.columnconfigure(1, weight=1)
         footer_frame.columnconfigure(2, weight=1)
         
-        # Botones Izquierda 
-        #frame_btn_izquierda = ttk.Frame(footer_frame)
-        #frame_btn_izquierda.grid(row=0, column=0, sticky="w")        
-        
-       # ttk.Button(frame_btn_izquierda, text="Limpiar", command=lambda: self.btn_limpiar()).grid(row=0, column=0, padx=5, pady=5)
         
         # Botones Centro 
         frame_btn_centro = ttk.Frame(footer_frame)

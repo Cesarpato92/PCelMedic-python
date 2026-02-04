@@ -46,7 +46,7 @@ class VentanaFinanzas(tk.Frame):
 
         parent_frame = self.scrollable_frame
 
-        # --- Frame Controles ---
+        # Frame Controles
         self.frame_controles = tk.Frame(parent_frame, bg='plum')
         self.frame_controles.grid(row=0, column=0, sticky="ew", padx=10, pady=10)
 
@@ -84,12 +84,12 @@ class VentanaFinanzas(tk.Frame):
         self.btn_exportar = ttk.Button(self.frame_controles, text="Exportar Clientes (Excel)", command=self.exportar_excel)
         self.btn_exportar.grid(row=0, column=3, rowspan=2, padx=10, pady=10)
 
-        # --- Frame Gráfico ---
+        # Frame Gráfico 
         self.frame_grafico = tk.Frame(parent_frame)
         self.frame_grafico.grid(row=1, column=0, pady=10) 
-        self.canvas_grafico = None # Renamed to avoid conflict with self.canvas
+        self.canvas_grafico = None # Inicializar canvas del gráfico como None
         
-        # --- Frame Datos ---
+        # Frame Datos 
         self.frame_datos = tk.Frame(parent_frame)
         self.frame_datos.grid(row=2, column=0, sticky="nsew", padx=10, pady=10)
 
