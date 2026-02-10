@@ -34,30 +34,63 @@ class LogicaCliente:
             return None
 
     def validacion_datos(self, modelo_cliente):
-         # Validaciones básicas
+        # Validaciones básicas
         # cédula: debe existir, no estar vacía y contener solo dígitos
         validacion_ced = self.validacion_cedula(modelo_cliente.cedula)
+        validacion_nombre = self.validacion_nombre(modelo_cliente.nombre)
+        validacion_email = self.validacion_email(modelo_cliente.email)
+        validacion_celular = self.validacion_cedula(modelo_cliente.celular)
         if not validacion_ced:
             return False
         # nombre es obligatorio
-        if not modelo_cliente.nombre or modelo_cliente.nombre.strip() == "":
-            messagebox.showerror("Error", "El nombre es obligatorio.")
+        if not validacion_nombre:
             return False
-        if modelo_cliente.celular and not modelo_cliente.celular.isdigit():
+        
+        if not validacion_email:
+            return False
+
+        if not validacion_celular:
+            return False
+        
+        return True
+        
+        
+    def validacion_celular(celular):
+        if celular and not celular.isdigit():
             messagebox.showerror(
                 "Error", "El número de celular debe contener solo dígitos."
             )
             return False
-        if modelo_cliente.celular and len(modelo_cliente.celular) < 10:
+        
+        if celular and len(celular) < 10:
             messagebox.showerror(
                 "Error", "El número de celular debe tener al menos 10 dígitos."
             )
             return False
-        if modelo_cliente.email and "@" not in modelo_cliente.email:
+        if len(celular > 15):
+            messagebox.showerror(
+                "Error", "El número de celular debe no puede tener mas de 15 digitos"
+            )
+            return False
+    def validacion_email(email):
+        if email and "@" not in email:
             messagebox.showerror("Error", "El correo electrónico no es válido.")
             return False
+        if len(email) > 100:
+            messagebox.showerror("Error", "El correo electrónico es demasiado largo.")
+            return False
         return True
-
+    def validacion_nombre( nombre):
+        if not nombre or nombre.strip() == "":
+            messagebox.showerror("Error", "El nombre es obligatorio.")
+            return False
+        
+        if len(nombre) >150:
+            messagebox.showerror(
+                "Error", "El nombre no puede tener mas de 150 caracteres."
+            )
+            return False
+        return True
     def validacion_cedula(self, cedula):
     # Verificamos que la cédula no esté vacía
         if not cedula or cedula.strip() == "":
@@ -72,11 +105,6 @@ class LogicaCliente:
         # Verificamos que la cédula tenga máximo 20 dígitos (consistente con VARCHAR(20))
         if len(cedula.strip()) > 20:
             messagebox.showerror("Error", "La cédula debe tener máximo 20 dígitos.")
-            return False
-        
-        # Validación de 10 dígitos para la cedula
-        if len(cedula.strip()) > 20:
-            messagebox.showerror("Error", "El cambo cedula no puede tener mas de 20 digitos")
             return False
         
         return True
