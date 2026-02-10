@@ -31,11 +31,21 @@ class LogicaDispositivo:
             messagebox.showerror("Error", "El tipo de reparación es obligatorio.")
             return False
         
+        if len(modelo_dispositivo.marca) > 45:
+            messagebox.showerror("Error", "No superar los 45 caracteres.")
+            return False
+        
         if modelo_dispositivo.tipo_password in ["PIN", "Contraseña", "Patrón"]:
             if not modelo_dispositivo.password or modelo_dispositivo.password.strip() == "":
                 messagebox.showerror("Error", f"La contraseña para el tipo {modelo_dispositivo.tipo_password} es obligatoria.")
                 return False
+            
+        if len(modelo_dispositivo.password) > 40:
+            messagebox.showerror("Error", "No superar los 40 caracteres.")
+            return False
+        
         if not modelo_dispositivo.comentarios or modelo_dispositivo.comentarios.strip() == "":
             messagebox.showerror("Error", "Debe dejar comentarios para la reparacion.")
             return False
+        
         return True
