@@ -223,7 +223,7 @@ class GeneradorPDF:
         
         # Título
         pdf.set_font("Arial", 'B', 16)
-        pdf.cell(200, 10, txt=f"PCelMedic - Factura de Servicio # {id_factura}", ln=True, align='C')
+        pdf.cell(200, 10, txt=f"PCelMedic - Recibo de pago # {id_factura}", ln=True, align='C')
         pdf.ln(10)
         
         # Datos del Cliente 
@@ -269,8 +269,9 @@ class GeneradorPDF:
         pdf.cell(40, 10, f"${reparacion.precio_reparacion:,.2f}", 1, ln=True, align='R')
         
         pdf.ln(20)
-        pdf.set_font("Arial", size=8)
+        pdf.set_font("Arial", size=6)
         pdf.cell(0, 5, "Gracias por confiar en PCelMedic.", ln=True, align='C')
+        pdf.cell(0, 5, "Pertenezco al regimen  de No Responsables de IVA (Art. 437 del Estatuto Tributario).", ln=True, align='C')
 
         pdf.output(ruta_archivo)
         return ruta_archivo
