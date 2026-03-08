@@ -7,6 +7,7 @@ from Modelo.ModeloReparacion import ModeloReparacion
 from Logica.LogicaCliente import LogicaCliente
 from Logica.LogicaDispositivo import LogicaDispositivo
 from Logica.LogicaReparacion import LogicaReparacion
+from Logica.Conexion import Conexion
 from Logica.GeneradorPDF import GeneradorPDF
 from datetime import datetime
 import os
@@ -181,7 +182,8 @@ class VentanaRegistro(tk.Frame):
         self.var_marca.set(opciones_marca[0])
         self.combobox_marca.current(0)
         self.on_tipo_contrasena_change() # Llama para asegurar que la contraseña se deshabilita/habilita correctamente
-        
+    
+
     
     def guardar(self):
         # Extrae datos de cliente
@@ -251,9 +253,18 @@ class VentanaRegistro(tk.Frame):
         except ValueError:
             messagebox.showwarning("Atención", "El precio de reparación debe ser un número válido")
             return
-     
 
-        # Decidir insertar o actualizar según exista el cliente
+        # Conectamos a la BD
+        conexion = Conexion.get_conexion()
+        # Verificamos que no haya una conexion en curso
+        if not conexion.in_transaction:
+            conexion.start_transaction()
+        else:
+            # Si ya hay una hacemos rollback para limpiar
+            conexion.rollback()
+            conexion.start_transaction()
+        # iniciamos el cursor
+        cursor = conexion.cursor()
         try:
             
             cliente_obj = ModeloCliente()
@@ -261,24 +272,9 @@ class VentanaRegistro(tk.Frame):
             cliente_obj.nombre = nombre
             cliente_obj.email = email
             cliente_obj.celular = celular
-            existente = self.cliente.verificacion_existencia_cliente(cedula)
-            
-            if existente:
-                messagebox.showinfo("CLIENTE REGISTRADO", f"Se actualizarán los datos del cliente {nombre}")
-                actualizado = self.cliente.actualizar_cliente(cliente_obj)
-                if not actualizado:
-                    messagebox.showwarning("Aviso", "No se realizaron cambios al cliente")
-            else:
-                insertado = self.cliente.agregar_cliente(cliente_obj) 
-                if not insertado:
-                    messagebox.showerror("Error", "Error al guardar el usuario")
-                    return
-        except Exception as e:
-            messagebox.showerror("Error", f"Error al guardar/actualizar cliente: {e}")
-            return
-
-        # Guardar dispositivo y reparación
-        try:
+            logica_cliente = LogicaCliente()
+            logica_cliente.agregar_cliente(cliente_obj, cursor)
+       
             dispositivo_obj = ModeloDispositivo()
             dispositivo_obj.id_cliente=cedula
             dispositivo_obj.marca=marca
@@ -289,7 +285,7 @@ class VentanaRegistro(tk.Frame):
             dispositivo_obj.version = version
             
             logica_disp = LogicaDispositivo()
-            id_disp = logica_disp.agregar_dispositivo(dispositivo_obj)
+            id_disp = logica_disp.agregar_dispositivo(dispositivo_obj, cursor)
             
             if id_disp:
                 dispositivo_obj.id_dispositivo = id_disp
@@ -302,23 +298,33 @@ class VentanaRegistro(tk.Frame):
                 reparacion_obj.precio_reparacion = precio_float
                 reparacion_obj.comentarios = comentarios_rep 
                 logica_rep= LogicaReparacion()
-                id_rep = logica_rep.agregar_reparacion(reparacion_obj)
+                id_rep = logica_rep.agregar_reparacion(reparacion_obj, cursor)
                 
                 if id_rep:
+
+                    #Aceptamos la transaccion
+                    conexion.commit()
                     # Generar PDF
                     try:
-                        reparacion_obj.id_reparacion = id_rep # Asignamos el ID generado
+                        reparacion_obj.id_reparacion = id_rep
                         generador = GeneradorPDF()
                         ruta_pdf = generador.generar_reporte_reparacion(cliente_obj, dispositivo_obj, reparacion_obj)
-                        messagebox.showinfo("Registro Exitoso", f"Reparación guardada con ID {id_rep}-{cliente_obj.cedula}.\nPDF generado en: {ruta_pdf}")
-                        os.startfile(ruta_pdf) #Abre el PDF
-                    except Exception as e:
-                        messagebox.showwarning("Aviso", f"Reparación guardada, pero error al generar PDF: {e}")
-                        
+                        messagebox.showinfo("Éxito", f"Registro {id_rep} guardado.")
+                        if os.path.exists(ruta_pdf):
+                            os.startfile(ruta_pdf)
+                    except Exception as e_pdf:
+                        messagebox.showwarning("Aviso", f"Datos guardados, pero el PDF falló: {e_pdf}")
+                    
                     self.limpiar_campos()
                         
         except Exception as e:
+            # Devolvemos todo 
+            conexion.rollback()
             messagebox.showwarning("Aviso", f"Ocurrió un error al guardar el dispositivo o la reparación: {e}")
+        finally:
+            if cursor:
+                # Liberamos cursor para la memoria del servidor
+                cursor.close()
 
     def limpiar_campos(self):
         # Función para limpiar todos los campos del formulario

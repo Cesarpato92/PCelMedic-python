@@ -9,11 +9,11 @@ class LogicaDispositivo:
     """En los metodos de la logica simplemente llamamos a los metodos del DAO correspondiente
     en cada metodo realizamos las validaciones o reglas de negocio necesarias antes o despues de llamar al DAO
     Verificamos que los datos sean correctos antes de llamar al DAO, etc."""
-    def agregar_dispositivo(self, modelo_dispositivo):
+    def agregar_dispositivo(self, modelo_dispositivo, cursor):
         
         if self.validacion_datos(modelo_dispositivo):
             # Llamamos al DAO para agregar el dispositivo luego de pasar las validaciones
-            return self.dispositivo_dao.agregar_dispositivo(modelo_dispositivo)
+            return self.dispositivo_dao.agregar_dispositivo(modelo_dispositivo, cursor)
 
     def obtener_dispositivo_por_id(self, id_disp):
         return self.dispositivo_dao.obtener_dispositivo_por_id(id_disp)
@@ -40,9 +40,10 @@ class LogicaDispositivo:
                 messagebox.showerror("Error", f"La contraseña para el tipo {modelo_dispositivo.tipo_password} es obligatoria.")
                 return False
             
-        if len(modelo_dispositivo.password) > 40:
-            messagebox.showerror("Error", "No superar los 40 caracteres.")
-            return False
+        if modelo_dispositivo.password is not None:
+            if len(modelo_dispositivo.password) > 40:
+                messagebox.showerror("Error", "La contraseña no puede superar los 40 caracteres.")
+                return False
         
         if not modelo_dispositivo.comentarios or modelo_dispositivo.comentarios.strip() == "":
             messagebox.showerror("Error", "Debe dejar comentarios para la reparacion.")

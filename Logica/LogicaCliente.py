@@ -12,9 +12,9 @@ class LogicaCliente:
     de negocio necesarias antes o despues de llamar al DAO
     Verificamos que los datos sean correctos antes de llamar al DAO, etc."""
 
-    def agregar_cliente(self, modelo_cliente):
+    def agregar_cliente(self, modelo_cliente, cursor = None):
         if self.validacion_datos(modelo_cliente):
-            return self.cliente_dao.agregar_cliente(modelo_cliente)
+            return self.cliente_dao.agregar_cliente(modelo_cliente, cursor)
         else:
             return None 
         
@@ -39,7 +39,7 @@ class LogicaCliente:
         validacion_ced = self.validacion_cedula(modelo_cliente.cedula)
         validacion_nombre = self.validacion_nombre(modelo_cliente.nombre)
         validacion_email = self.validacion_email(modelo_cliente.email)
-        validacion_celular = self.validacion_cedula(modelo_cliente.celular)
+        validacion_celular = self.validacion_celular(modelo_cliente.celular)
         if not validacion_ced:
             return False
         # nombre es obligatorio
@@ -55,24 +55,21 @@ class LogicaCliente:
         return True
         
         
-    def validacion_celular(celular):
+    def validacion_celular(self,celular):
         if celular and not celular.isdigit():
             messagebox.showerror(
                 "Error", "El número de celular debe contener solo dígitos."
             )
             return False
         
-        if celular and len(celular) < 10:
+        if len(celular) < 10 and len(celular)> 15:
             messagebox.showerror(
-                "Error", "El número de celular debe tener al menos 10 dígitos."
+                "Error", "El número de celular debe tener entre 10 y 15 digitos como maximo."
             )
             return False
-        if len(celular > 15):
-            messagebox.showerror(
-                "Error", "El número de celular debe no puede tener mas de 15 digitos"
-            )
-            return False
-    def validacion_email(email):
+                
+        return True
+    def validacion_email(self,email):
         if email and "@" not in email:
             messagebox.showerror("Error", "El correo electrónico no es válido.")
             return False
@@ -80,7 +77,7 @@ class LogicaCliente:
             messagebox.showerror("Error", "El correo electrónico es demasiado largo.")
             return False
         return True
-    def validacion_nombre( nombre):
+    def validacion_nombre(self, nombre):
         if not nombre or nombre.strip() == "":
             messagebox.showerror("Error", "El nombre es obligatorio.")
             return False

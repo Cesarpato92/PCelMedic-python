@@ -5,9 +5,9 @@ class LogicaReparacion:
     def __init__(self):
         self.reparacion_dao = reparacion_dao.ReparacionDAO()
 
-    def agregar_reparacion(self, modelo_reparacion):
+    def agregar_reparacion(self, modelo_reparacion, cursor):
         if self.validacion_datos_para_agregar(modelo_reparacion):
-            return self.reparacion_dao.agregar_reparacion(modelo_reparacion)
+            return self.reparacion_dao.agregar_reparacion(modelo_reparacion, cursor)
 
     def actualizar_estado_reparacion(self, modelo_reparacion):
        return self.reparacion_dao.actualizar_estado_reparacion(modelo_reparacion)

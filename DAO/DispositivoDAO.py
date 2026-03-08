@@ -8,38 +8,20 @@ class DispositivoDAO:
     def __init__(self):
         pass
     
-    def agregar_dispositivo(self, modelo_dispositivo):
-        conexion = None
-        cursor = None
-        id_dispositivo = None
-        try:
-            conexion = conexion_bd.Conexion.get_conexion()
-            cursor = conexion.cursor()
-
+    def agregar_dispositivo(self, modelo_dispositivo, cursor):
+        
             sql = """INSERT INTO dispositivo (marca, tipo_reparacion, tipo_contraseña, contraseña, comentarios, id_cliente, version ) 
                      VALUES (%s, %s, %s, %s, %s, %s, %s)"""
-            valores = (modelo_dispositivo.marca, modelo_dispositivo.tipo_reparacion,
-                       modelo_dispositivo.tipo_password, modelo_dispositivo.password,
-                       modelo_dispositivo.comentarios, modelo_dispositivo.id_cliente,
+            valores = (modelo_dispositivo.marca, 
+                       modelo_dispositivo.tipo_reparacion,
+                       modelo_dispositivo.tipo_password, 
+                       modelo_dispositivo.password,
+                       modelo_dispositivo.comentarios,
+                       modelo_dispositivo.id_cliente,
                        modelo_dispositivo.version)
             cursor.execute(sql, valores)
-            conexion.commit()
-            if cursor.rowcount > 0:
-                id_dispositivo = cursor.lastrowid  # Obtener el ID auto-generado
-                
-            else:
-                messagebox.showwarning("Advertencia", "No se pudo agregar el dispositivo.")
+            return cursor.lastrowid #Id del dispositivo
 
-        except mysql.connector.Error as e:
-            messagebox.showerror("Error", f"Error SQL: {e}")
-            if conexion:
-                conexion.rollback()
-        except Exception as e:
-            messagebox.showerror("Error", f"Error inesperado: {e}")
-        finally:
-            if cursor:
-                cursor.close()
-        return id_dispositivo
 
     def obtener_dispositivo_por_id(self, id_dispositivo):
         conexion = None
