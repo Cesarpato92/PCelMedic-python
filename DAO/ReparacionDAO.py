@@ -58,39 +58,27 @@ class ReparacionDAO:
             if conexion:
                 conexion.close()
 
-    def obtener_reparacion_por_id(self, id_reparacion):
-        conexion = None
-        cursor = None
+    def obtener_reparacion_por_id(self, id_reparacion, cursor):
+        
         reparacion_encontrada = None
-        try:
-            conexion = conexion_bd.Conexion.get_conexion()
-            cursor = conexion.cursor()
-
-            sql = """SELECT fecha_ingreso, estado, costo_repuesto, precio_reparacion, comentarios, id_dispositivo 
+       
+        sql = """SELECT fecha_ingreso, estado, costo_repuesto, precio_reparacion, comentarios, id_dispositivo 
                      FROM reparacion WHERE id_reparacion = %s"""
-            valores = (id_reparacion,)
+        valores = (id_reparacion,)
             
-            cursor.execute(sql, valores)
+        cursor.execute(sql, valores)
 
-            resultado = cursor.fetchone()
+        resultado = cursor.fetchone()
             
-            if resultado:
-                reparacion_encontrada = ModeloReparacion()
-                reparacion_encontrada.id_reparacion = id_reparacion
-                reparacion_encontrada.fecha_ingreso = resultado[0]
-                reparacion_encontrada.estado = resultado[1]
-                reparacion_encontrada.costo_repuestos = resultado[2]
-                reparacion_encontrada.precio_reparacion = resultado[3]
-                reparacion_encontrada.comentarios = resultado[4]
-                reparacion_encontrada.id_dispositivo = resultado[5]
-                
-        except mysql.connector.Error as e:
-            messagebox.showerror("Error", f"Error SQL: {e}")
-        except Exception as e:
-            messagebox.showerror("Error", f"Error inesperado: {e}")
-        finally:
-            if cursor:
-                cursor.close()
+        if resultado:
+            reparacion_encontrada = ModeloReparacion()
+            reparacion_encontrada.id_reparacion = id_reparacion
+            reparacion_encontrada.fecha_ingreso = resultado[0]
+            reparacion_encontrada.estado = resultado[1]
+            reparacion_encontrada.costo_repuestos = resultado[2]
+            reparacion_encontrada.precio_reparacion = resultado[3]
+            reparacion_encontrada.comentarios = resultado[4]
+            reparacion_encontrada.id_dispositivo = resultado[5]
             
         return reparacion_encontrada
     

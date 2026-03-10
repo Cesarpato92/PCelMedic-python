@@ -23,41 +23,29 @@ class DispositivoDAO:
             return cursor.lastrowid #Id del dispositivo
 
 
-    def obtener_dispositivo_por_id(self, id_dispositivo):
-        conexion = None
-        cursor = None
+    def obtener_dispositivo_por_id(self, id_dispositivo, cursor):
+       
         dispositivo_encontrado = None
-        try:
-            conexion = conexion_bd.Conexion.get_conexion()
-            cursor = conexion.cursor()
+        
 
-            sql = "SELECT marca, tipo_reparacion, tipo_contraseña, contraseña, comentarios, id_cliente, version FROM dispositivo WHERE id_dispositivo = %s"
-            #Ingresar primero el id_dispositivo al objeto modelo_dispositivo antes de llamar a este metodo
-            valores = (id_dispositivo,)
+        sql = "SELECT marca, tipo_reparacion, tipo_contraseña, contraseña, comentarios, id_cliente, version FROM dispositivo WHERE id_dispositivo = %s"
+        #Ingresar primero el id_dispositivo al objeto modelo_dispositivo antes de llamar a este metodo
+        valores = (id_dispositivo,)
             
-            cursor.execute(sql, valores)
+        cursor.execute(sql, valores)
 
-            #se obtiene el primer resultado
-            resultado = cursor.fetchone()
-            if resultado:
+        #se obtiene el primer resultado
+        resultado = cursor.fetchone()
+        if resultado:
                 
-                dispositivo_encontrado = ModeloDispositivo()
-                dispositivo_encontrado.id_dispositivo = id_dispositivo
-                dispositivo_encontrado.marca = resultado[0]
-                dispositivo_encontrado.tipo_reparacion = resultado[1]
-                dispositivo_encontrado.tipo_password = resultado[2]
-                dispositivo_encontrado.password = resultado[3]
-                dispositivo_encontrado.comentarios = resultado[4]
-                dispositivo_encontrado.id_cliente = resultado[5]
-                dispositivo_encontrado.version = resultado[6]
+            dispositivo_encontrado = ModeloDispositivo()
+            dispositivo_encontrado.id_dispositivo = id_dispositivo
+            dispositivo_encontrado.marca = resultado[0]
+            dispositivo_encontrado.tipo_reparacion = resultado[1]
+            dispositivo_encontrado.tipo_password = resultado[2]
+            dispositivo_encontrado.password = resultado[3]
+            dispositivo_encontrado.comentarios = resultado[4]
+            dispositivo_encontrado.id_cliente = resultado[5]
+            dispositivo_encontrado.version = resultado[6]
                 
-                    
-
-        except mysql.connector.Error as e:
-            messagebox.showerror("Error", f"Error SQL: {e}")
-        except Exception as e:
-            messagebox.showerror("Error", f"Error inesperado: {e}")
-        finally:
-            if cursor:
-                cursor.close()
         return dispositivo_encontrado

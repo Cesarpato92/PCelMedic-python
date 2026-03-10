@@ -8,6 +8,7 @@ from Logica.LogicaDispositivo import LogicaDispositivo
 from Logica.LogicaReparacion import LogicaReparacion
 from Logica.LogicaGarantia import LogicaGarantia
 from Logica.GeneradorPDF import GeneradorPDF
+from Logica.Conexion import Conexion
 
 class VentanaEntradaGarantia(tkinter.Frame):
 
@@ -237,23 +238,34 @@ class VentanaEntradaGarantia(tkinter.Frame):
         if not self.verificar_id_reparacion():
             return
 
+
         id_rep = self.entrada_id_reparacion.get().strip()
-        
+        # Conectamos a la BD
+        conexion = Conexion.get_conexion()
+        # Verificamos que no haya una conexion en curso
+        if not conexion.in_transaction:
+            conexion.start_transaction()
+        else:
+            # Si ya hay una hacemos rollback para limpiar
+            conexion.rollback()
+            conexion.start_transaction()
+        # iniciamos el cursor
+        cursor = conexion.cursor()
         try:
-            reparacion_obj = self.reparacion.obtener_reparacion_por_id(id_rep)
+            reparacion_obj = self.reparacion.obtener_reparacion_por_id(id_rep, cursor)
             
             if not reparacion_obj:
                 messagebox.showinfo("No encontrado", "No se encontró ninguna reparación con ese ID")
                 return
 
             # Obtener dispositivo
-            dispositivo_obj = self.dispositivo.obtener_dispositivo_por_id(reparacion_obj.id_dispositivo)
+            dispositivo_obj = self.dispositivo.obtener_dispositivo_por_id(reparacion_obj.id_dispositivo, cursor)
             if not dispositivo_obj:
                 messagebox.showerror("Error", "No se encontró el dispositivo asociado a la reparación")
                 return
 
             # Obtener cliente
-            cliente_obj = self.cliente.obtener_cliente_por_cedula(dispositivo_obj.id_cliente)
+            cliente_obj = self.cliente.obtener_cliente_por_cedula(dispositivo_obj.id_cliente, cursor)
             if not cliente_obj:
                 messagebox.showerror("Error", "No se encontró el cliente asociado al dispositivo")
                 return
@@ -334,9 +346,16 @@ class VentanaEntradaGarantia(tkinter.Frame):
             # Habilitar campos de entrada de garantía
             self.entrada_comentarios_gar.config(state="normal")
             self.Btn_guardar.config(state="normal")
-
+            
+            # Aceptamos la transaccion
+            conexion.commit()
         except Exception as e:
+            #devolvemos todo
+            conexion.rollback()
             messagebox.showerror("Error", f"Ocurrió un error al buscar: {e}")
+        finally:
+            if cursor:
+                cursor.close()
 
     def btn_guardar(self):
         id_rep = self.entrada_id_reparacion.get().strip()
@@ -351,17 +370,28 @@ class VentanaEntradaGarantia(tkinter.Frame):
             messagebox.showwarning("Atención", "Debe ingresar comentarios de la garantia")
             return
 
+        conexion = Conexion.get_conexion()
+        # Verificamos que no haya una conexion en curso
+        if not conexion.in_transaction:
+            conexion.start_transaction()
+        else:
+            # Si ya hay una hacemos rollback para limpiar
+            conexion.rollback()
+            conexion.start_transaction()
+        # iniciamos el cursor
+        cursor = conexion.cursor()
         try:
             modelo_garantia = ModeloGarantia()
             modelo_garantia.id_reparacion = id_rep
             modelo_garantia.fecha_inicio = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             modelo_garantia.observaciones = comentarios_gar
             modelo_garantia.estado = "En Garantia" if equipo_reparado == "SI" else "Rechazada"
-            
-                        
+                       
             id_garantia = self.garantia.agregar_garantia(modelo_garantia)
             
             if id_garantia:
+                # Aceptamos la transaccion
+                conexion.commit()
                 modelo_garantia.id_garantia = id_garantia
                 messagebox.showinfo("Éxito", f"Garantía registrada con ID: {id_garantia}")
                 
@@ -378,7 +408,12 @@ class VentanaEntradaGarantia(tkinter.Frame):
                 messagebox.showerror("Error", "No se pudo registrar la garantía, error ocurrido")
 
         except Exception as e:
+            conexion.rollback()
             messagebox.showerror("Error", f"Error al guardar garantía: {e}")
+        finally:
+            if cursor:
+                #liberamos cursor  para la memoria del servidor
+                cursor.close()
 
     def btn_limpiar(self, mantener_id=False):
         if not mantener_id:

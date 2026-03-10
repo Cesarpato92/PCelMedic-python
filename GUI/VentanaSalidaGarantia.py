@@ -7,6 +7,7 @@ from Logica.LogicaDispositivo import LogicaDispositivo
 from Logica.LogicaReparacion import LogicaReparacion
 from Logica.LogicaGarantia import LogicaGarantia
 from Logica.GeneradorPDF import GeneradorPDF
+from Logica.Conexion import Conexion
 import os
 
 
@@ -108,19 +109,30 @@ class VentanaSalidaGarantia(tk.Frame):
         if not id_garantia:
             messagebox.showwarning("Atención", "Ingrese un ID de garantía")
             return
-            
+        
+        # Conectamos a la BD
+        conexion = Conexion.get_conexion()
+        # Verificamos que no haya una conexion en curso
+        if not conexion.in_transaction:
+            conexion.start_transaction()
+        else:
+            # Si ya hay una hacemos rollback para limpiar
+            conexion.rollback()
+            conexion.start_transaction()
+        # iniciamos el cursor
+        cursor = conexion.cursor()    
         try:
-            garantia = self.garantia.obtener_garantia_por_id(id_garantia)
+            garantia = self.garantia.obtener_garantia_por_id(id_garantia, cursor)
             if not garantia:
                 messagebox.showinfo("No encontrado", "No se encontró la garantía")
                 return
-                
+               
             self.garantia_actual = garantia
             
             # Obtener datos relacionados
-            reparacion = self.reparacion.obtener_reparacion_por_id(garantia.id_reparacion)
-            dispositivo = self.dispositivo.obtener_dispositivo_por_id(reparacion.id_dispositivo)
-            cliente = self.cliente.obtener_cliente_por_cedula(dispositivo.id_cliente)
+            reparacion = self.reparacion.obtener_reparacion_por_id(garantia.id_reparacion, cursor)
+            dispositivo = self.dispositivo.obtener_dispositivo_por_id(reparacion.id_dispositivo, cursor)
+            cliente = self.cliente.obtener_cliente_por_cedula(dispositivo.id_cliente, cursor)
             
             # Guardar modelos para el reporte
             self.reparacion_model = reparacion
@@ -140,10 +152,14 @@ class VentanaSalidaGarantia(tk.Frame):
             
             self.btn_entregar.config(state="normal")
             
-            
+            conexion.commit()
             
         except Exception as e:
+            conexion.rollback()
             messagebox.showerror("Error", f"Error al buscar garantía: {e}")
+        finally:
+            if cursor:
+                cursor.close()
 
     def entregar_garantia(self):
         if not self.garantia_actual:
@@ -172,17 +188,37 @@ class VentanaSalidaGarantia(tk.Frame):
             self.garantia_actual.fecha_fin = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             self.garantia_actual.precio_insumos = precio_float
             self.garantia_actual.comentarios_finales = observaciones_finales
-    
-            exito = self.garantia.actualizar_garantia(self.garantia_actual)
+
+            # Conectamos a la BD
+            conexion = Conexion.get_conexion()
+            # Verificamos que no haya una conexion en curso
+            if not conexion.in_transaction:
+                conexion.start_transaction()
+            else:
+            # Si ya hay una hacemos rollback para limpiar
+                conexion.rollback()
+                conexion.start_transaction()
+            # iniciamos el cursor
+            cursor = conexion.cursor()  
+
+            exito = self.garantia.actualizar_garantia(self.garantia_actual, cursor)
             
             if exito:
-                self.generar_pdf_salida()
 
+                #aceptamos la transaccion
+                conexion.commit()
+                self.generar_pdf_salida()
                 self.limpiar_campos()
                
                 
         except Exception as e:
+            # devolvemos todo
+            conexion.rollback()
             messagebox.showerror("Error", f"Error al actualizar garantía: {e}")
+        finally:
+            if cursor:
+                cursor.close()
+
 
     def generar_pdf_salida(self):
         if self.cliente_model and self.dispositivo_model and self.reparacion_model:

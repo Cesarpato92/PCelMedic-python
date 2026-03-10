@@ -18,9 +18,9 @@ class LogicaCliente:
         else:
             return None 
         
-    def obtener_cliente_por_cedula(self, cedula):
+    def obtener_cliente_por_cedula(self, cedula, cursor):
         if self.validacion_cedula(cedula):
-            return self.cliente_dao.obtener_cliente_por_cedula(cedula)
+            return self.cliente_dao.obtener_cliente_por_cedula(cedula, cursor)
         else:
             return False
         

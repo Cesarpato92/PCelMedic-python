@@ -29,40 +29,28 @@ class ClienteDAO:
                    modelo_cliente.celular)      
         cursor.execute(sql, valores)
 
-    def obtener_cliente_por_cedula(self, cedula):
-        conexion = None
-        cursor = None
+    def obtener_cliente_por_cedula(self, cedula, cursor):
+       
         cliente_encontrado = None
-        try:
-            conexion = conexion_bd.Conexion.get_conexion()
-            cursor = conexion.cursor()
+       
 
-            sql = "SELECT nombre, email, celular FROM cliente WHERE cedula = %s"
+        sql = "SELECT nombre, email, celular FROM cliente WHERE cedula = %s"
             #Ingresar primero la cedula al objeto modelo_cliente antes de llamar a este metodo
-            valores = (cedula,)
+        valores = (cedula,)
             
-            cursor.execute(sql, valores)
+        cursor.execute(sql, valores)
 
             #se obtiene el primer resultado
-            resultado = cursor.fetchone()
+        resultado = cursor.fetchone()
             
-            if resultado:
+        if resultado:
                 #Si encuentra el cliente, se crea un objeto ModeloCliente con los datos
-                nombre, email, celular = resultado
-                cliente_encontrado = ModeloCliente()
-                cliente_encontrado.cedula = cedula
-                cliente_encontrado.nombre = nombre
-                cliente_encontrado.email = email
-                cliente_encontrado.celular = celular
-               
-            
-        except mysql.connector.Error as e:
-            messagebox.showerror("Error", f"Error SQL: {e}")
-        except Exception as e:
-            messagebox.showerror("Error", f"Error inesperado: {e}")
-        finally:
-            if cursor:
-                cursor.close()
+            nombre, email, celular = resultado
+            cliente_encontrado = ModeloCliente()
+            cliente_encontrado.cedula = cedula
+            cliente_encontrado.nombre = nombre
+            cliente_encontrado.email = email
+            cliente_encontrado.celular = celular
             
         return cliente_encontrado
         
