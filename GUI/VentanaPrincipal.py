@@ -1,3 +1,5 @@
+import json
+import os
 import tkinter as tk
 from tkinter import messagebox, ttk
 
@@ -77,13 +79,36 @@ class VentanaPrincipal(tk.Tk):
     def validacion_admin(self):
         
         # Creacion de la ventana de autenticacion
-        login = tk.Toplevel(self) # Correcto, Toplevel es tk.
+        login = tk.Toplevel(self) 
         login.title("Autenticación requerida")
         login.transient(self)
         login.grab_set()
         login.resizable(False, False)
 
-        # Todos estos widgets ya son ttk, lo cual es correcto:
+        #intentamos leer el archivo de configuracion de usuario Admin
+        ruta_actual = os.path.dirname(__file__)  # Directorio donde está VentanaPrincipal
+        ruta_raiz = os.path.dirname(ruta_actual)  # Directorio raíz del proyecto
+        ruta_config = os.path.join(ruta_raiz, '.configAdmin')
+        
+        # Leer credenciales del archivo .configAdmin
+        try:
+            with open(ruta_config, 'r') as archivo:
+                config = {}
+                for linea in archivo:
+                    if '=' in linea:
+                        key, value = linea.strip().split('=', 1)
+                        config[key] = value
+                
+                admin_user = config.get('USER', '')
+                admin_pass = config.get('PASSWORD', '')
+        except FileNotFoundError:
+            messagebox.showerror("Error", f"No se encontró el archivo de configuración en:\n{ruta_config}")
+            return
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al leer configuración: {e}")
+            return
+        
+        
         ttk.Label(login, text="Usuario:").grid(row=0, column=0, padx=8, pady=8)
         user_var = tk.StringVar() 
         ttk.Entry(login, textvariable=user_var).grid(row=0, column=1, padx=8, pady=8)
@@ -96,7 +121,7 @@ class VentanaPrincipal(tk.Tk):
             """Valida credenciales y abre VentanaFinanzas si son correctas."""
             user = user_var.get().strip()
             pwd = pwd_var.get()
-            if user == "admin" and pwd == "admin123":
+            if user == admin_user and pwd == admin_pass:
                 login.destroy()
                 self.mostrar_frame("VentanaFinanzas")
             else:

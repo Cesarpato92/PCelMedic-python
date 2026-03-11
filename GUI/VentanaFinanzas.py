@@ -3,6 +3,7 @@ from tkinter import messagebox, ttk, filedialog
 from tkcalendar import DateEntry
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
+from Logica.Conexion import Conexion
 from Logica.LogicaFactura import LogicaFactura
 from Logica.LogicaCliente import LogicaCliente
 from openpyxl import Workbook
@@ -17,6 +18,11 @@ class VentanaFinanzas(tk.Frame):
         self.logica_factura = LogicaFactura()
         self.logica_cliente = LogicaCliente()
         
+        # Iniciamos en None para el grafico en Matplotlib
+        self.fig = None
+        self.ax = None
+        self.canvas_grafico = None
+
         # Config grid principal
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
@@ -83,11 +89,13 @@ class VentanaFinanzas(tk.Frame):
         # Botón Exportar Excel
         self.btn_exportar = ttk.Button(self.frame_controles, text="Exportar Clientes (Excel)", command=self.exportar_excel)
         self.btn_exportar.grid(row=0, column=3, rowspan=2, padx=10, pady=10)
-
+        # Boton limpiar
+        self.btn_limpiar = ttk.Button(self.frame_controles, text="Limpiar Gráfico", command=self.limpiar_grafico)
+        self.btn_limpiar.grid(row=0, column=4, rowspan=2, padx=10, pady=10)
         # Frame Gráfico 
         self.frame_grafico = tk.Frame(parent_frame)
         self.frame_grafico.grid(row=1, column=0, pady=10) 
-        self.canvas_grafico = None # Inicializar canvas del gráfico como None
+        self.canvas_grafico = None 
         
         # Frame Datos 
         self.frame_datos = tk.Frame(parent_frame)
@@ -101,6 +109,18 @@ class VentanaFinanzas(tk.Frame):
             messagebox.showwarning("Campos vacíos", "Por favor ingrese ambas fechas.")
             return
 
+        # Conectamos a la BD
+        conexion = Conexion.get_conexion()
+        # Verificamos que no haya una conexion en curso
+        if not conexion.in_transaction:
+            conexion.start_transaction()
+        else:
+            # Si ya hay una hacemos rollback para limpiar
+            conexion.rollback()
+            conexion.start_transaction()
+        # iniciamos el cursor
+        cursor = conexion.cursor()
+
         # Limpiar gráfico 
         if self.canvas_grafico:
             self.canvas_grafico.get_tk_widget().destroy()
@@ -109,21 +129,31 @@ class VentanaFinanzas(tk.Frame):
         # Limpiar datos anteriores
         for widget in self.frame_datos.winfo_children():
             widget.destroy()
+        try:
+            # Obtener datos
+            datos = self.logica_factura.obtener_ventas_por_rango(fecha_inicio, fecha_fin, cursor)
 
-        # Obtener datos
-        datos = self.logica_factura.obtener_ventas_por_rango(fecha_inicio, fecha_fin)
-
-        if not datos:
-            messagebox.showinfo("Info", "No se encontraron datos en el rango seleccionado.")
-            return
+            if not datos:
+                messagebox.showinfo("Info", "No se encontraron datos en el rango seleccionado.")
+                return
+            else:
+                conexion.commit()
+        except Exception as e:
+            # Devolvemos todo 
+            conexion.rollback()
+            messagebox.showwarning("Aviso", f"Ocurrió un error generar el grafico: {e}")
+        finally:
+            if cursor:
+                # Liberamos cursor para la memoria del servidor
+                cursor.close()
 
         #mostrar formato sin hora
-        def format_date(d):
+        def formato_fecha(d):
             if hasattr(d, 'strftime'):
                 return d.strftime('%Y-%m-%d')
             return str(d).split()[0] 
 
-        dias = [format_date(x[0]) for x in datos]
+        dias = [formato_fecha(x[0]) for x in datos]
         ventas = [x[1] if x[1] else 0 for x in datos]
         repuestos = [x[2] if x[2] else 0 for x in datos]
 
@@ -152,11 +182,9 @@ class VentanaFinanzas(tk.Frame):
         self.canvas_grafico = FigureCanvasTkAgg(fig, master=self.frame_grafico)
         self.canvas_grafico.draw()
         self.canvas_grafico.get_tk_widget().pack(side=tk.TOP, padx=10, pady=10)
-        
-        
+ 
         tk.Label(self.frame_datos, text="Detalle de Movimientos:", font=("Arial", 10, "bold")).pack(anchor="center", pady=(10, 5))
-        
-      
+  
         frame_lista = tk.Frame(self.frame_datos)
         frame_lista.pack(anchor="center")
         
@@ -166,7 +194,7 @@ class VentanaFinanzas(tk.Frame):
         for dia, venta, repuesto in datos:
             v = venta if venta else 0
             r = repuesto if repuesto else 0
-            d_str = format_date(dia)
+            d_str = formato_fecha(dia)
             lbl = tk.Label(frame_lista, text=f"{d_str:<12} | ${v:>11,.0f} | ${r:>11,.0f}", font=("Consolas", 9))
             lbl.pack(anchor="w")
 
@@ -187,10 +215,8 @@ class VentanaFinanzas(tk.Frame):
             ws = wb.active
             ws.title = "Clientes"
             
-           
             ws.append(["Nombre", "Email", "Celular"])
             
-          
             for cliente in clientes:
                 ws.append([cliente[0], cliente[1], cliente[2]])
                 
@@ -198,3 +224,30 @@ class VentanaFinanzas(tk.Frame):
             messagebox.showinfo("Éxito", f"Archivo exportado correctamente en:\n{filename}")
         except Exception as e:
             messagebox.showerror("Error", f"Error al generar Excel: {e}")
+
+
+    def limpiar_grafico(self):
+        try:
+            # Limpiar el canvas del gráfico
+            if hasattr(self, 'canvas_grafico') and self.canvas_grafico:
+                self.canvas_grafico.get_tk_widget().destroy()
+                self.canvas_grafico = None
+            
+            # Limpiar la figura
+            if hasattr(self, 'fig') and self.fig:
+                self.fig.clear()
+                import matplotlib.pyplot as plt
+                plt.close(self.fig)
+                self.fig = None
+                self.ax = None
+            
+            # Limpiar detalles de movimiento
+            if hasattr(self, 'frame_datos'):
+                # Destruir todos los widgets
+                for widget in self.frame_datos.winfo_children():
+                    widget.destroy()
+            
+            # Actualizacion interfaz
+            self.update_idletasks()
+        except Exception as e:
+            messagebox.ERROR("Error", f"Error al limpiar grafico {e}")
