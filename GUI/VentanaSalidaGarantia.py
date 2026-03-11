@@ -125,6 +125,7 @@ class VentanaSalidaGarantia(tk.Frame):
             garantia = self.garantia.obtener_garantia_por_id(id_garantia, cursor)
             if not garantia:
                 messagebox.showinfo("No encontrado", "No se encontró la garantía")
+                self.limpiar_campos()
                 return
                
             self.garantia_actual = garantia

@@ -14,7 +14,7 @@ class ModeloGarantia:
     def __str__(self):
         return (f"Garantía: {self._id_garantia} (Estado: {self._estado}, "
                 f"Observaciones: {self._observaciones}, Fecha Inicio: {self._fecha_inicio}, "
-                f"Fecha Fin: {self._fecha_fin})")
+                f"Fecha Fin: {self._fecha_fin}), Comentarios Finales: f{self.comentarios_finales}")
     
 
     "Getters y Setters"

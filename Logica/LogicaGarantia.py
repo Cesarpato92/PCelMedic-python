@@ -19,19 +19,32 @@ class LogicaGarantia:
     
     def validar_id(self, id_garantia):
         if not id_garantia or id_garantia.strip() == "":
-            messagebox.showerror("Error", "el id de garantia no puede estar vacía.")
+            messagebox.showerror("Error", "El id de garantía no puede estar vacío.")
             return False
-        if not id_garantia.isdigit():
-            messagebox.showerror("Error", "El id solo debe de contener numeros.")
+            
+        if not id_garantia.strip().isdigit():
+            messagebox.showerror("Error", "El id solo debe contener números.")
             return False
-        if len(id_garantia.strip()) < 0:
-            messagebox.showerror("Error", "El id debe ser un numero mayor a cero (0)")
+            
+        # Convertir a entero para comparaciones numéricas
+        try:
+            id_num = int(id_garantia.strip())
+        except ValueError:
+            messagebox.showerror("Error", "El id debe ser un número válido.")
             return False
-        # Validacion de INT que no supere el valor maximo
-        if id_garantia.strip() > 4294967295:
-            messagebox.showerror("Error", "valor muy largo.")
+            
+        if id_num <= 0:
+            messagebox.showerror("Error", "El id debe ser un número mayor a cero.")
             return False
+            
+        # comparar entero con entero
+        MAX_ID = 4294967295
+        if id_num > MAX_ID:
+            messagebox.showerror("Error", f"El id no puede ser mayor a {MAX_ID}.")
+            return False
+            
         return True
     
     def validar_campos(self, modelo_garantia):
-        pass
+        # TODO: Implementar validación de campos del modelo
+        return True

@@ -8,6 +8,7 @@ from Logica.LogicaDispositivo import LogicaDispositivo
 from Logica.LogicaReparacion import LogicaReparacion
 from Logica.LogicaFactura import LogicaFactura
 from Logica.GeneradorPDF import GeneradorPDF
+from Logica.Conexion import Conexion
 from Modelo.ModeloFactura import ModeloFactura
 import os
 
@@ -94,7 +95,18 @@ class VentanaFactura(tk.Frame):
             self.limpiar_campos()
             return
 
-        factura = self.factura.obtener_factura_por_id_reparacion(self.reparacion_model.id_reparacion)
+        # Conectamos a la BD
+        conexion = Conexion.get_conexion()
+        # Verificamos que no haya una conexion en curso
+        if not conexion.in_transaction:
+            conexion.start_transaction()
+        else:
+            # Si ya hay una hacemos rollback para limpiar
+            conexion.rollback()
+            conexion.start_transaction()
+        # iniciamos el cursor
+        cursor = conexion.cursor()
+        factura = self.factura.obtener_factura_por_id_reparacion(self.reparacion_model.id_reparacion, cursor)
         if factura:
             messagebox.showwarning("Atención", "Ya se genero la factura")
             return
@@ -116,36 +128,53 @@ class VentanaFactura(tk.Frame):
                  factura_model.total = 0.0
             
             # Guardar en BD
-            id_factura = self.factura.agregar_factura(factura_model)
+            id_factura = self.factura.agregar_factura(factura_model, cursor)
             
             if id_factura:
+                #aceptamos la transaccion
+                conexion.commit()
                 # Generar PDF
                 ruta = self.generador_pdf.generar_factura(self.cliente_model, self.dispositivo_model, self.reparacion_model, id_factura)
                 messagebox.showinfo("Éxito", "Factura generada exitosamente")
                 os.startfile(ruta)
                 self.limpiar_campos()
-            else:
-                 messagebox.showerror("Error", "No se pudo guardar la factura en la base de datos")
+            
                  
         except Exception as e:
+            conexion.rollback()
             messagebox.showerror("Error", f"No se pudo generar la factura: {e}")
+        finally:
+            if cursor:
+                cursor.close()
 
     def buscar_reparacion(self):
         id_reparacion = self.entrada_id_reparacion.get().strip()
         if not id_reparacion:
             messagebox.showwarning("Atencion", "Ingrese un ID de reparacion")
             return
-        
+        # Conectamos a la BD
+        conexion = Conexion.get_conexion()
+        # Verificamos que no haya una conexion en curso
+        if not conexion.in_transaction:
+            conexion.start_transaction()
+        else:
+            # Si ya hay una hacemos rollback para limpiar
+            conexion.rollback()
+            conexion.start_transaction()
+        # iniciamos el cursor
+        cursor = conexion.cursor()
         try:
-            reparacion = self.reparacion.obtener_reparacion_por_id(id_reparacion)
+            reparacion = self.reparacion.obtener_reparacion_por_id(id_reparacion, cursor)
             if not reparacion:
                 messagebox.showinfo("No encontrado", "No se encontro la reparacion")
                 return
             
             # Obtener datos relacionales
-            dispositivo = self.dispositivo.obtener_dispositivo_por_id(reparacion.id_dispositivo)
-            cliente = self.cliente.obtener_cliente_por_cedula(dispositivo.id_cliente)
-           
+            dispositivo = self.dispositivo.obtener_dispositivo_por_id(reparacion.id_dispositivo, cursor)
+            cliente = self.cliente.obtener_cliente_por_cedula(dispositivo.id_cliente, cursor)
+            
+            if cliente:
+                conexion.commit()
             # Guardar los datos para el reporte
             self.reparacion_model = reparacion
             self.cliente_model = cliente
@@ -161,13 +190,18 @@ class VentanaFactura(tk.Frame):
             self.entrada_tipo_reparacion.config(text=f"{dispositivo.tipo_reparacion}")
             self.txt_observaciones_entrada.config(state="normal")
             self.txt_observaciones_entrada.delete(1.0, tk.END)
-            self.txt_observaciones_entrada.insert(tk.END, reparacion.comentarios)
+            # Validamos que no sea None
+            comentarios = reparacion.comentarios if reparacion.comentarios is not None else "SIN COMENTARIOS ESCRITOS POR EL TECNICO AUN"
+            self.txt_observaciones_entrada.insert("1.0", str(comentarios))
+           
             self.txt_observaciones_entrada.config(state="disabled")
-            
-        
 
         except Exception as e:
+            conexion.rollback()
             messagebox.showerror(f"Error al buscar la reparacion {id_reparacion}", str(e))
+        finally:
+            if cursor:
+                cursor.close()
 
     def limpiar_campos(self):
         self.entrada_id_reparacion.delete(0, tk.END)
