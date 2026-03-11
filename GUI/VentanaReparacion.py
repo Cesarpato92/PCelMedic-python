@@ -7,6 +7,7 @@ from Modelo.ModeloReparacion import ModeloReparacion
 from Logica.LogicaCliente import LogicaCliente
 from Logica.LogicaDispositivo import LogicaDispositivo
 from Logica.LogicaReparacion import LogicaReparacion
+from Logica.Conexion import Conexion
 
 class VentanaReparacion(tk.Frame):
     def __init__(self, master, controller, **kwargs):
@@ -176,7 +177,7 @@ class VentanaReparacion(tk.Frame):
         frame_btn_derecha = ttk.Frame(footer_frame)
         frame_btn_derecha.grid(row=0, column=2, sticky="e")        
        
-        ttk.Button(frame_btn_derecha, text="Cancelar", command=lambda: self.btn_cancelar()).grid(row=0, column=2, padx=5, pady=5)
+        ttk.Button(frame_btn_derecha, text="Cancelar", command=lambda: self.cancelar_accion()).grid(row=0, column=2, padx=5, pady=5)
 
         self.deshabilitar_entradas()
         self.entrada_id_reparacion.focus()
@@ -193,54 +194,71 @@ class VentanaReparacion(tk.Frame):
 
     # Métodos de la clase 
     def btn_guardar(self):
-        try:
-            id_reparacion = self.entrada_id_reparacion.get().strip()
-            comen_tec = self.entrada_comentarios_tec.get("1.0", tk.END).strip()
-            costo_refaccion = self.entrada_refaccion.get().strip()
+        id_reparacion = self.entrada_id_reparacion.get().strip()
+        comen_tec = self.entrada_comentarios_tec.get("1.0", tk.END).strip()
+        costo_refaccion = self.entrada_refaccion.get().strip()
 
                             
-            # Validaciones mejoradas
-            if not comen_tec:  # Esto cubre None, "" y strings vacíos
-                messagebox.showwarning("Advertencia", "El campo de comentarios es obligatorio y no puede estar vacío")
-                return
+        # Validaciones 
+        if not comen_tec: 
+            messagebox.showwarning("Advertencia", "El campo de comentarios es obligatorio y no puede estar vacío")
+            return
                 
-            if not costo_refaccion:  # Esto cubre None, "" y strings vacíos
-                messagebox.showwarning("Advertencia", "El campo de costo de repuestos es obligatorio y no puede estar vacío")
-                return
+        if not costo_refaccion:  
+            messagebox.showwarning("Advertencia", "El campo de costo de repuestos es obligatorio y no puede estar vacío")
+            return
             
-            # Validar que el costo sea numérico
-            try:
-                costo_float = float(costo_refaccion)
-                if costo_float < 0:
-                    messagebox.showwarning("Advertencia", "El costo de repuestos no puede ser negativo")
-                    return
-            except ValueError:
+        # Validar que el costo sea numérico
+        try:
+            costo_float = float(costo_refaccion)
+            if costo_float < 0:
+                messagebox.showwarning("Advertencia", "El costo de repuestos no puede ser negativo")
+                return
+        except ValueError:
                 messagebox.showwarning("Advertencia", "El campo de costo de repuestos debe ser un número válido")
                 return
-            if self.var_tipo_rep.get() == "NO":
+        
+        if self.var_tipo_rep.get() == "NO":
                 messagebox.showwarning("Advertencia", "Debe seleccionar si el equipo fue reparado o no")
                 return
-            else:
-                # Crear y configurar el objeto
-                reparacion_obj = ModeloReparacion()
-                reparacion_obj.id_reparacion = id_reparacion
-                reparacion_obj.comentarios = comen_tec
-                reparacion_obj.costo_repuestos = costo_float
-                reparacion_obj.estado = "Completada"
+
+        # Conectamos a la BD
+        conexion = Conexion.get_conexion()
+        # Verificamos que no haya una conexion en curso
+        if not conexion.in_transaction:
+            conexion.start_transaction()
+        else:
+            # Si ya hay una hacemos rollback para limpiar
+            conexion.rollback()
+            conexion.start_transaction()
+        # iniciamos el cursor
+        cursor = conexion.cursor()
+       
+        try:
+            # Crear y configurar el objeto
+            reparacion_obj = ModeloReparacion()
+            reparacion_obj.id_reparacion = id_reparacion
+            reparacion_obj.comentarios = comen_tec
+            reparacion_obj.costo_repuestos = costo_float
+            reparacion_obj.estado = "Completada"
                 
-                # Llamar al método de actualización
-                resultado = self.reparacion.actualizar_estado_reparacion(reparacion_obj)
+            # Llamar al método de actualización
+            resultado = self.reparacion.actualizar_estado_reparacion(reparacion_obj, cursor)
                 
-                if resultado:
-                    
-                    messagebox.showinfo("Éxito", "Reparación actualizada exitosamente.")
-                    self.btn_limpiar()
-                    self.deshabilitar_entradas()
+            if resultado:
+                # Aceptamos la transaccion
+                conexion.commit()
+                messagebox.showinfo("Éxito", "Reparación actualizada exitosamente.")
+                self.btn_limpiar()
+                self.deshabilitar_entradas()
                 
                     
         except Exception as e:
+            conexion.rollback()
             messagebox.showerror("Error", f"No se pudo actualizar la reparación. Error: {str(e)}")
-
+        finally:
+            if cursor:
+                cursor.close()
 
     def buscar_id_reparacion(self):
         if not self.verificar_id_reparacion():
@@ -250,9 +268,19 @@ class VentanaReparacion(tk.Frame):
         
         # Limpiar campos antes de buscar
         self.limpiar_campos()
-
+        # Conectamos a la BD
+        conexion = Conexion.get_conexion()
+        # Verificamos que no haya una conexion en curso
+        if not conexion.in_transaction:
+            conexion.start_transaction()
+        else:
+            # Si ya hay una hacemos rollback para limpiar
+            conexion.rollback()
+            conexion.start_transaction()
+        # iniciamos el cursor
+        cursor = conexion.cursor()
         try:
-            resultado_reparacion = self.reparacion.obtener_reparacion_por_id(id_rep)
+            resultado_reparacion = self.reparacion.obtener_reparacion_por_id(id_rep, cursor)
             if not resultado_reparacion:
                 messagebox.showinfo("No encontrado", f"La reparación con ID {id_rep} no se encuentra en la base de datos.")
                 return
@@ -267,7 +295,7 @@ class VentanaReparacion(tk.Frame):
             
             id_disp = resultado_reparacion.id_dispositivo
             
-            resultado_dispositivo = self.dispositivo.obtener_dispositivo_por_id(id_disp)
+            resultado_dispositivo = self.dispositivo.obtener_dispositivo_por_id(id_disp, cursor)
             if resultado_dispositivo:
                                
                 # Insertar datos del dispositivo
@@ -281,10 +309,11 @@ class VentanaReparacion(tk.Frame):
                 self.insertar_texto_seguro(self.entrada_comentarios, resultado_dispositivo.comentarios)
 
                 id_cliente = resultado_dispositivo.id_cliente
-                resultado_cliente = self.cliente.obtener_cliente_por_cedula(id_cliente)
+                resultado_cliente = self.cliente.obtener_cliente_por_cedula(id_cliente, cursor)
 
                 if resultado_cliente:
-                                        
+                    # aceptamos la transaccion
+                    conexion.commit()                 
                     # Insertar datos del cliente
                     self.insertar_valor_seguro(self.entrada_cedula, resultado_cliente.cedula)
                     self.insertar_valor_seguro(self.entrada_nombre, resultado_cliente.nombre)
@@ -299,7 +328,11 @@ class VentanaReparacion(tk.Frame):
             self.habilitar_entrada()
 
         except Exception as e:
+            conexion.rollback()
             messagebox.showerror("ERROR", f"Error al cargar los datos: {e}")
+        finally:
+            if cursor:
+                cursor.close()
 
     def habilitar_temporalmente(self):
         """Habilita temporalmente todos los campos para poder insertar valores"""

@@ -44,6 +44,7 @@ class GarantiaDAO:
             valores = (modelo_garantia.estado, modelo_garantia.fecha_fin, modelo_garantia.precio_insumos, modelo_garantia.comentarios_finales, modelo_garantia.id_garantia)
             
             cursor.execute(sql, valores)
+            return cursor.rowcount()
             
             
             

@@ -24,39 +24,14 @@ class ReparacionDAO:
             return id_reparacion
      
     
-    def actualizar_estado_reparacion(self, modelo_reparacion):
-        conexion = None
-        cursor = None
-        try:
-            conexion = conexion_bd.Conexion.get_conexion()
-            cursor = conexion.cursor()
+    def actualizar_estado_reparacion(self, modelo_reparacion, cursor):
+        
 
             sql = "UPDATE reparacion SET estado = %s, costo_repuesto = %s, comentarios = %s WHERE id_reparacion = %s"
             valores = (modelo_reparacion.estado, modelo_reparacion.costo_repuestos, modelo_reparacion.comentarios, modelo_reparacion.id_reparacion,)
         
             cursor.execute(sql, valores)
-            conexion.commit()
-        
-            if cursor.rowcount > 0:
-                messagebox.showinfo("Éxito", "Estado de la reparación actualizado exitosamente.")
-                return True  # Retornar True solo si se actualizó
-            else:
-                messagebox.showwarning("Advertencia", "No se encontró la reparación para actualizar")
-                return False
-            
-        except mysql.connector.Error as e:
-            messagebox.showerror("Error", f"Error SQL: {e}")
-            if conexion:
-                conexion.rollback()
-            return False  # Asegurar que retorne False en caso de error
-        except Exception as e:
-            messagebox.showerror("Error", f"Error inesperado: {e}")
-            return False  # Asegurar que retorne False en caso de error
-        finally:
-            if cursor:
-                cursor.close()
-            if conexion:
-                conexion.close()
+            return cursor.rowcount
 
     def obtener_reparacion_por_id(self, id_reparacion, cursor):
         
