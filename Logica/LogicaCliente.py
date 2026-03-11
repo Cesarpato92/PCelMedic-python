@@ -15,24 +15,19 @@ class LogicaCliente:
     def agregar_cliente(self, modelo_cliente, cursor = None):
         if self.validacion_datos(modelo_cliente):
             return self.cliente_dao.agregar_cliente(modelo_cliente, cursor)
-        else:
-            return None 
+        
         
     def obtener_cliente_por_cedula(self, cedula, cursor):
         if self.validacion_cedula(cedula):
             return self.cliente_dao.obtener_cliente_por_cedula(cedula, cursor)
-        else:
-            return False
-        
+
     def verificacion_existencia_cliente(self, cedula):
         return self.cliente_dao.verificar_existencia_cliente(cedula)
     
     def actualizar_cliente(self, modelo_cliente):
         if self.validacion_datos(modelo_cliente):
             return self.cliente_dao.actualizar_cliente(modelo_cliente)
-        else:
-            return None
-
+    
     def validacion_datos(self, modelo_cliente):
         # Validaciones básicas
         # cédula: debe existir, no estar vacía y contener solo dígitos
@@ -62,7 +57,7 @@ class LogicaCliente:
             )
             return False
         
-        if len(celular) < 10 and len(celular)> 15:
+        if len(celular) < 10 or len(celular)> 15:
             messagebox.showerror(
                 "Error", "El número de celular debe tener entre 10 y 15 digitos como maximo."
             )
@@ -77,6 +72,7 @@ class LogicaCliente:
             messagebox.showerror("Error", "El correo electrónico es demasiado largo.")
             return False
         return True
+
     def validacion_nombre(self, nombre):
         if not nombre or nombre.strip() == "":
             messagebox.showerror("Error", "El nombre es obligatorio.")
@@ -88,6 +84,7 @@ class LogicaCliente:
             )
             return False
         return True
+
     def validacion_cedula(self, cedula):
     # Verificamos que la cédula no esté vacía
         if not cedula or cedula.strip() == "":

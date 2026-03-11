@@ -9,6 +9,8 @@ from GUI.VentanaGarantia import VentanaGarantia
 from GUI.VentanaFactura import VentanaFactura
 from GUI.VentanaFinanzas import VentanaFinanzas
 
+from Utilidades.ManejadorPassword import ManejadorPassword
+
 class VentanaPrincipal(tk.Tk):
    
     def __init__(self):
@@ -18,7 +20,8 @@ class VentanaPrincipal(tk.Tk):
         self.geometry("1200x800")
         self.state('zoomed') 
        
-        self.resizable(True, True) 
+        self.resizable(True, True)
+
         # Define un estilo para la navbar 
         style = ttk.Style()
         style.configure("Navbar.TFrame", background="#f0f0f0")
@@ -67,6 +70,7 @@ class VentanaPrincipal(tk.Tk):
         ttk.Button(navbar, text="Gestión facturas", command=lambda: self.mostrar_frame("VentanaFactura")).pack(side="left", padx=6, pady=8)
         ttk.Button(navbar, text="Finanzas", command=lambda: self.validacion_admin()).pack(side="left", padx=6, pady=8)
 
+
     def mostrar_frame(self, page_name):
         # Muestra el frame para le nombre de la pagina dado
         frame = self.frames.get(page_name)
@@ -75,8 +79,15 @@ class VentanaPrincipal(tk.Tk):
         else:
             messagebox.showerror("Error de navegación", f"No se encontró el frame: {page_name}")
 
+      
     def validacion_admin(self):
         
+        #intentamos leer el archivo de configuracion de usuario Admin
+        ruta_actual = os.path.dirname(__file__)  # Directorio donde está VentanaPrincipal
+        ruta_raiz = os.path.dirname(ruta_actual)  # Directorio raíz del proyecto
+        ruta_config = os.path.join(ruta_raiz, '.configAdmin')
+
+
         # Creacion de la ventana de autenticacion
         login = tk.Toplevel(self) 
         login.title("Autenticación requerida")
@@ -84,12 +95,8 @@ class VentanaPrincipal(tk.Tk):
         login.grab_set()
         login.resizable(False, False)
 
-        #intentamos leer el archivo de configuracion de usuario Admin
-        ruta_actual = os.path.dirname(__file__)  # Directorio donde está VentanaPrincipal
-        ruta_raiz = os.path.dirname(ruta_actual)  # Directorio raíz del proyecto
-        ruta_config = os.path.join(ruta_raiz, '.configAdmin')
-        
-        # Leer credenciales del archivo .configAdmin
+      
+         # Leer credenciales del archivo .configAdmin
         try:
             with open(ruta_config, 'r') as archivo:
                 config = {}
@@ -99,15 +106,14 @@ class VentanaPrincipal(tk.Tk):
                         config[key] = value
                 
                 admin_user = config.get('USER', '')
-                admin_pass = config.get('PASSWORD', '')
+                admin_pass_hash = config.get('PASSWORD', '')  
         except FileNotFoundError:
             messagebox.showerror("Error", f"No se encontró el archivo de configuración en:\n{ruta_config}")
             return
         except Exception as e:
             messagebox.showerror("Error", f"Error al leer configuración: {e}")
             return
-        
-        
+
         ttk.Label(login, text="Usuario:").grid(row=0, column=0, padx=8, pady=8)
         user_var = tk.StringVar() 
         ttk.Entry(login, textvariable=user_var).grid(row=0, column=1, padx=8, pady=8)
@@ -117,10 +123,10 @@ class VentanaPrincipal(tk.Tk):
         ttk.Entry(login, textvariable=pwd_var, show="*").grid(row=1, column=1, padx=8, pady=8)
 
         def on_ok():
-            """Valida credenciales y abre VentanaFinanzas si son correctas."""
+            # Valida credenciales y abre VentanaFinanzas si son correctas.
             user = user_var.get().strip()
             pwd = pwd_var.get()
-            if user == admin_user and pwd == admin_pass:
+            if user == admin_user and ManejadorPassword.verificar_password(pwd, admin_pass_hash):
                 login.destroy()
                 self.mostrar_frame("VentanaFinanzas")
             else:
@@ -131,7 +137,7 @@ class VentanaPrincipal(tk.Tk):
         btn_ok.grid(row=2, column=0, padx=8, pady=10)
 
         def on_cancel():
-            """Cierra el diálogo sin autenticar."""
+            # Cierra el diálogo sin autenticar.
             login.destroy()
 
         btn_ok = ttk.Button(login, text="Ingresar", command=on_ok)
