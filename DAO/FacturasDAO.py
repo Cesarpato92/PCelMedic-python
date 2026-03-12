@@ -8,65 +8,43 @@ class FacturasDAO:
         pass
 
     def agregar_factura(self, modelo_factura, cursor):
-        
-        id_factura = None
-
-        conexion = conexion_bd.Conexion.get_conexion()
-        cursor = conexion.cursor()
-        sql = "INSERT INTO factura (fecha, total, id_reparacion) VALUES (%s,%s,%s)"
+        sql = "INSERT INTO factura (fecha, total, id_reparacion) VALUES (%s, %s, %s)"
         valores = (modelo_factura.fecha, modelo_factura.total, modelo_factura.id_reparacion)
-        cursor.execute(sql,valores)
-        conexion.commit()
-        if cursor.rowcount > 0:
-            messagebox.showinfo("Exito", "Factura agregada correctamente")
-            id_factura = cursor.lastrowid
-                
-        else:
-            messagebox.showwarning("Advertencia", "No se pudo agregar la factura")
-            return None
-        
-        return id_factura
-    
-    # Obtiene la informacion de la factura
-    def obtener_factura_por_id(self, id_factura, cursor):
-        
-        factura_encontrada = None
-  
-        sql = "SELECT fecha, total, id_reparacion WHERE id_factura = %s"
-        valores = (id_factura)
         cursor.execute(sql, valores)
-
-        # Obtiene el primer resultado
+        
+        if cursor.rowcount > 0:
+            return cursor.lastrowid
+        return None
+    
+    def obtener_factura_por_id(self, id_factura, cursor):
+        factura_encontrada = None
+        sql = "SELECT id_factura, fecha, total, id_reparacion FROM factura WHERE id_factura = %s"
+        valores = (id_factura,)
+        cursor.execute(sql, valores)
         resultado = cursor.fetchone()
 
         if resultado:
             factura_encontrada = ModeloFactura()
-            factura_encontrada.fecha = resultado[0]
-            factura_encontrada.total = resultado[1]
-            factura_encontrada.id_reparacion = resultado[2]
+            factura_encontrada.id_factura = resultado[0]
+            factura_encontrada.fecha = resultado[1]
+            factura_encontrada.total = resultado[2]
+            factura_encontrada.id_reparacion = resultado[3]
         
         return factura_encontrada
 
-
     def obtener_factura_por_id_reparacion(self, id_reparacion, cursor):
-        
         factura_encontrada = None
-        
-        conexion = conexion_bd.Conexion.get_conexion()
-        cursor = conexion.cursor()
-
-        sql = "SELECT fecha, total, id_reparacion FROM factura WHERE id_reparacion = %s"
+        sql = "SELECT id_factura, fecha, total, id_reparacion FROM factura WHERE id_reparacion = %s"
         valores = (id_reparacion,)
         cursor.execute(sql, valores)
-
-        # Obtiene el primer resultado
         resultado = cursor.fetchone()
 
         if resultado:
             factura_encontrada = ModeloFactura()
-            factura_encontrada.fecha = resultado[0]
-            factura_encontrada.total = resultado[1]
-            factura_encontrada.id_reparacion = resultado[2]
+            factura_encontrada.id_factura = resultado[0]
+            factura_encontrada.fecha = resultado[1]
+            factura_encontrada.total = resultado[2]
+            factura_encontrada.id_reparacion = resultado[3]
         
         return factura_encontrada
 

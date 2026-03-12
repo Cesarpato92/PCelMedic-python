@@ -153,29 +153,11 @@ class VentanaReparacion(tk.Frame):
         
         # Configuramos el footer con 3 columnas que se expanden proporcionalmente
         footer_frame.columnconfigure(0, weight=1)
-        footer_frame.columnconfigure(1, weight=1)
-        footer_frame.columnconfigure(2, weight=1)
-        
-        # Botones Izquierda 
-        frame_btn_izquierda = ttk.Frame(footer_frame)
-        frame_btn_izquierda.grid(row=0, column=0, sticky="w")        
-        
-        ttk.Button(frame_btn_izquierda, text="Limpiar", command=lambda: self.btn_limpiar()).grid(row=0, column=0, padx=5, pady=5)
-        
-        # Botones Centro 
-        frame_btn_centro = ttk.Frame(footer_frame)
-        frame_btn_centro.grid(row=0, column=1, sticky="nsew")
-        
-        frame_btn_centro.columnconfigure(0, weight=1)
-        self.Btn_guardar = ttk.Button(frame_btn_centro, text="Guardar", command=lambda: self.btn_guardar())
-        self.Btn_guardar.grid(row=0, column=0, sticky="ew", padx=5, pady=5) 
-        
-        # Botones Derecha 
-        frame_btn_derecha = ttk.Frame(footer_frame)
-        frame_btn_derecha.grid(row=0, column=2, sticky="e")        
-       
-        ttk.Button(frame_btn_derecha, text="Cancelar", command=lambda: self.cancelar_accion()).grid(row=0, column=2, padx=5, pady=5)
-
+        frame_btn = ttk.Frame(footer_frame)
+        frame_btn.grid(row=0, column=0, sticky="e")        
+        self.Btn_guardar = ttk.Button(frame_btn, text="Guardar", command=lambda: self.btn_guardar())
+        self.Btn_guardar.grid(row=0, column=1, sticky="ew", padx=5, pady=5) 
+        ttk.Button(frame_btn, text="Limpiar", command=lambda: self.cancelar_accion()).grid(row=0, column=2, padx=5, pady=5)
         self.deshabilitar_entradas()
         self.entrada_id_reparacion.focus()
         

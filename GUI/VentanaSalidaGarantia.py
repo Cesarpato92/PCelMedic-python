@@ -98,9 +98,11 @@ class VentanaSalidaGarantia(tk.Frame):
         frame_botones = ttk.Frame(contenedor, padding="10")
         frame_botones.grid(row=4, column=0, columnspan=2, sticky="ew")
         
-        ttk.Button(frame_botones, text="Limpiar", command=self.limpiar_campos).pack(side=tk.LEFT, padx=5)
+        
         self.btn_entregar = ttk.Button(frame_botones, text="Confirmar Entrega", command=self.entregar_garantia, state="disabled")
-        self.btn_entregar.pack(side=tk.RIGHT, padx=5)
+        self.btn_entregar.grid(row=0, column=0, padx=5)
+        ttk.Button(frame_botones, text="Limpiar", command=self.limpiar_campos).grid(row=0, column=1, padx=5)
+       
         
         
 

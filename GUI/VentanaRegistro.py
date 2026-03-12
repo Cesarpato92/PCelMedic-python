@@ -136,18 +136,12 @@ class VentanaRegistro(tk.Frame):
         inferior_frame.columnconfigure(1, weight=1)
         inferior_frame.columnconfigure(2, weight=1)
 
-        # Botones Izquierda 
-        frame_btn_izquierda = ttk.Frame(inferior_frame)
-        frame_btn_izquierda.grid(row=0, column=0, sticky="w")
-        ttk.Button(frame_btn_izquierda, text="Limpiar Campos", command=self.limpiar_campos).grid(row=0, column=0, padx=5, pady=5)
+      
+        frame_btn = ttk.Frame(inferior_frame)
+        frame_btn.grid(row=0, column=2, sticky="e")
+        ttk.Button(frame_btn, text="Guardar Registro", command=self.guardar).grid(row=0, column=0, padx=5, pady=5) 
+        ttk.Button(frame_btn, text="Limpiar Campos", command=self.limpiar_campos).grid(row=0, column=1, padx=5, pady=5)
         
-        # Botones Centro 
-        frame_btn_centro = ttk.Frame(inferior_frame)
-        frame_btn_centro.grid(row=0, column=1, sticky="nsew")
-        frame_btn_centro.columnconfigure(0, weight=1) 
-        Btn_guardar = ttk.Button(frame_btn_centro, text="Guardar Registro", command=self.guardar)
-        Btn_guardar.grid(row=0, column=1, sticky="w", padx=5, pady=5) 
-
        
         self.on_tipo_contrasena_change()
         self.entrada_cedula.focus()

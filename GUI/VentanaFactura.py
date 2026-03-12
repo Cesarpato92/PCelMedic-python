@@ -98,8 +98,19 @@ class VentanaFactura(tk.Frame):
         try:
             with TransaccionConexion() as (cursor, conexion):
                 factura = self.factura.obtener_factura_por_id_reparacion(self.reparacion_model.id_reparacion, cursor)
+
+                # validamos si ya existe una factura para esta reparación
                 if factura:
-                    messagebox.showwarning("Atención", "Ya se genero la factura")
+                    # Si ya existe una factura para esta reparación, preguntar si se desea abrir el PDF
+                    respuesta = messagebox.askyesno("Factura existente", "Ya se generó una factura para esta reparación. ¿Desea abrir una copia del archivo PDF?")
+                    if respuesta:
+                        # Reconstruir ruta del PDF
+                        nombre_archivo = f"Factura_{factura.id_factura}-{self.cliente_model.cedula}.pdf"
+                        ruta = os.path.join("Reportes", nombre_archivo)
+                        if os.path.exists(ruta):
+                            os.startfile(ruta)
+                        else:
+                            messagebox.showwarning("Archivo no encontrado", f"No se encontró el archivo: {nombre_archivo}")
                     return
                 
                 # Crear modelo de factura
@@ -109,7 +120,7 @@ class VentanaFactura(tk.Frame):
                 # Asegurarse de que el total sea float
                 try:
                     if isinstance(self.reparacion_model.precio_reparacion, str):
-                        # Limpiar string de precio si tiene caracteres no numéricos (excepto punto)
+                        # Limpiar string de precio si tiene caracteres no numéricos
                         precio_limpio = ''.join(c for c in self.reparacion_model.precio_reparacion if c.isdigit() or c == '.')
                         factura_model.total = float(precio_limpio)
                     else:
@@ -132,9 +143,6 @@ class VentanaFactura(tk.Frame):
             
         except Exception as e:
             messagebox.showerror("Error", f"No se pudo generar la factura: {e}")
-        finally:
-            if cursor:
-                cursor.close()
 
     def buscar_reparacion(self):
         id_reparacion = self.entrada_id_reparacion.get().strip()
@@ -177,9 +185,6 @@ class VentanaFactura(tk.Frame):
 
         except Exception as e:
             messagebox.showerror(f"Error al buscar la reparacion {id_reparacion}", str(e))
-        finally:
-            if cursor:
-                cursor.close()
 
     def limpiar_campos(self):
         self.entrada_id_reparacion.delete(0, tk.END)
