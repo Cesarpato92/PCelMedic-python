@@ -81,7 +81,7 @@ class VentanaSalidaGarantia(tk.Frame):
         frame_salida.columnconfigure(1, weight=1)
         
         ttk.Label(frame_salida, text="Estado Final:").grid(row=0, column=0, sticky="w", pady=5)
-        self.combo_estado_final = ttk.Combobox(frame_salida, values=["Completada", "Rechazada", "En Proceso"], state="readonly")
+        self.combo_estado_final = ttk.Combobox(frame_salida, values=["Completada", "En Proceso", "Rechazada"], state="readonly")
         self.combo_estado_final.grid(row=0, column=1, sticky="w", pady=5)
         self.combo_estado_final.set("Completada")
         

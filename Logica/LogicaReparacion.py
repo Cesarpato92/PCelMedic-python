@@ -28,8 +28,8 @@ class LogicaReparacion:
             messagebox.showerror("Error", "El comentario es obligatorio.")
             return False
         
-        if modelo_reparacion.repuesto is None or modelo_reparacion.repuesto == "":
-            messagebox.showerror("Error", "El repuesto es obligatorio.")
+        if modelo_reparacion.costo_repuestos is None or modelo_reparacion.costo_repuestos == "":
+            messagebox.showerror("Error", "El costo del repuesto es obligatorio.")
             return False
         return True
 
