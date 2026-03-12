@@ -27,7 +27,7 @@ class LogicaGarantia:
         return Validador.validar_id(id_garantia, "ID de garantía")
 
     def validar_estado(self, estado):
-        estados_validos = ["Completada", "En Proceso", "Rechazada", "En Garantia"]
+        estados_validos = ["Completada", "En Garantia", "Rechazada"]
         if estado not in estados_validos:
             return False, f"El estado '{estado}' no es válido."
         return True, ""
@@ -71,4 +71,4 @@ class LogicaGarantia:
         if not res: return False, msg
         res, msg = self.validar_comentarios_finales(modelo_garantia.comentarios_finales)
         if not res: return False, msg
-        return True, ""
+        return True, ""

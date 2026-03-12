@@ -1,13 +1,10 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
-from Modelo.ModeloCliente import ModeloCliente
-from Modelo.ModeloDispositivo import ModeloDispositivo
-from Modelo.ModeloReparacion import ModeloReparacion
-
 from Logica.LogicaCliente import LogicaCliente
+from Utilidades.TransaccionConexion import TransaccionConexion
 from Logica.LogicaDispositivo import LogicaDispositivo
 from Logica.LogicaReparacion import LogicaReparacion
-from Logica.Conexion import Conexion
+from Modelo.ModeloReparacion import ModeloReparacion
 
 class VentanaReparacion(tk.Frame):
     def __init__(self, master, controller, **kwargs):
@@ -198,68 +195,40 @@ class VentanaReparacion(tk.Frame):
         comen_tec = self.entrada_comentarios_tec.get("1.0", tk.END).strip()
         costo_refaccion = self.entrada_refaccion.get().strip()
 
-                            
-        # Validaciones 
-        if not comen_tec: 
-            messagebox.showwarning("Advertencia", "El campo de comentarios es obligatorio y no puede estar vacío")
+        if not (comen_tec and costo_refaccion):
+            messagebox.showwarning("Advertencia", "Por favor, complete el costo de repuestos y los comentarios del técnico.")
             return
-                
-        if not costo_refaccion:  
-            messagebox.showwarning("Advertencia", "El campo de costo de repuestos es obligatorio y no puede estar vacío")
+        if self.var_tipo_rep.get() == "NO":
+            messagebox.showwarning("Advertencia", "Solo se puede guardar si el equipo esta reparado")
             return
-            
-        # Validar que el costo sea numérico
         try:
             costo_float = float(costo_refaccion)
-            if costo_float < 0:
-                messagebox.showwarning("Advertencia", "El costo de repuestos no puede ser negativo")
-                return
         except ValueError:
-                messagebox.showwarning("Advertencia", "El campo de costo de repuestos debe ser un número válido")
-                return
-        
-        if self.var_tipo_rep.get() == "NO":
-                messagebox.showwarning("Advertencia", "Debe seleccionar si el equipo fue reparado o no")
-                return
+            messagebox.showwarning("Advertencia", "El campo de costo de repuestos debe ser un número válido")
+            return
 
-        # Conectamos a la BD
-        conexion = Conexion.get_conexion()
-        # Verificamos que no haya una conexion en curso
-        if not conexion.in_transaction:
-            conexion.start_transaction()
-        else:
-            # Si ya hay una hacemos rollback para limpiar
-            conexion.rollback()
-            conexion.start_transaction()
-        # iniciamos el cursor
-        cursor = conexion.cursor()
-       
         try:
-            # Crear y configurar el objeto
-            reparacion_obj = ModeloReparacion()
-            reparacion_obj.id_reparacion = id_reparacion
-            reparacion_obj.comentarios = comen_tec
-            reparacion_obj.costo_repuestos = costo_float
-            reparacion_obj.estado = "Completada"
-                
-            # Llamar al método de actualización
-            self.reparacion.actualizar_estado_reparacion(reparacion_obj, cursor)
-                
-            # Aceptamos la transaccion
-            conexion.commit()
-            messagebox.showinfo("Éxito", "Reparación actualizada exitosamente.")
-            self.btn_limpiar()
-            self.deshabilitar_entradas()
+            with TransaccionConexion() as (cursor, conexion):
+                # Crear y configurar el objeto
+                reparacion_obj = ModeloReparacion()
+                reparacion_obj.id_reparacion = id_reparacion
+                reparacion_obj.comentarios = comen_tec
+                reparacion_obj.costo_repuestos = costo_float
+                reparacion_obj.estado = "Completada"
+                    
+                # Llamar al método de actualización
+                self.reparacion.actualizar_estado_reparacion(reparacion_obj, cursor)
+                    
+                # Aceptamos la transaccion
+                conexion.commit()
+                messagebox.showinfo("Éxito", "Reparación actualizada exitosamente.")
+                self.btn_limpiar()
+                self.deshabilitar_entradas()
                 
         except ValueError as ve:
-            conexion.rollback()
             messagebox.showwarning("Aviso", f"Ocurrió un error de validación: {ve}")
         except Exception as e:
-            conexion.rollback()
             messagebox.showerror("Error", f"No se pudo actualizar la reparación. Error: {str(e)}")
-        finally:
-            if cursor:
-                cursor.close()
 
     def buscar_id_reparacion(self):
         if not self.verificar_id_reparacion():
@@ -269,77 +238,62 @@ class VentanaReparacion(tk.Frame):
         
         # Limpiar campos antes de buscar
         self.limpiar_campos()
-        # Conectamos a la BD
-        conexion = Conexion.get_conexion()
-        # Verificamos que no haya una conexion en curso
-        if not conexion.in_transaction:
-            conexion.start_transaction()
-        else:
-            # Si ya hay una hacemos rollback para limpiar
-            conexion.rollback()
-            conexion.start_transaction()
-        # iniciamos el cursor
-        cursor = conexion.cursor()
         try:
-            resultado_reparacion = self.reparacion.obtener_reparacion_por_id(id_rep, cursor)
-            if not resultado_reparacion:
-                messagebox.showinfo("No encontrado", f"La reparación con ID {id_rep} no se encuentra en la base de datos.")
-                return
+            with TransaccionConexion() as (cursor, conexion):
+                resultado_reparacion = self.reparacion.obtener_reparacion_por_id(id_rep, cursor)
+                if not resultado_reparacion:
+                    messagebox.showinfo("No encontrado", f"La reparación con ID {id_rep} no se encuentra en la base de datos.")
+                    return
 
-            # HABILITAR TEMPORALMENTE todos los campos para poder insertar
-            self.habilitar_temporalmente()
+                # HABILITAR TEMPORALMENTE todos los campos para poder insertar
+                self.habilitar_temporalmente()
 
-            # Insertar datos de la reparación
-            self.insertar_valor_seguro(self.entrada_ingreso, resultado_reparacion.fecha_ingreso)
-            self.insertar_valor_seguro(self.entrada_estado, resultado_reparacion.estado)
-            self.insertar_valor_seguro(self.entrada_precio, resultado_reparacion.precio_reparacion)
-            
-            id_disp = resultado_reparacion.id_dispositivo
-            
-            resultado_dispositivo = self.dispositivo.obtener_dispositivo_por_id(id_disp, cursor)
-            if resultado_dispositivo:
-                               
-                # Insertar datos del dispositivo
-                self.insertar_valor_seguro(self.entrada_marca, resultado_dispositivo.marca)
-                self.insertar_valor_seguro(self.entrada_modelo, resultado_dispositivo.version)
-                self.insertar_valor_seguro(self.entrada_tipo_rep, resultado_dispositivo.tipo_reparacion)
-                self.insertar_valor_seguro(self.entrada_tipo_password, resultado_dispositivo.tipo_password)
-                self.insertar_valor_seguro(self.entrada_password, resultado_dispositivo.password)
+                # Insertar datos de la reparación
+                self.insertar_valor_seguro(self.entrada_ingreso, resultado_reparacion.fecha_ingreso)
+                self.insertar_valor_seguro(self.entrada_estado, resultado_reparacion.estado)
+                self.insertar_valor_seguro(self.entrada_precio, resultado_reparacion.precio_reparacion)
                 
-                # Para el campo Text (comentarios)
-                self.insertar_texto_seguro(self.entrada_comentarios, resultado_dispositivo.comentarios)
+                id_disp = resultado_reparacion.id_dispositivo
+                
+                resultado_dispositivo = self.dispositivo.obtener_dispositivo_por_id(id_disp, cursor)
+                if resultado_dispositivo:
+                                   
+                    # Insertar datos del dispositivo
+                    self.insertar_valor_seguro(self.entrada_marca, resultado_dispositivo.marca)
+                    self.insertar_valor_seguro(self.entrada_modelo, resultado_dispositivo.version)
+                    self.insertar_valor_seguro(self.entrada_tipo_rep, resultado_dispositivo.tipo_reparacion)
+                    self.insertar_valor_seguro(self.entrada_tipo_password, resultado_dispositivo.tipo_password)
+                    self.insertar_valor_seguro(self.entrada_password, resultado_dispositivo.password)
+                    
+                    # Para el campo Text (comentarios)
+                    self.insertar_texto_seguro(self.entrada_comentarios, resultado_dispositivo.comentarios)
 
-                id_cliente = resultado_dispositivo.id_cliente
-                resultado_cliente = self.cliente.obtener_cliente_por_cedula(id_cliente, cursor)
+                    id_cliente = resultado_dispositivo.id_cliente
+                    resultado_cliente = self.cliente.obtener_cliente_por_cedula(id_cliente, cursor)
 
-                if resultado_cliente:
-                    # aceptamos la transaccion
-                    conexion.commit()                 
-                    # Insertar datos del cliente
-                    self.insertar_valor_seguro(self.entrada_cedula, resultado_cliente.cedula)
-                    self.insertar_valor_seguro(self.entrada_nombre, resultado_cliente.nombre)
-                    self.insertar_valor_seguro(self.entrada_celular, resultado_cliente.celular)
-                    self.insertar_valor_seguro(self.entrada_email, resultado_cliente.email)
+                    if resultado_cliente:
+                        # aceptamos la transaccion
+                        conexion.commit()                 
+                        # Insertar datos del cliente
+                        self.insertar_valor_seguro(self.entrada_cedula, resultado_cliente.cedula)
+                        self.insertar_valor_seguro(self.entrada_nombre, resultado_cliente.nombre)
+                        self.insertar_valor_seguro(self.entrada_celular, resultado_cliente.celular)
+                        self.insertar_valor_seguro(self.entrada_email, resultado_cliente.email)
+                    else:
+                        messagebox.showwarning("Cliente no encontrado", f"No se encontró el cliente con cédula {id_cliente}.")
                 else:
-                    messagebox.showwarning("Cliente no encontrado", f"No se encontró el cliente con cédula {id_cliente}.")
-            else:
-                messagebox.showwarning("Dispositivo no encontrado", f"No se encontró el dispositivo con ID {id_disp}.")
-            
-            # Restaurar el estado original de los campos (deshabilitar los que correspondan)
-            self.habilitar_entrada()
+                    messagebox.showwarning("Dispositivo no encontrado", f"No se encontró el dispositivo con ID {id_disp}.")
+                
+                # Restaurar el estado original de los campos (deshabilitar los que correspondan)
+                self.habilitar_entrada()
 
         except ValueError as ve:
-            conexion.rollback()
             messagebox.showwarning("Aviso", f"Error de validación: {ve}")
         except Exception as e:
-            conexion.rollback()
             messagebox.showerror("ERROR", f"Error al cargar los datos: {e}")
-        finally:
-            if cursor:
-                cursor.close()
 
     def habilitar_temporalmente(self):
-        """Habilita temporalmente todos los campos para poder insertar valores"""
+        #Habilita temporalmente todos los campos para poder insertar valores
         campos = [self.entrada_cedula,
             self.entrada_ingreso,
             self.entrada_marca,
@@ -364,7 +318,7 @@ class VentanaReparacion(tk.Frame):
                 pass
 
     def insertar_valor_seguro(self, campo, valor):
-        """Inserta valores de forma segura en campos Entry"""
+        # Inserta valores de forma segura en campos 
         try:
             if valor is None:
                 valor = ""
@@ -374,7 +328,7 @@ class VentanaReparacion(tk.Frame):
             print(f"ERROR insertando en {campo}: {e}")
 
     def insertar_texto_seguro(self, campo_text, valor):
-        """Inserta valores de forma segura en campos Text"""
+        # Inserta valores de forma segura en campos 
         try:
             if valor is None:
                 valor = ""
@@ -430,7 +384,7 @@ class VentanaReparacion(tk.Frame):
             pass
 
     def habilitar_entrada(self):
-        """Habilita los campos después de cargar los datos"""
+        #Habilita los campos después de cargar los datos
         
         campos_habilitados = [
             self.entrada_refaccion,

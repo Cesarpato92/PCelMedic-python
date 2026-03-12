@@ -1,8 +1,7 @@
 import re
 
 class Validador:
-    """Clase utilitaria para validaciones comunes en el sistema."""
-    
+        
     @staticmethod
     def validar_email(email):
         if not email:
@@ -20,8 +19,8 @@ class Validador:
             return False, "El número de celular es obligatorio."
         if not celular.isdigit():
             return False, "El número de celular debe contener solo dígitos."
-        if len(celular) != 10:
-            return False, "El número de celular debe tener exactamente 10 dígitos."
+        if len(celular) > 15 or len(celular) < 7:
+            return False, "El número de celular debe tener entre 7 y 15 dígitos."
         return True, ""
 
     @staticmethod

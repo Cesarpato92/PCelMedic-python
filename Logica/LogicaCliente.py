@@ -44,8 +44,5 @@ class LogicaCliente:
     def validacion_cedula(self, cedula):
         return Validador.validar_cedula(cedula)
 
-    def obtener_todos_clientes(self):
-        return self.cliente_dao.obtener_todos_clientes()
-
-    def obtener_todos_clientes(self):
-        return self.cliente_dao.obtener_todos_clientes()
+    def obtener_todos_clientes(self, cursor=None):
+        return self.cliente_dao.obtener_todos_clientes(cursor)

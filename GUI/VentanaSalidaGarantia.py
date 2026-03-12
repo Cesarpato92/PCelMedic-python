@@ -7,7 +7,7 @@ from Logica.LogicaDispositivo import LogicaDispositivo
 from Logica.LogicaReparacion import LogicaReparacion
 from Logica.LogicaGarantia import LogicaGarantia
 from Logica.GeneradorPDF import GeneradorPDF
-from Logica.Conexion import Conexion
+from Utilidades.TransaccionConexion import TransaccionConexion
 import os
 
 
@@ -81,7 +81,7 @@ class VentanaSalidaGarantia(tk.Frame):
         frame_salida.columnconfigure(1, weight=1)
         
         ttk.Label(frame_salida, text="Estado Final:").grid(row=0, column=0, sticky="w", pady=5)
-        self.combo_estado_final = ttk.Combobox(frame_salida, values=["Completada", "En Proceso", "Rechazada"], state="readonly")
+        self.combo_estado_final = ttk.Combobox(frame_salida, values=["Completada", "Rechazada"], state="readonly")
         self.combo_estado_final.grid(row=0, column=1, sticky="w", pady=5)
         self.combo_estado_final.set("Completada")
         
@@ -110,57 +110,44 @@ class VentanaSalidaGarantia(tk.Frame):
             messagebox.showwarning("Atención", "Ingrese un ID de garantía")
             return
         
-        # Conectamos a la BD
-        conexion = Conexion.get_conexion()
-        # Verificamos que no haya una conexion en curso
-        if not conexion.in_transaction:
-            conexion.start_transaction()
-        else:
-            # Si ya hay una hacemos rollback para limpiar
-            conexion.rollback()
-            conexion.start_transaction()
-        # iniciamos el cursor
-        cursor = conexion.cursor()    
         try:
-            garantia = self.garantia.obtener_garantia_por_id(id_garantia, cursor)
-            if not garantia:
-                messagebox.showinfo("No encontrado", "No se encontró la garantía")
-                self.limpiar_campos()
-                return
-               
-            self.garantia_actual = garantia
-            
-            # Obtener datos relacionados
-            reparacion = self.reparacion.obtener_reparacion_por_id(garantia.id_reparacion, cursor)
-            dispositivo = self.dispositivo.obtener_dispositivo_por_id(reparacion.id_dispositivo, cursor)
-            cliente = self.cliente.obtener_cliente_por_cedula(dispositivo.id_cliente, cursor)
-            
-            # Guardar modelos para el reporte
-            self.reparacion_model = reparacion
-            self.dispositivo_model = dispositivo
-            self.cliente_model = cliente
-            
-            # Mostrar datos
-            self.lbl_cliente.config(text=f"{cliente.nombre} ({cliente.cedula})")
-            self.lbl_dispositivo.config(text=f"{dispositivo.marca} {dispositivo.version}")
-            self.lbl_fecha_inicio.config(text=garantia.fecha_inicio)
-            self.lbl_estado.config(text=garantia.estado)
-            
-            self.txt_observaciones_entrada.config(state="normal")
-            self.txt_observaciones_entrada.delete("1.0", tk.END)
-            self.txt_observaciones_entrada.insert("1.0", garantia.observaciones)
-            self.txt_observaciones_entrada.config(state="disabled")
-            
-            self.btn_entregar.config(state="normal")
-            
-            conexion.commit()
-            
+            with TransaccionConexion() as (cursor, conexion):
+                garantia = self.garantia.obtener_garantia_por_id(id_garantia, cursor)
+                if not garantia:
+                    messagebox.showinfo("No encontrado", "No se encontró la garantía")
+                    self.limpiar_campos()
+                    return
+                   
+                self.garantia_actual = garantia
+                
+                # Obtener datos relacionados
+                reparacion = self.reparacion.obtener_reparacion_por_id(garantia.id_reparacion, cursor)
+                dispositivo = self.dispositivo.obtener_dispositivo_por_id(reparacion.id_dispositivo, cursor)
+                cliente = self.cliente.obtener_cliente_por_cedula(dispositivo.id_cliente, cursor)
+                
+                # Guardar modelos para el reporte
+                self.reparacion_model = reparacion
+                self.dispositivo_model = dispositivo
+                self.cliente_model = cliente
+                
+                # Mostrar datos
+                self.lbl_cliente.config(text=f"{cliente.nombre} ({cliente.cedula})")
+                self.lbl_dispositivo.config(text=f"{dispositivo.marca} {dispositivo.version}")
+                self.lbl_fecha_inicio.config(text=garantia.fecha_inicio)
+                self.lbl_estado.config(text=garantia.estado)
+                
+                self.txt_observaciones_entrada.config(state="normal")
+                self.txt_observaciones_entrada.delete("1.0", tk.END)
+                self.txt_observaciones_entrada.insert("1.0", garantia.observaciones)
+                self.txt_observaciones_entrada.config(state="disabled")
+                
+                self.btn_entregar.config(state="normal")
+                
+                conexion.commit()
+                
         except Exception as e:
-            conexion.rollback()
-            messagebox.showerror("Error", f"Error al buscar garantía: {e}")
-        finally:
-            if cursor:
-                cursor.close()
+            messagebox.showerror("Error", f"Ocurrió un error al buscar la garantía: {e}")
+
 
     def entregar_garantia(self):
         if not self.garantia_actual:
@@ -174,52 +161,35 @@ class VentanaSalidaGarantia(tk.Frame):
             # Validar precio
             try:
                 precio_float = float(precio_insumos)
-                if precio_float < 0:
-                    raise ValueError
             except ValueError:
-                messagebox.showwarning("Atención", "El precio de insumos debe ser un número válido positivo")
+                messagebox.showwarning("Atención", "El precio de insumos debe ser un número válido")
                 return
-            
-            if not observaciones_finales:
-                messagebox.showwarning("Atención", "Debe ingresar observaciones finales")
-                return
-            
+           
             # Actualizar objeto
             self.garantia_actual.estado = estado_final
             self.garantia_actual.fecha_fin = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             self.garantia_actual.precio_insumos = precio_float
             self.garantia_actual.comentarios_finales = observaciones_finales
 
-            # Conectamos a la BD
-            conexion = Conexion.get_conexion()
-            # Verificamos que no haya una conexion en curso
-            if not conexion.in_transaction:
-                conexion.start_transaction()
-            else:
-            # Si ya hay una hacemos rollback para limpiar
-                conexion.rollback()
-                conexion.start_transaction()
-            # iniciamos el cursor
-            cursor = conexion.cursor()  
-
-            # actualizar_garantia ahora puede lanzar ValueError y acepta opcionalmente cursor
-            self.garantia.actualizar_garantia(self.garantia_actual, cursor)
-            
-            # Si no lanzó excepción, aceptamos la transaccion
-            conexion.commit()
-            self.generar_pdf_salida()
-            self.limpiar_campos()
+            try:
+                with TransaccionConexion() as (cursor, conexion):
+                    # actualizar_garantia ahora puede lanzar ValueError
+                    self.garantia.actualizar_garantia(self.garantia_actual, cursor)
+                    
+                    # Si no lanzó excepción, aceptamos la transaccion
+                    conexion.commit()
+                    messagebox.showinfo("Exito", "Garantía entregada exitosamente")
+                    self.generar_pdf_salida()
+                    self.limpiar_campos()
+            except ValueError as ve:
+                messagebox.showwarning("Aviso", f"Error de validación: {ve}")
+            except Exception as e:
+                messagebox.showerror("Error", f"Error al actualizar garantía: {e}")
                
         except ValueError as ve:
-            if 'conexion' in locals(): conexion.rollback()
             messagebox.showwarning("Aviso", f"Error de validación: {ve}")
         except Exception as e:
-            # devolvemos todo
-            if 'conexion' in locals(): conexion.rollback()
             messagebox.showerror("Error", f"Error al actualizar garantía: {e}")
-        finally:
-            if cursor:
-                cursor.close()
 
 
     def generar_pdf_salida(self):
@@ -248,7 +218,7 @@ class VentanaSalidaGarantia(tk.Frame):
         self.txt_observaciones_entrada.delete("1.0", tk.END)
         self.txt_observaciones_entrada.config(state="disabled")
         
-        self.combo_estado_final.set("Entregada")
+        self.combo_estado_final.set("Completada")
         self.entrada_precio_insumos.delete(0, tk.END)
         self.entrada_precio_insumos.insert(0, "0")
         self.txt_observaciones_finales.delete("1.0", tk.END)

@@ -8,8 +8,8 @@ from Logica.LogicaDispositivo import LogicaDispositivo
 from Logica.LogicaReparacion import LogicaReparacion
 from Logica.LogicaFactura import LogicaFactura
 from Logica.GeneradorPDF import GeneradorPDF
-from Logica.Conexion import Conexion
 from Modelo.ModeloFactura import ModeloFactura
+from Utilidades.TransaccionConexion import TransaccionConexion
 import os
 
 
@@ -64,7 +64,7 @@ class VentanaFactura(tk.Frame):
         self.entrada_dispositivo = ttk.Label(frame_factura, width=20)
         self.entrada_dispositivo.grid(row=2, column=2, sticky="w", pady=5)
         ttk.Label(frame_factura, text="Estado: ").grid(row=2, column=3, sticky="w", pady=5)
-        self.entrada_estado = ttk.Label(frame_factura, width=20, foreground="red", font=("Helvetica", 12, "bold"))
+        self.entrada_estado = ttk.Label(frame_factura, width=20, foreground="blue", font=("Helvetica", 12, "bold"))
         self.entrada_estado.grid(row=2, column=4, sticky="w", pady=5)
         ttk.Label(frame_factura, text="Tipo de reparacion: ").grid(row=3, column=1, sticky="w", pady=5)
         self.entrada_tipo_reparacion = ttk.Label(frame_factura, width=20)
@@ -73,7 +73,7 @@ class VentanaFactura(tk.Frame):
         self.txt_observaciones_entrada = tk.Text(frame_factura, height=4, width=50, state="disabled")
         self.txt_observaciones_entrada.grid(row=4, column=2, sticky="w", pady=2)
         ttk.Label(frame_factura, text="Total: ").grid(row=5, column=3, sticky="w", pady=5)
-        self.entrada_total = ttk.Label(frame_factura, width=20)
+        self.entrada_total = ttk.Label(frame_factura, width=20, foreground="red", font=("Helvetica", 12, "bold"))
         self.entrada_total.grid(row=5, column=4, sticky="w", pady=5)
         ttk.Button(frame_factura, text="Generar", command=self.generar_factura).grid(row=6, column=2, columnspan=2, pady=10)
         ttk.Button(frame_factura, text="Limpiar", command=self.limpiar_campos).grid(row=7, column=2, columnspan=2, pady=10)
@@ -95,53 +95,42 @@ class VentanaFactura(tk.Frame):
             self.limpiar_campos()
             return
 
-        # Conectamos a la BD
-        conexion = Conexion.get_conexion()
-        # Verificamos que no haya una conexion en curso
-        if not conexion.in_transaction:
-            conexion.start_transaction()
-        else:
-            # Si ya hay una hacemos rollback para limpiar
-            conexion.rollback()
-            conexion.start_transaction()
-        # iniciamos el cursor
-        cursor = conexion.cursor()
-        factura = self.factura.obtener_factura_por_id_reparacion(self.reparacion_model.id_reparacion, cursor)
-        if factura:
-            messagebox.showwarning("Atención", "Ya se genero la factura")
-            return
-        
         try:
-            # Crear modelo de factura
-            factura_model = ModeloFactura()
-            factura_model.id_reparacion = self.reparacion_model.id_reparacion
-            factura_model.fecha = datetime.now()
-            # Asegurarse de que el total sea float
-            try:
-                if isinstance(self.reparacion_model.precio_reparacion, str):
-                     # Limpiar string de precio si tiene caracteres no numéricos (excepto punto)
-                     precio_limpio = ''.join(c for c in self.reparacion_model.precio_reparacion if c.isdigit() or c == '.')
-                     factura_model.total = float(precio_limpio)
-                else:
-                    factura_model.total = float(self.reparacion_model.precio_reparacion)
-            except ValueError:
-                 factura_model.total = 0.0
+            with TransaccionConexion() as (cursor, conexion):
+                factura = self.factura.obtener_factura_por_id_reparacion(self.reparacion_model.id_reparacion, cursor)
+                if factura:
+                    messagebox.showwarning("Atención", "Ya se genero la factura")
+                    return
+                
+                # Crear modelo de factura
+                factura_model = ModeloFactura()
+                factura_model.id_reparacion = self.reparacion_model.id_reparacion
+                factura_model.fecha = datetime.now()
+                # Asegurarse de que el total sea float
+                try:
+                    if isinstance(self.reparacion_model.precio_reparacion, str):
+                        # Limpiar string de precio si tiene caracteres no numéricos (excepto punto)
+                        precio_limpio = ''.join(c for c in self.reparacion_model.precio_reparacion if c.isdigit() or c == '.')
+                        factura_model.total = float(precio_limpio)
+                    else:
+                        factura_model.total = float(self.reparacion_model.precio_reparacion)
+                except ValueError:
+                    factura_model.total = 0.0
+                
+                # Guardar en BD
+                id_factura = self.factura.agregar_factura(factura_model, cursor)
+                
+                if id_factura:
+                    #aceptamos la transaccion
+                    conexion.commit()
+                    # Generar PDF
+                    ruta = self.generador_pdf.generar_factura(self.cliente_model, self.dispositivo_model, self.reparacion_model, id_factura)
+                    
+                    if os.path.exists(ruta):
+                        os.startfile(ruta)
+                    self.limpiar_campos()
             
-            # Guardar en BD
-            id_factura = self.factura.agregar_factura(factura_model, cursor)
-            
-            if id_factura:
-                #aceptamos la transaccion
-                conexion.commit()
-                # Generar PDF
-                ruta = self.generador_pdf.generar_factura(self.cliente_model, self.dispositivo_model, self.reparacion_model, id_factura)
-                messagebox.showinfo("Éxito", "Factura generada exitosamente")
-                os.startfile(ruta)
-                self.limpiar_campos()
-            
-                 
         except Exception as e:
-            conexion.rollback()
             messagebox.showerror("Error", f"No se pudo generar la factura: {e}")
         finally:
             if cursor:
@@ -152,52 +141,41 @@ class VentanaFactura(tk.Frame):
         if not id_reparacion:
             messagebox.showwarning("Atencion", "Ingrese un ID de reparacion")
             return
-        # Conectamos a la BD
-        conexion = Conexion.get_conexion()
-        # Verificamos que no haya una conexion en curso
-        if not conexion.in_transaction:
-            conexion.start_transaction()
-        else:
-            # Si ya hay una hacemos rollback para limpiar
-            conexion.rollback()
-            conexion.start_transaction()
-        # iniciamos el cursor
-        cursor = conexion.cursor()
         try:
-            reparacion = self.reparacion.obtener_reparacion_por_id(id_reparacion, cursor)
-            if not reparacion:
-                messagebox.showinfo("No encontrado", "No se encontro la reparacion")
-                return
-            
-            # Obtener datos relacionales
-            dispositivo = self.dispositivo.obtener_dispositivo_por_id(reparacion.id_dispositivo, cursor)
-            cliente = self.cliente.obtener_cliente_por_cedula(dispositivo.id_cliente, cursor)
-            
-            if cliente:
-                conexion.commit()
-            # Guardar los datos para el reporte
-            self.reparacion_model = reparacion
-            self.cliente_model = cliente
-            self.dispositivo_model = dispositivo
-            
-            # Actualizar los campos de la interfaz
-            self.entrada_cliente.config(text=f"{cliente.nombre} {cliente.cedula}")
-            self.entrada_fecha_inicio.config(text=f"{reparacion.fecha_ingreso}")
-            self.entrada_id_dispositivo.config(text=f"{dispositivo.id_dispositivo}")
-            self.entrada_dispositivo.config(text=f"{dispositivo.marca} {dispositivo.version}")
-            self.entrada_estado.config(text=f"{reparacion.estado}")
-            self.entrada_total.config(text=f"{reparacion.precio_reparacion}")
-            self.entrada_tipo_reparacion.config(text=f"{dispositivo.tipo_reparacion}")
-            self.txt_observaciones_entrada.config(state="normal")
-            self.txt_observaciones_entrada.delete(1.0, tk.END)
-            # Validamos que no sea None
-            comentarios = reparacion.comentarios if reparacion.comentarios is not None else "SIN COMENTARIOS ESCRITOS POR EL TECNICO AUN"
-            self.txt_observaciones_entrada.insert("1.0", str(comentarios))
-           
-            self.txt_observaciones_entrada.config(state="disabled")
+            with TransaccionConexion() as (cursor, conexion):
+                reparacion = self.reparacion.obtener_reparacion_por_id(id_reparacion, cursor)
+                if not reparacion:
+                    messagebox.showinfo("No encontrado", "No se encontro la reparacion")
+                    return
+                
+                # Obtener datos relacionales
+                dispositivo = self.dispositivo.obtener_dispositivo_por_id(reparacion.id_dispositivo, cursor)
+                cliente = self.cliente.obtener_cliente_por_cedula(dispositivo.id_cliente, cursor)
+                
+                if cliente:
+                    conexion.commit()
+                # Guardar los datos para el reporte
+                self.reparacion_model = reparacion
+                self.cliente_model = cliente
+                self.dispositivo_model = dispositivo
+                
+                # Actualizar los campos de la interfaz
+                self.entrada_cliente.config(text=f"{cliente.nombre}, Cedula: {cliente.cedula}")
+                self.entrada_fecha_inicio.config(text=f"{reparacion.fecha_ingreso}")
+                self.entrada_id_dispositivo.config(text=f"{dispositivo.id_dispositivo}")
+                self.entrada_dispositivo.config(text=f"{dispositivo.marca} {dispositivo.version}")
+                self.entrada_estado.config(text=f"{reparacion.estado}")
+                self.entrada_total.config(text=f"{reparacion.precio_reparacion}")
+                self.entrada_tipo_reparacion.config(text=f"{dispositivo.tipo_reparacion}")
+                self.txt_observaciones_entrada.config(state="normal")
+                self.txt_observaciones_entrada.delete(1.0, tk.END)
+                # Validamos que no sea None
+                comentarios = reparacion.comentarios if reparacion.comentarios is not None else "SIN COMENTARIOS ESCRITOS POR EL TECNICO AUN"
+                self.txt_observaciones_entrada.insert("1.0", str(comentarios))
+               
+                self.txt_observaciones_entrada.config(state="disabled")
 
         except Exception as e:
-            conexion.rollback()
             messagebox.showerror(f"Error al buscar la reparacion {id_reparacion}", str(e))
         finally:
             if cursor:

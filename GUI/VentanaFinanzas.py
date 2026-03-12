@@ -3,9 +3,9 @@ from tkinter import messagebox, ttk, filedialog
 from tkcalendar import DateEntry
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
-from Logica.Conexion import Conexion
 from Logica.LogicaFactura import LogicaFactura
 from Logica.LogicaCliente import LogicaCliente
+from Utilidades.TransaccionConexion import TransaccionConexion
 from openpyxl import Workbook
 import datetime
 
@@ -112,15 +112,6 @@ class VentanaFinanzas(tk.Frame):
         # Conectamos a la BD
         conexion = Conexion.get_conexion()
         # Verificamos que no haya una conexion en curso
-        if not conexion.in_transaction:
-            conexion.start_transaction()
-        else:
-            # Si ya hay una hacemos rollback para limpiar
-            conexion.rollback()
-            conexion.start_transaction()
-        # iniciamos el cursor
-        cursor = conexion.cursor()
-
         # Limpiar gráfico 
         if self.canvas_grafico:
             self.canvas_grafico.get_tk_widget().destroy()
@@ -130,22 +121,18 @@ class VentanaFinanzas(tk.Frame):
         for widget in self.frame_datos.winfo_children():
             widget.destroy()
         try:
-            # Obtener datos
-            datos = self.logica_factura.obtener_ventas_por_rango(fecha_inicio, fecha_fin, cursor)
+            with TransaccionConexion() as (cursor, conexion):
+                # Obtener datos
+                datos = self.logica_factura.obtener_ventas_por_rango(fecha_inicio, fecha_fin, cursor)
 
-            if not datos:
-                messagebox.showinfo("Info", "No se encontraron datos en el rango seleccionado.")
-                return
-            else:
-                conexion.commit()
+                if not datos:
+                    messagebox.showinfo("Info", "No se encontraron datos en el rango seleccionado.")
+                    return
+                else:
+                    conexion.commit()
+
         except Exception as e:
-            # Devolvemos todo 
-            conexion.rollback()
-            messagebox.showwarning("Aviso", f"Ocurrió un error generar el grafico: {e}")
-        finally:
-            if cursor:
-                # Liberamos cursor para la memoria del servidor
-                cursor.close()
+            messagebox.showwarning("Aviso", f"Ocurrió un error al generar el gráfico: {e}")
 
         #mostrar formato sin hora
         def formato_fecha(d):
@@ -199,9 +186,14 @@ class VentanaFinanzas(tk.Frame):
             lbl.pack(anchor="w")
 
     def exportar_excel(self):
-        clientes = self.logica_cliente.obtener_todos_clientes()
-        if not clientes:
-            messagebox.showinfo("Cero datos", "No hay clientes registrados para exportar.")
+        try:
+            with TransaccionConexion() as (cursor, conexion):
+                clientes = self.logica_cliente.obtener_todos_clientes(cursor)
+                if not clientes:
+                    messagebox.showinfo("Cero datos", "No hay clientes registrados para exportar.")
+                    return
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al obtener clientes: {e}")
             return
 
         filename = filedialog.asksaveasfilename(defaultextension=".xlsx", 

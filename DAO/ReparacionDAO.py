@@ -1,4 +1,4 @@
-import Logica.Conexion as conexion_bd
+import Utilidades.Conexion as conexion_bd
 from Modelo.ModeloReparacion import ModeloReparacion
 from tkinter import messagebox
 import mysql.connector

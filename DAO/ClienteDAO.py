@@ -1,4 +1,4 @@
-import Logica.Conexion as conexion_bd
+import Utilidades.Conexion as conexion_bd
 from tkinter import messagebox
 import mysql.connector
 from Modelo.ModeloCliente import ModeloCliente
@@ -35,16 +35,16 @@ class ClienteDAO:
        
 
         sql = "SELECT nombre, email, celular FROM cliente WHERE cedula = %s"
-            #Ingresar primero la cedula al objeto modelo_cliente antes de llamar a este metodo
+        #Ingresar primero la cedula al objeto modelo_cliente antes de llamar a este metodo
         valores = (cedula,)
             
         cursor.execute(sql, valores)
 
-            #se obtiene el primer resultado
+        #se obtiene el primer resultado
         resultado = cursor.fetchone()
             
         if resultado:
-                #Si encuentra el cliente, se crea un objeto ModeloCliente con los datos
+            #Si encuentra el cliente, se crea un objeto ModeloCliente con los datos
             nombre, email, celular = resultado
             cliente_encontrado = ModeloCliente()
             cliente_encontrado.cedula = cedula
@@ -55,21 +55,27 @@ class ClienteDAO:
         return cliente_encontrado
         
  
-    def obtener_todos_clientes(self):
+    def obtener_todos_clientes(self, cursor=None):
+        # si se pasa un cursor, se usa ese cursor, si no, se crea uno nuevo
+        if cursor:
+            sql = "SELECT nombre, email, celular FROM cliente"
+            cursor.execute(sql)
+            return cursor.fetchall()
+        # si no se pasa un cursor, se crea uno nuevo
         conexion = None
-        cursor = None
+        local_cursor = None
         clientes = []
         try:
             conexion = conexion_bd.Conexion.get_conexion()
-            cursor = conexion.cursor()
+            local_cursor = conexion.cursor()
             sql = "SELECT nombre, email, celular FROM cliente"
-            cursor.execute(sql)
-            clientes = cursor.fetchall() # Lista de tuplas
+            local_cursor.execute(sql)
+            clientes = local_cursor.fetchall()
         except mysql.connector.Error as e:
             messagebox.showerror("Error", f"Error SQL: {e}")
         except Exception as e:
             messagebox.showerror("Error", f"Error inesperado: {e}")
         finally:
-            if cursor:
-                cursor.close()
+            if local_cursor:
+                local_cursor.close()
         return clientes

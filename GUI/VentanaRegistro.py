@@ -7,11 +7,10 @@ from Modelo.ModeloReparacion import ModeloReparacion
 from Logica.LogicaCliente import LogicaCliente
 from Logica.LogicaDispositivo import LogicaDispositivo
 from Logica.LogicaReparacion import LogicaReparacion
-from Logica.Conexion import Conexion
 from Logica.GeneradorPDF import GeneradorPDF
 from datetime import datetime
 import os
-import re
+from Utilidades.TransaccionConexion import TransaccionConexion
 
 
 class VentanaRegistro(tk.Frame):
@@ -181,7 +180,7 @@ class VentanaRegistro(tk.Frame):
         self.var_tipo_contrasena.set(opciones_contra[0])
         self.var_marca.set(opciones_marca[0])
         self.combobox_marca.current(0)
-        self.on_tipo_contrasena_change() # Llama para asegurar que la contraseña se deshabilita/habilita correctamente
+        self.on_tipo_contrasena_change() # Llama para asegurar que la contraseña se deshabilita o habilita correctamente
     
 
     
@@ -202,129 +201,79 @@ class VentanaRegistro(tk.Frame):
 
         # Datos de la reparacion
         estado = "En proceso"
-        fecha_ingreso = datetime.now().strftime('%Y-%m-%d')
+        fecha_ingreso = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         costo_repuesto = 0
         precio_rep = self.entrada_precio.get().strip()
         comentarios_rep = ""
 
-        # VALIDACIONES 
-
-        # Validación Datos Cliente
-        if not (cedula and nombre and email and celular):
-            messagebox.showwarning("Atención", "Rellene todos los datos del cliente")
+        # VALIDACIONES BÁSICAS 
+        if not (cedula and nombre and email and celular and marca and version and tipo_rep and precio_rep):
+            messagebox.showwarning("Atención", "Por favor, complete todos los campos obligatorios.")
             return
 
-        # Validar Cédula 
-        if not cedula.isdigit():
-            messagebox.showwarning("Atención", "La cédula debe contener solo números")
-            return
-
-        # Validar Email 
-        email_regex = r"^[\w\.-]+@[\w\.-]+\.\w+$"
-        if not re.match(email_regex, email):
-            messagebox.showwarning("Atención", "El formato del correo electrónico no es válido")
-            return
-
-        # Validar Celular 
-        if not celular.isdigit() or len(celular) != 10:
-            messagebox.showwarning("Atención", "El celular debe ser un número de 10 dígitos")
-            return
-
-        # Validación Datos Dispositivo
-        if not (marca and version and tipo_rep):
-            messagebox.showwarning("Atención", "Rellene marca, modelo y tipo de reparación")
-            return
-
-        # Validar Contraseña si aplica
-        if tipo_contra != "Sin contraseña" and not contra:
-            messagebox.showwarning("Atención", "Debe ingresar la contraseña del dispositivo si seleccionó un tipo de seguridad")
-            return
-
-        # Validación Precio
-        if not precio_rep:
-            messagebox.showwarning("Atención", "Precio reparación obligatorio")
-            return
-            
         try:
             precio_float = float(precio_rep)
-            if precio_float <= 0:
-                messagebox.showwarning("Atención", "El precio de reparación debe ser mayor a 0")
-                return
         except ValueError:
             messagebox.showwarning("Atención", "El precio de reparación debe ser un número válido")
             return
 
-        # Conectamos a la BD
-        conexion = Conexion.get_conexion()
-        # Verificamos que no haya una conexion en curso
-        if not conexion.in_transaction:
-            conexion.start_transaction()
-        else:
-            # Si ya hay una hacemos rollback para limpiar
-            conexion.rollback()
-            conexion.start_transaction()
-        # iniciamos el cursor
-        cursor = conexion.cursor()
         try:
-            
-            cliente_obj = ModeloCliente()
-            cliente_obj.cedula = cedula
-            cliente_obj.nombre = nombre
-            cliente_obj.email = email
-            cliente_obj.celular = celular
-            logica_cliente = LogicaCliente()
-            exito_cli, msg_cli = logica_cliente.agregar_cliente(cliente_obj, cursor)
-            if not exito_cli:
-                messagebox.showwarning("Aviso", f"Error en datos de cliente: {msg_cli}")
-                conexion.rollback()
-                return
-       
-            dispositivo_obj = ModeloDispositivo()
-            dispositivo_obj.id_cliente=cedula
-            dispositivo_obj.marca=marca
-            dispositivo_obj.tipo_reparacion = tipo_rep
-            dispositivo_obj.tipo_password=tipo_contra
-            dispositivo_obj.password=contra or None
-            dispositivo_obj.comentarios=comentarios_disp # Los comentarios son solo los ingresados, sin el modelo
-            dispositivo_obj.version = version
-            
-            logica_disp = LogicaDispositivo()
-            id_disp = logica_disp.agregar_dispositivo(dispositivo_obj, cursor)
-            
-            if id_disp:
-                dispositivo_obj.id_dispositivo = id_disp
-                # Guardar la reparación asociada al dispositivo
-                reparacion_obj = ModeloReparacion()
-                reparacion_obj.id_dispositivo = id_disp
-                reparacion_obj.fecha_ingreso = fecha_ingreso
-                reparacion_obj.estado = estado
-                reparacion_obj.costo_repuestos = costo_repuesto
-                reparacion_obj.precio_reparacion = precio_float
-                reparacion_obj.comentarios = comentarios_rep 
-                logica_rep= LogicaReparacion()
-                id_rep = logica_rep.agregar_reparacion(reparacion_obj, cursor)
+            with TransaccionConexion() as (cursor, conexion):
+                cliente_obj = ModeloCliente()
+                cliente_obj.cedula = cedula
+                cliente_obj.nombre = nombre
+                cliente_obj.email = email
+                cliente_obj.celular = celular
+                logica_cliente = LogicaCliente()
+                exito_cli, msg_cli = logica_cliente.agregar_cliente(cliente_obj, cursor)
+                if not exito_cli:
+                    messagebox.showwarning("Aviso", f"Error en datos de cliente: {msg_cli}")
+                    conexion.rollback()
+                    return
+           
+                dispositivo_obj = ModeloDispositivo()
+                dispositivo_obj.id_cliente=cedula
+                dispositivo_obj.marca=marca
+                dispositivo_obj.tipo_reparacion = tipo_rep
+                dispositivo_obj.tipo_password=tipo_contra
+                dispositivo_obj.password=contra or None
+                dispositivo_obj.comentarios=comentarios_disp # Los comentarios son solo los ingresados, sin el modelo
+                dispositivo_obj.version = version
                 
-                if id_rep:
-
-                    #Aceptamos la transaccion
-                    conexion.commit()
-                    # Generar PDF
-                    try:
-                        reparacion_obj.id_reparacion = id_rep
-                        generador = GeneradorPDF()
-                        ruta_pdf = generador.generar_reporte_reparacion(cliente_obj, dispositivo_obj, reparacion_obj)
-                        messagebox.showinfo("Éxito", f"Registro {id_rep} guardado.")
-                        if os.path.exists(ruta_pdf):
-                            os.startfile(ruta_pdf)
-                    except Exception as e_pdf:
-                        messagebox.showwarning("Aviso", f"Datos guardados, pero el PDF falló: {e_pdf}")
+                logica_disp = LogicaDispositivo()
+                id_disp = logica_disp.agregar_dispositivo(dispositivo_obj, cursor)
+                
+                if id_disp:
+                    dispositivo_obj.id_dispositivo = id_disp
+                    # Guardar la reparación asociada al dispositivo
+                    reparacion_obj = ModeloReparacion()
+                    reparacion_obj.id_dispositivo = id_disp
+                    reparacion_obj.fecha_ingreso = fecha_ingreso
+                    reparacion_obj.estado = estado
+                    reparacion_obj.costo_repuestos = costo_repuesto
+                    reparacion_obj.precio_reparacion = precio_float
+                    reparacion_obj.comentarios = comentarios_rep 
+                    logica_rep= LogicaReparacion()
+                    id_rep = logica_rep.agregar_reparacion(reparacion_obj, cursor)
                     
-                    self.limpiar_campos()
+                    if id_rep:
+                        #Aceptamos la transaccion
+                        conexion.commit()
+                        # Generar PDF
+                        try:
+                            reparacion_obj.id_reparacion = id_rep
+                            generador = GeneradorPDF()
+                            ruta_pdf = generador.generar_reporte_reparacion(cliente_obj, dispositivo_obj, reparacion_obj)
+                            messagebox.showinfo("Éxito", f"Registro {id_rep} guardado.")
+                            if os.path.exists(ruta_pdf):
+                                os.startfile(ruta_pdf)
+                        except Exception as e_pdf:
+                            messagebox.showwarning("Aviso", f"Datos guardados, pero el PDF falló: {e_pdf}")
                         
+                        self.limpiar_campos()
+                            
         except Exception as e:
-            # Devolvemos todo 
-            conexion.rollback()
-            messagebox.showwarning("Aviso", f"Ocurrió un error al guardar el dispositivo o la reparación: {e}")
+            messagebox.showwarning("Aviso", f"Ocurrió un error al guardar: {e}")
         finally:
             if cursor:
                 # Liberamos cursor para la memoria del servidor
@@ -363,30 +312,29 @@ class VentanaRegistro(tk.Frame):
         if not cedula:
             messagebox.showwarning("AVISO", "Ingrese una cedula para buscar")
             return
-        
-        resultado = None
+            
         try: 
-            resultado = self.cliente.obtener_cliente_por_cedula(cedula)
+            with TransaccionConexion() as (cursor, conexion):
+                resultado = self.cliente.obtener_cliente_por_cedula(cedula, cursor)
+                if resultado:
+                    conexion.commit()
+                    # Rellenamos los campos del formulario
+                    self.entrada_nombre.delete(0,tk.END)
+                    self.entrada_nombre.insert(0, resultado.nombre)
+                    self.entrada_email.delete(0, tk.END)
+                    self.entrada_email.insert(0, resultado.email)
+                    self.entrada_celular.delete(0, tk.END)
+                    self.entrada_celular.insert(0, resultado.celular)
+                    
+                    # Deshabilitar campos de cliente si ya existe?
+                    self.entrada_cedula.config(state=tk.DISABLED)
+
+                    messagebox.showinfo("Éxito", "Cliente encontrado y datos cargados")
+
+                else:
+                    conexion.rollback()
+                    messagebox.showinfo("No encontrado", "El cliente no está registrado en la base de datos")
+        
         except Exception as e:
             messagebox.showerror("ERROR", f"Error al buscar cliente : {e}")
-            return
-        
-        if not resultado:
-            messagebox.showinfo("No encontrado", "El cliente no esta registrado en la base de datos")
-            return
-            
-        # Rellenamos los campos del formulario
-        try:
-            self.entrada_nombre.delete(0,tk.END)
-            self.entrada_nombre.insert(0, resultado.nombre)
-            self.entrada_email.delete(0, tk.END)
-            self.entrada_email.insert(0, resultado.email)
-            self.entrada_celular.delete(0, tk.END)
-            self.entrada_celular.insert(0, resultado.celular)
-            
-            # Deshabilitar campos de cliente si ya existe?
-            self.entrada_cedula.config(state=tk.DISABLED)
-            
-        except Exception as e:
-            messagebox.showerror("ERROR", f"Error al rellenar los campos: {e}")
             return
