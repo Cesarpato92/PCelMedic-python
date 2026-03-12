@@ -52,15 +52,11 @@ class LogicaCliente:
         
     def validacion_celular(self,celular):
         if celular and not celular.isdigit():
-            messagebox.showerror(
-                "Error", "El número de celular debe contener solo dígitos."
-            )
+            messagebox.showerror("Error", "El número de celular debe contener solo dígitos.")
             return False
         
         if len(celular) < 10 or len(celular)> 15:
-            messagebox.showerror(
-                "Error", "El número de celular debe tener entre 10 y 15 digitos como maximo."
-            )
+            messagebox.showerror("Error", "El número de celular debe tener entre 10 y 15 digitos como maximo.")
             return False
                 
         return True
@@ -79,9 +75,7 @@ class LogicaCliente:
             return False
         
         if len(nombre) >150:
-            messagebox.showerror(
-                "Error", "El nombre no puede tener mas de 150 caracteres."
-            )
+            messagebox.showerror("Error", "El nombre no puede tener mas de 150 caracteres.")
             return False
         return True
 
