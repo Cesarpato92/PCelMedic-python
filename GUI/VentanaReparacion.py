@@ -243,16 +243,17 @@ class VentanaReparacion(tk.Frame):
             reparacion_obj.estado = "Completada"
                 
             # Llamar al método de actualización
-            resultado = self.reparacion.actualizar_estado_reparacion(reparacion_obj, cursor)
+            self.reparacion.actualizar_estado_reparacion(reparacion_obj, cursor)
                 
-            if resultado:
-                # Aceptamos la transaccion
-                conexion.commit()
-                messagebox.showinfo("Éxito", "Reparación actualizada exitosamente.")
-                self.btn_limpiar()
-                self.deshabilitar_entradas()
+            # Aceptamos la transaccion
+            conexion.commit()
+            messagebox.showinfo("Éxito", "Reparación actualizada exitosamente.")
+            self.btn_limpiar()
+            self.deshabilitar_entradas()
                 
-                    
+        except ValueError as ve:
+            conexion.rollback()
+            messagebox.showwarning("Aviso", f"Ocurrió un error de validación: {ve}")
         except Exception as e:
             conexion.rollback()
             messagebox.showerror("Error", f"No se pudo actualizar la reparación. Error: {str(e)}")
@@ -327,6 +328,9 @@ class VentanaReparacion(tk.Frame):
             # Restaurar el estado original de los campos (deshabilitar los que correspondan)
             self.habilitar_entrada()
 
+        except ValueError as ve:
+            conexion.rollback()
+            messagebox.showwarning("Aviso", f"Error de validación: {ve}")
         except Exception as e:
             conexion.rollback()
             messagebox.showerror("ERROR", f"Error al cargar los datos: {e}")

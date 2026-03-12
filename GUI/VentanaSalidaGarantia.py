@@ -202,19 +202,20 @@ class VentanaSalidaGarantia(tk.Frame):
             # iniciamos el cursor
             cursor = conexion.cursor()  
 
-            exito = self.garantia.actualizar_garantia(self.garantia_actual, cursor)
+            # actualizar_garantia ahora puede lanzar ValueError y acepta opcionalmente cursor
+            self.garantia.actualizar_garantia(self.garantia_actual, cursor)
             
-            if exito:
-
-                #aceptamos la transaccion
-                conexion.commit()
-                self.generar_pdf_salida()
-                self.limpiar_campos()
+            # Si no lanzó excepción, aceptamos la transaccion
+            conexion.commit()
+            self.generar_pdf_salida()
+            self.limpiar_campos()
                
-                
+        except ValueError as ve:
+            if 'conexion' in locals(): conexion.rollback()
+            messagebox.showwarning("Aviso", f"Error de validación: {ve}")
         except Exception as e:
             # devolvemos todo
-            conexion.rollback()
+            if 'conexion' in locals(): conexion.rollback()
             messagebox.showerror("Error", f"Error al actualizar garantía: {e}")
         finally:
             if cursor:

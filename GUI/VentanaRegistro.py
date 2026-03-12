@@ -273,7 +273,11 @@ class VentanaRegistro(tk.Frame):
             cliente_obj.email = email
             cliente_obj.celular = celular
             logica_cliente = LogicaCliente()
-            logica_cliente.agregar_cliente(cliente_obj, cursor)
+            exito_cli, msg_cli = logica_cliente.agregar_cliente(cliente_obj, cursor)
+            if not exito_cli:
+                messagebox.showwarning("Aviso", f"Error en datos de cliente: {msg_cli}")
+                conexion.rollback()
+                return
        
             dispositivo_obj = ModeloDispositivo()
             dispositivo_obj.id_cliente=cedula

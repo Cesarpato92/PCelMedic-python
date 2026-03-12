@@ -387,7 +387,8 @@ class VentanaEntradaGarantia(tkinter.Frame):
             modelo_garantia.observaciones = comentarios_gar
             modelo_garantia.estado = "En Garantia" if equipo_reparado == "SI" else "Rechazada"
                        
-            id_garantia = self.garantia.agregar_garantia(modelo_garantia)
+            
+            id_garantia = self.garantia.agregar_garantia(modelo_garantia, cursor)
             
             if id_garantia:
                 # Aceptamos la transaccion
@@ -404,9 +405,9 @@ class VentanaEntradaGarantia(tkinter.Frame):
                 
                 self.btn_limpiar()
 
-            else:
-                messagebox.showerror("Error", "No se pudo registrar la garantía, error ocurrido")
-
+        except ValueError as ve:
+            conexion.rollback()
+            messagebox.showwarning("Aviso", f"Error de validación: {ve}")
         except Exception as e:
             conexion.rollback()
             messagebox.showerror("Error", f"Error al guardar garantía: {e}")
