@@ -39,11 +39,20 @@ class VentanaFinanzas(tk.Frame):
             )
         )
 
-        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        self.canvas_window = self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
         self.canvas.configure(yscrollcommand=self.scrollbar.set)
 
         self.canvas.pack(side="left", fill="both", expand=True)
         self.scrollbar.pack(side="right", fill="y")
+        
+        # Centrar contenido: Configurar peso en el frame desplazable
+        self.scrollable_frame.columnconfigure(0, weight=1)
+
+        # Ajustar el ancho del frame interno al ancho del canvas para que el grid funcione
+        def _on_canvas_configure(event):
+            self.canvas.itemconfig(self.canvas_window, width=event.width)
+        
+        self.canvas.bind("<Configure>", _on_canvas_configure)
         
         def _on_mousewheel(event):
             self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
@@ -52,9 +61,9 @@ class VentanaFinanzas(tk.Frame):
 
         parent_frame = self.scrollable_frame
 
-        # Frame Controles
+        # Frame Controles - Sin sticky="ew" para que se centre en la columna 0
         self.frame_controles = tk.Frame(parent_frame, bg='plum')
-        self.frame_controles.grid(row=0, column=0, sticky="ew", padx=10, pady=10)
+        self.frame_controles.grid(row=0, column=0, padx=10, pady=10)
 
         # Configurar columnas para centrar
         self.frame_controles.columnconfigure(0, weight=1)
@@ -97,9 +106,9 @@ class VentanaFinanzas(tk.Frame):
         self.frame_grafico.grid(row=1, column=0, pady=10) 
         self.canvas_grafico = None 
         
-        # Frame Datos 
+        # Frame Datos - Sin sticky="nsew" para que se centre
         self.frame_datos = tk.Frame(parent_frame)
-        self.frame_datos.grid(row=2, column=0, sticky="nsew", padx=10, pady=10)
+        self.frame_datos.grid(row=2, column=0, padx=10, pady=10)
 
     def generar_grafico(self):
         fecha_inicio = self.entry_fecha_inicio.get()
@@ -109,9 +118,6 @@ class VentanaFinanzas(tk.Frame):
             messagebox.showwarning("Campos vacíos", "Por favor ingrese ambas fechas.")
             return
 
-        # Conectamos a la BD
-        conexion = Conexion.get_conexion()
-        # Verificamos que no haya una conexion en curso
         # Limpiar gráfico 
         if self.canvas_grafico:
             self.canvas_grafico.get_tk_widget().destroy()
