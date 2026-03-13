@@ -44,5 +44,14 @@ class LogicaCliente:
     def validacion_cedula(self, cedula):
         return Validador.validar_cedula(cedula)
 
+    def validacion_nombre(self, nombre):
+        return Validador.validar_nombre(nombre)
+
+    def validacion_email(self, email):
+        return Validador.validar_email(email)
+
+    def validacion_celular(self, celular):
+        return Validador.validar_celular(celular)
+
     def obtener_todos_clientes(self, cursor=None):
         return self.cliente_dao.obtener_todos_clientes(cursor)
