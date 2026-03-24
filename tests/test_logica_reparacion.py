@@ -50,3 +50,4 @@ if __name__ == "__main__":
     test_validaciones_reparacion()
     print("\n" + "-" * 50)
     print("Todas las pruebas completadas de forma exitosa")
+    print("-"*50)

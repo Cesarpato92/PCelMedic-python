@@ -18,7 +18,7 @@ def test_validaciones_garantia():
     
     # Prueba 016 - Cambio de "En Garantia" a "Completada"
     print("\nPrueba 016 - Cambio: En Garantia a Completada")
-    print("-" * 40)
+    print("-" * 50)
     
     garantia1 = ModeloGarantia()
     garantia1.id_garantia = 1
@@ -29,7 +29,7 @@ def test_validaciones_garantia():
     estado_antiguo1 = "En Garantia"
     
     resultado1, mensaje1 = logica.validar_campos_a_actualizar(garantia1, estado_antiguo1)
-    print(f"Estado anterior: {estado_antiguo1}")
+    print(f"\nEstado anterior: {estado_antiguo1}")
     print(f"Estado nuevo: {garantia1.estado}")
     print(f"Precio insumos: {garantia1.precio_insumos}")
     print(f"Fecha fin: {garantia1.fecha_fin}")
@@ -89,3 +89,4 @@ if __name__ == "__main__":
     test_validaciones_garantia()
     print("\n" + "-" * 50)
     print("Todas las pruebas completadas de forma exitosa")
+    print("-"*50)

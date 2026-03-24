@@ -12,15 +12,18 @@ def test_validaciones():
 
     #Pruebas de valicacion de precio
     print("\nProbando validación de precio")
+    print("-"*50)
     # 011 - Validadion de precio positivo
     precio1 = 150000
     resultado1, _ = validador.validar_precio(precio1)
+    print("011 - Validadion de precio positivo")
     print (f"Precio {precio1} : {'VALIDO' if resultado1 else 'INVALIDO'}")
     assert resultado1 == True
 
     # 012 - validacion precio negativo
     precio2 = -100000
     resultado2, mensaje = validador.validar_precio(precio2)
+    print("012 - validacion precio negativo")
     print (f"Precio {precio2} : {'VALIDO' if resultado2 else 'INVALIDO'}")
     if not resultado2:
         print(f"Motivo: {mensaje}")
@@ -29,6 +32,7 @@ def test_validaciones():
     # 013 - Validacion precio usando texto
     precio3 = "cien"
     resultado3, mensaje = validador.validar_precio(precio3)
+    print("013 - Validacion precio usando texto")
     print (f"Precio {precio3} : {'VALIDO' if resultado3 else 'INVALIDO'}")
     if not resultado3:
         print(f"Motivo: {mensaje}")
@@ -43,3 +47,4 @@ if __name__ == "__main__":
 
     test_validaciones()
     print("Todas las pruebas completadas de forma exitosa")
+    print("-"*50)
