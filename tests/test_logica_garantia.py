@@ -16,7 +16,7 @@ def test_validaciones_garantia():
     
     logica = LogicaGarantia()
     
-    # Prueba 016 - Cambio de "En Garantia" a "Completada"
+    #Prueba 016 - Cambio de "En Garantia" a "Completada"
     print("\nPrueba 016 - Cambio: En Garantia a Completada")
     print("-" * 50)
     
@@ -33,12 +33,13 @@ def test_validaciones_garantia():
     print(f"Estado nuevo: {garantia1.estado}")
     print(f"Precio insumos: {garantia1.precio_insumos}")
     print(f"Fecha fin: {garantia1.fecha_fin}")
+    print(f"Comentarios finales: {garantia1.comentarios_finales}")
     print(f"Resultado: {'VALIDO' if resultado1 else 'INVALIDO'}")
     if not resultado1:
         print(f"Motivo: {mensaje1}")
     assert resultado1 == True
 
-    # Prueba 017 - Cambio de "En Garantia" a "Rechazada"
+    #Prueba 017 - Cambio de "En Garantia" a "Rechazada"
     print("\nPrueba 017 - Cambio: En Garantia a Rechazada")
     print("-" * 40)
     
@@ -55,12 +56,13 @@ def test_validaciones_garantia():
     print(f"Estado nuevo: {garantia2.estado}")
     print(f"Precio insumos: {garantia2.precio_insumos}")
     print(f"Fecha fin: {garantia2.fecha_fin}")
+    print(f"Comentarios finales: {garantia2.comentarios_finales}")
     print(f"Resultado: {'VALIDO' if resultado2 else 'INVALIDO'}")
     if not resultado2:
         print(f"Motivo: {mensaje2}")
     assert resultado2 == True
 
-    # Prueba 018 - Cambio de "Completada" a "Rechazada"
+    #Prueba 018 - Cambio de "Completada" a "Rechazada"
     print("\nPrueba 018 - Cambio: Completada a Rechazada")
     print("-" * 40)
     
