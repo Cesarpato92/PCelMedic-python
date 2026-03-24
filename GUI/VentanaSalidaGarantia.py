@@ -166,7 +166,9 @@ class VentanaSalidaGarantia(tk.Frame):
             except ValueError:
                 messagebox.showwarning("Atención", "El precio de insumos debe ser un número válido")
                 return
-           
+            
+            
+            estado_antiguo = self.garantia_actual.estado
             # Actualizar objeto
             self.garantia_actual.estado = estado_final
             self.garantia_actual.fecha_fin = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -176,7 +178,7 @@ class VentanaSalidaGarantia(tk.Frame):
             try:
                 with TransaccionConexion() as (cursor, conexion):
                     # actualizar_garantia ahora puede lanzar ValueError
-                    self.garantia.actualizar_garantia(self.garantia_actual, cursor)
+                    self.garantia.actualizar_garantia(self.garantia_actual,estado_antiguo, cursor)
                     
                     # Si no lanzó excepción, aceptamos la transaccion
                     conexion.commit()

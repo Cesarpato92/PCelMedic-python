@@ -17,7 +17,7 @@ class VentanaPrincipal(tk.Tk):
         super().__init__()
         
         self.title("SGI PCelMedic")
-        self.geometry("1200x800")
+        self.geometry("1280x720")
         self.state('zoomed') 
        
         self.resizable(True, True)

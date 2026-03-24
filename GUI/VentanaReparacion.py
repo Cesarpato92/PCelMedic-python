@@ -196,10 +196,13 @@ class VentanaReparacion(tk.Frame):
                 reparacion_obj.id_reparacion = id_reparacion
                 reparacion_obj.comentarios = comen_tec
                 reparacion_obj.costo_repuestos = costo_float
+                # guardamos el estado antiguo
+                estado_antiguo = reparacion_obj.estado
+                print(estado_antiguo)
                 reparacion_obj.estado = "Completada"
                     
                 # Llamar al método de actualización
-                self.reparacion.actualizar_estado_reparacion(reparacion_obj, cursor)
+                self.reparacion.actualizar_estado_reparacion(reparacion_obj, estado_antiguo, cursor)
                     
                 # Aceptamos la transaccion
                 conexion.commit()

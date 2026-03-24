@@ -39,7 +39,10 @@ class Validador:
             return False, "El nombre es obligatorio."
         if len(nombre) > max_len:
             return False, f"El nombre no puede superar los {max_len} caracteres."
+        if not nombre.strip().replace(" ", "").isalpha():
+            return False, "El nombre no debe tener números ni caracteres especiales."
         return True, ""
+
 
     @staticmethod
     def validar_precio(precio):

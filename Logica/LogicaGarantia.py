@@ -17,19 +17,26 @@ class LogicaGarantia:
             return self.garantia_dao.obtener_garantia_por_id(id_garantia, cursor)
         raise ValueError(mensaje)
 
-    def actualizar_garantia(self, modelo_garantia, cursor=None):
-        valido, mensaje = self.validar_campos_a_actualizar(modelo_garantia)
+    def actualizar_garantia(self, modelo_garantia, estado_antiguo,cursor=None):
+        valido, mensaje = self.validar_campos_a_actualizar(modelo_garantia, estado_antiguo)
         if valido:
             return self.garantia_dao.actualizar_garantia(modelo_garantia, cursor)
         raise ValueError(mensaje)
     
     def validar_id(self, id_garantia):
         return Validador.validar_id(id_garantia, "ID de garantía")
+    
+    
+    
+    def validar_estado(self, estado, estado_antiguo):
 
-    def validar_estado(self, estado):
         estados_validos = ["Completada", "En Garantia", "Rechazada"]
+        if estado_antiguo not in ["Completada", "En Garantia", "Rechazada"]:
+            return False, f"El estado '{estado_antiguo}' no es válido."
         if estado not in estados_validos:
             return False, f"El estado '{estado}' no es válido."
+        if estado_antiguo != "En Garantia":
+            return False, f"Garantía con estado '{estado_antiguo}' no puede modificarse, Agrega una nueva Garantia."
         return True, ""
 
     def validar_observaciones(self, observaciones):
@@ -64,8 +71,8 @@ class LogicaGarantia:
         if not res: return False, msg
         return True, ""
 
-    def validar_campos_a_actualizar(self, modelo_garantia):
-        res, msg = self.validar_estado(modelo_garantia.estado)
+    def validar_campos_a_actualizar(self, modelo_garantia, estado_antiguo):
+        res, msg = self.validar_estado(modelo_garantia.estado, estado_antiguo)
         if not res: return False, msg
         res, msg = self.validar_fecha_fin(modelo_garantia.fecha_fin)
         if not res: return False, msg
