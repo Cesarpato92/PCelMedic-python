@@ -17,8 +17,34 @@
 
 ---
 
+## Guia Rapida de Inicio
+
+### Instalación en 5 pasos
+
+```bash
+# 1. Clonar el repositorio
+git clone https://github.com/Cesarpato92/PCelMedic-python.git
+cd PCelMedic-python
+
+# 2. Crear y activar entorno virtual
+python -m venv .venv
+.venv\Scripts\activate  # Windows
+
+# 3. Instalar dependencias
+pip install -r requirements.txt
+
+# 4. Crear base de datos
+mysql -u tu_usuario -p < pcelmedic_database.sql
+
+# 5. Ejecutar la aplicación
+python main.py
+```
+
+---
+
 ## Tabla de Contenidos
 
+- [Guia Rapida de Inicio](#guia-rapida-de-inicio)
 - [Caracteristicas Principales](#caracteristicas-principales)
 - [Arquitectura del Proyecto](#arquitectura-del-proyecto)
 - [Requisitos Previos](#requisitos-previos)
@@ -36,14 +62,15 @@
 
 ## Caracteristicas Principales
 
-- **Registro de clientes y dispositivos** con validacion completa de datos (cedula, email, celular, nombre).
-- **Control del ciclo de reparacion** con estados: *En Proceso*, *Completada*, *Entregada*.
-- **Facturacion automatica** vinculada a las reparaciones realizadas.
-- **Gestion de garantias** con flujo de entrada y salida, seguimiento de estados y observaciones.
-- **Panel financiero** con graficos dinamicos (Matplotlib) y exportacion a Excel (.xlsx).
-- **Generacion de reportes en PDF**: ordenes de reparacion, recibos de garantia y facturas.
-- **Autenticacion de administrador** con contrasenas encriptadas mediante bcrypt.
-- **Transacciones seguras** con soporte para commit/rollback automatico via context manager.
+- **Gestión Integral de Clientes**: Validación completa de datos (cédula, email, celular, nombre) con búsqueda y filtrado.
+- **Control del Ciclo de Reparación**: Estados bien definidos (*En Proceso* → *Completada* → *Entregada*) con seguimiento en tiempo real.
+- **Facturación Inteligente**: Generación automática de facturas vinculadas a reparaciones con cálculo automatizado de totales.
+- **Gestión de Garantías Flexible**: Flujo de entrada y salida, estados configurables, seguimiento de vencimientos y observaciones detalladas.
+- **Panel Financiero Avanzado**: Gráficos dinámicos con Matplotlib, análisis comparativo (ventas vs. costos) y exportación a Excel.
+- **Reportes Profesionales en PDF**: Órdenes de reparación, recibos de garantía y facturas personalizadas.
+- **Seguridad Robusta**: Autenticación de administrador con contraseñas encriptadas (bcrypt), transacciones ACID con commit/rollback automático.
+- **Base de Datos Optimizada**: Índices estratégicos, vistas útiles para reportes y procedimientos almacenados para operaciones complejas.
+- **Interfaz Intuitiva**: Navegación clara con iconografía, validación en tiempo real y mensajes de error descriptivos.
 
 ---
 
@@ -110,8 +137,11 @@ cd PCelMedic-python
 # Crear el entorno virtual
 python -m venv .venv
 
-# Activar en Windows (PowerShell / CMD)
+# Activar en Windows (PowerShell)
 .venv\Scripts\activate
+
+# Activar en Windows (CMD)
+.venv\Scripts\activate.bat
 
 # Activar en Linux / macOS
 source .venv/bin/activate
@@ -123,52 +153,118 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-> **Nota:** El archivo `requirements.txt` incluye todas las librerias necesarias: `mysql-connector-python`, `matplotlib`, `fpdf`, `openpyxl`, `bcrypt`, `tkcalendar`, `pillow`, entre otras.
+> **Dependencias principales**:
+> - `mysql-connector-python`: Driver para conexión a MySQL 8.0+
+> - `matplotlib`: Visualización de gráficos financieros
+> - `fpdf2`: Generación de reportes PDF de alta calidad
+> - `openpyxl`: Exportación a Excel (.xlsx)
+> - `bcrypt`: Encriptación segura de contraseñas (12 rounds)
+> - `tkcalendar`: Selectores de fecha en la interfaz
+> - `pillow`: Procesamiento de imágenes
+> - `pytest`: Framework de testing unitario
 
 ---
 
 ## Configuracion de la Base de Datos
 
-1. Accede a tu servidor MySQL y crea la base de datos:
+### Opción 1: Usando el Script SQL (Recomendado)
 
-   ```sql
-   CREATE DATABASE pcelmedic;
+1. **Ejecutar el script SQL** para crear la base de datos y todas las tablas:
+
+   ```bash
+   # Desde PowerShell o CMD
+   mysql -u tu_usuario -p < pcelmedic_database.sql
+   
+   # O desde MySQL CLI
+   mysql> SOURCE pcelmedic_database.sql;
    ```
 
-2. Edita las credenciales de conexion en `Utilidades/Conexion.py`:
+   > El script `pcelmedic_database.sql` incluye:
+   > - Creación de base de datos con charset UTF-8
+   > - 5 tablas principales (clientes, dispositivos, reparaciones, facturas, garantias)
+   > - Índices para optimizar consultas
+   > - Restricciones de integridad referencial
+   > - Vistas útiles para reportes (reparaciones activas, resumen financiero, garantias por vencer)
+   > - Procedimientos almacenados para operaciones complejas
+   > - Tabla de auditoría (opcional)
+
+2. **Configurar las credenciales de conexion** en [Utilidades/Conexion.py](Utilidades/Conexion.py):
 
    ```python
    self.config = {
        'host': 'localhost',
        'user': 'tu_usuario',
        'password': 'tu_password',
-       'database': 'pcelmedic_db'
+       'database': 'pcelmedic_db',
+       'autocommit': False
    }
    ```
-4. Asegúrate de ejecutar el script SQL de creación de tablas (si se proporciona) o verificar que los DAOs tengan las tablas correspondientes.
+
+### Opción 2: Creación Manual
+
+Si prefieres crear la base de datos manualmente:
+
+```sql
+CREATE DATABASE IF NOT EXISTS pcelmedic_db 
+CHARACTER SET utf8mb4 
+COLLATE utf8mb4_unicode_ci;
+
+USE pcelmedic_db;
+
+-- Crear tablas individuales según los DAOs
+-- (Consulta pcelmedic_database.sql para la definición completa)
+```
+
+### Verificación
+
+Para verificar que la base de datos está correctamente configurada:
+
+```bash
+# Conectar a MySQL
+mysql -u tu_usuario -p pcelmedic_db
+
+# Listar tablas
+SHOW TABLES;
+
+# Verificar estructura de una tabla
+DESCRIBE clientes;
+```
 
 ---
 
 ## Configuracion del Administrador
 
-El acceso al modulo de **Finanzas** requiere autenticacion. Las credenciales se almacenan en un archivo `.configAdmin` en la raiz del proyecto con el siguiente formato:
+### Autenticación Segura del Módulo Finanzas
 
-```
-USER=admin
-PASSWORD=<hash_bcrypt>
-```
+El acceso al módulo **Finanzas** está protegido por autenticación de administrador. Las credenciales se almacenan de forma segura en el archivo `.configAdmin` (no versionado en Git).
 
-Para encriptar una contrasena en texto plano, ejecuta:
+#### Crear credenciales iniciales
 
 ```bash
 python Utilidades/EncriptarConfigAdmin.py
 ```
 
-Este script:
-1. Lee la contrasena actual del archivo `.configAdmin`.
-2. Genera un hash bcrypt (12 rounds).
-3. Crea un backup (`.configAdmin.backup`).
-4. Sobrescribe el archivo con la contrasena encriptada.
+Se te pedirá ingresar:
+1. **Usuario**: Nombre de usuario del administrador (ej: `admin`)
+2. **Contraseña**: Contraseña en texto plano (será encriptada con bcrypt)
+
+El script generará:
+- **`.configAdmin`**: Archivo con credenciales encriptadas (formato: `USER=admin\nPASSWORD=<hash_bcrypt>`)
+- **`.configAdmin.backup`**: Copia de seguridad de la configuración anterior
+
+#### Formato del archivo `.configAdmin`
+
+```
+USER=admin
+PASSWORD=$2b$12$abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOP
+```
+
+### Seguridad y Mejores Prácticas
+
+- ✅ **Las contraseñas se encriptan con bcrypt** (12 rounds) - nunca se almacenan en texto plano
+- ✅ **El archivo `.configAdmin` no se versionan en Git** - se incluye en `.gitignore`
+- ✅ **Hacer backup regular** del archivo `.configAdmin.backup` en lugar seguro
+- ⚠️ **Cambiar la contraseña periódicamente** ejecutando nuevamente `EncriptarConfigAdmin.py`
 
 ---
 
@@ -241,43 +337,70 @@ El sistema genera tres tipos de reportes en PDF, almacenados en la carpeta `Repo
 
 ## Tests
 
-El proyecto incluye pruebas unitarias con **pytest**. Los tests se ubican en la carpeta `tests/` y cubren las validaciones de la capa de logica de negocio:
+El proyecto incluye una **suite completa de pruebas unitarias** desarrollada con **pytest**. Los tests validan la capa de lógica de negocio asegurando confiabilidad y mantenibilidad del código.
+
+### Ejecutar pruebas
 
 ```bash
-# Ejecutar todas las pruebas
+# Ejecutar todas las pruebas con salida detallada
 pytest tests/ -v
 
-# Ejecutar un test especifico
+# Ejecutar pruebas específicas
 pytest tests/test_logica_cliente.py -v
+
+# Ejecutar con cobertura de código
+pytest tests/ --cov=Logica --cov-report=html
+
+# Ejecutar pruebas y mostrar output de print
+pytest tests/ -v -s
 ```
 
-### Tests disponibles
+### Cobertura de pruebas
 
-| Archivo | Cobertura |
-|---------|-----------|
-| `test_logica_cliente.py` | Validacion de cedula, email, nombre y celular. |
-| `test_logica_reparacion.py` | Validacion de datos y estados de reparacion. |
-| `test_logica_garantia.py` | Validacion de campos y estados de garantia. |
-| `test_validador_precio.py` | Validacion de precios (numeros positivos). |
+| Módulo | Archivo | Casos de uso |
+|--------|---------|-------------|
+| **Clientes** | `test_logica_cliente.py` | Validación de cédula (formato), email (RFC), nombre, celular |
+| **Reparaciones** | `test_logica_reparacion.py` | Estados válidos, transiciones permitidas, cálculo de costos |
+| **Garantías** | `test_logica_garantia.py` | Validación de fechas, estados, observaciones |
+| **Precios** | `test_validador_precio.py` | Números positivos, decimales, cero no permitido |
+
+### Ejecutar tests de forma automática
+
+Para ejecutar tests cada vez que haces cambios (modo watch):
+
+```bash
+# Usando pytest-watch (si está instalado)
+ptw tests/ -v
+```
 
 ---
 
 ## Tecnologias Utilizadas
 
-| Tecnologia | Uso |
-|------------|-----|
-| **Python 3.13** | Lenguaje principal |
-| **Tkinter / ttk** | Interfaz grafica de escritorio |
-| **MySQL** | Base de datos relacional |
-| **mysql-connector-python** | Driver de conexion a MySQL |
-| **Matplotlib** | Graficos y visualizaciones financieras |
-| **fpdf** | Generacion de reportes PDF |
-| **openpyxl** | Exportacion de datos a Excel (.xlsx) |
-| **bcrypt** | Encriptacion de contrasenas |
-| **tkcalendar** | Selectores de fecha en la GUI |
-| **Pillow** | Procesamiento de imagenes |
-| **pytest** | Framework de testing |
-| **numpy** | Calculos para graficos de barras |
+### Stack Tecnológico
+
+| Componente | Tecnología | Versión | Propósito |
+|-----------|-----------|---------|----------|
+| **Lenguaje** | Python | 3.13+ | Lenguaje principal |
+| **GUI** | Tkinter / ttk | Built-in | Interfaz gráfica de escritorio multiplataforma |
+| **Base de Datos** | MySQL | 8.0+ | Base de datos relacional con transacciones ACID |
+| **Driver BD** | mysql-connector-python | 9.0+ | Conexión segura a MySQL |
+| **Visualización** | Matplotlib | 3.8+ | Gráficos de barras, líneas y análisis financiero |
+| **Reportes PDF** | fpdf2 | 2.7+ | Generación de PDFs profesionales |
+| **Excel** | openpyxl | 3.10+ | Exportación de datos a archivos .xlsx |
+| **Seguridad** | bcrypt | 4.0+ | Hash seguro de contraseñas (12 rounds) |
+| **Calendario** | tkcalendar | 1.6+ | Selectores de fecha en GUI |
+| **Imágenes** | Pillow | 10.0+ | Procesamiento y manipulación de imágenes |
+| **Testing** | pytest | 8.0+ | Framework de testing unitario |
+| **Análisis** | numpy | 2.0+ | Cálculos numéricos para gráficos |
+
+### Requisitos de Infraestructura
+
+- **Python 3.13** o superior
+- **MySQL Server 8.0** o compatible (MariaDB 10.5+)
+- **4GB RAM** mínimo para operación normal
+- **500MB** espacio en disco para instalación base
+- **Windows 7+**, **Linux** o **macOS 10.14+**
 
 ---
 
@@ -339,10 +462,140 @@ PCelMedic-python/
     |-- test_logica_reparacion.py
     |-- test_logica_garantia.py
     +-- test_validador_precio.py
+|
++-- pcelmedic_database.sql          # Script SQL de inicialización
+|-- .gitignore                       # Archivos ignorados por Git
+|-- requirements.txt                 # Dependencias del proyecto
++-- setup.py (opcional)              # Configuración para packaging
 ```
 
 ---
 
-<p align="center">
+## Configuracion Avanzada
+
+### Optimización de Base de Datos
+
+Para mejor rendimiento en producción:
+
+```sql
+-- Analizar tablas y actualizar estadísticas
+ANALYZE TABLE clientes, dispositivos, reparaciones, facturas, garantias;
+
+-- Optimizar tablas fragmentadas
+OPTIMIZE TABLE clientes, dispositivos, reparaciones, facturas, garantias;
+
+-- Ver configuración actual
+SHOW VARIABLES LIKE '%buffer%';
+```
+
+### Variables de Entorno (Opcional)
+
+Crear archivo `.env` para mayor seguridad:
+
+```bash
+DB_HOST=localhost
+DB_USER=admin
+DB_PASSWORD=tu_contrasena
+DB_NAME=pcelmedic_db
+LOG_LEVEL=INFO
+```
+
+---
+
+## Solucion de Problemas
+
+### Problema: "Access denied for user"
+
+**Solución**:
+```bash
+# Verificar usuario MySQL está creado
+mysql -h localhost -u root -p
+
+mysql> CREATE USER 'tu_usuario'@'localhost' IDENTIFIED BY 'tu_password';
+mysql> GRANT ALL PRIVILEGES ON pcelmedic_db.* TO 'tu_usuario'@'localhost';
+mysql> FLUSH PRIVILEGES;
+```
+
+### Problema: "No module named 'mysql'"
+
+**Solución**:
+```bash
+# Reinstalar el driver MySQL
+pip install --upgrade mysql-connector-python
+```
+
+### Problema: "Tkinter not installed"
+
+**Solución en Ubuntu/Debian**:
+```bash
+sudo apt-get install python3-tk python3-dev
+```
+
+**En Windows**: Tkinter viene incluido con Python. Si tienes problemas, reinstala Python incluyendo Tkinter.
+
+---
+
+## Contribuciones y Reporte de Bugs
+
+### Reportar un error
+
+1. Abre un issue en GitHub con descripción detallada
+2. Incluye la versión de Python, Sistema Operativo y pasos para reproducir
+3. Adjunta archivos de log si es necesario (carpeta `Reportes/` sin datos sensibles)
+
+### Contribuir código
+
+1. Haz fork del repositorio
+2. Crea una rama para tu feature: `git checkout -b feature/nueva-funcionalidad`
+3. Asegúrate que los tests pasen: `pytest tests/ -v`
+4. Commit con mensajes descriptivos: `git commit -m "Agregar nueva funcionalidad"`
+5. Push a la rama: `git push origin feature/nueva-funcionalidad`
+6. Abre un Pull Request con descripción clara
+
+### Estándares de código
+
+- Seguir **PEP 8** para estilo de código
+- Incluir docstrings en funciones públicas
+- Escribir tests para funcionalidad nueva
+- Usar type hints cuando sea posible
+
+---
+
+## Roadmap (Próximas Versiones)
+
+### v1.1 (Q2 2026)
+- [ ] API REST para integración con sistemas externos
+- [ ] Soporte para múltiples sedes/sucursales
+- [ ] Dashboard web complementario
+- [ ] Integración con WhatsApp para notificaciones
+
+### v1.2 (Q3 2026)
+- [ ] Sincronización en la nube (AWS S3 / Azure Blob)
+- [ ] Soporte para múltiples idiomas
+- [ ] Catálogo de repuestos con inventario
+- [ ] Generación de reportes automáticos vía email
+
+### v2.0 (2027)
+- [ ] Migración a arquitectura microservicios
+- [ ] Aplicación móvil (Flutter/React Native)
+- [ ] Machine Learning para predicción de fallos
+
+---
+
+## Licencia
+
+Este proyecto está bajo licencia **Privada**. Todos los derechos reservados © 2026 PCelMedic.
+
+Para información sobre permisos de uso comercial, contactar a: `info@pcelmedic.local`
+
+---
+
+## Contacto y Soporte
+
+- **Documentación**: [Wiki del Proyecto](https://github.com/Cesarpato92/PCelMedic-python/wiki)
+- **Issues**: [GitHub Issues](https://github.com/Cesarpato92/PCelMedic-python/issues)
+- **Email**: `soporte@pcelmedic.local`
+
+---<p align="center">
   &copy; 2026 <strong>PCelMedic</strong> — Eficiencia y transparencia en tu servicio tecnico.
 </p>
