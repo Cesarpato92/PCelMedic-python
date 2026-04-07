@@ -166,6 +166,8 @@ pip install -r requirements.txt
 > - `tkcalendar`: Selectores de fecha en la interfaz
 > - `pillow`: Procesamiento de imágenes
 > - `pytest`: Framework de testing unitario
+> - `python-dotenv`: Biblioteca para lectura de variables de entorno
+
 
 ---
 
@@ -188,21 +190,25 @@ pip install -r requirements.txt
    > - 5 tablas principales (clientes, dispositivos, reparaciones, facturas, garantias)
    > - Índices para optimizar consultas
    > - Restricciones de integridad referencial
-   > - Vistas útiles para reportes (reparaciones activas, resumen financiero, garantias por vencer)
-   > - Procedimientos almacenados para operaciones complejas
-   > - Tabla de auditoría (opcional)
+   
 
-2. **Configurar las credenciales de conexion** en [Utilidades/Conexion.py](Utilidades/Conexion.py):
+2. **Configurar las credenciales de conexión usando archivo `.env`**:
 
-   ```python
-   self.config = {
-       'host': 'localhost',
-       'user': 'tu_usuario',
-       'password': 'tu_password',
-       'database': 'pcelmedic_db',
-       'autocommit': False
-   }
+   Crea un archivo `.env` en la raíz del proyecto con las siguientes variables:
+
+   ```env
+   # Configuración de Base de Datos
+   DB_HOST=localhost
+   DB_PORT=3306
+   DB_USER=tu_usuario
+   DB_PASSWORD=tu_password
+   DB_DATABASE=pcelmedic_db
    ```
+
+   > **Nota de seguridad**: El archivo `.env` NO debe versionarse en Git. 
+   > Asegúrate de que está incluido en `.gitignore` (ya está por defecto).
+   
+   El archivo [Config/Conexion.py](Config/Conexion.py) carga automáticamente estas variables usando `python-dotenv`.
 
 ### Opción 2: Creación Manual
 
@@ -221,18 +227,51 @@ USE pcelmedic_db;
 
 ### Verificación
 
-Para verificar que la base de datos está correctamente configurada:
+Antes de ejecutar la aplicación, verifica que todo está configurado correctamente:
 
-```bash
-# Conectar a MySQL
-mysql -u tu_usuario -p pcelmedic_db
+1. **Verificar que el archivo `.env` existe** en la raíz del proyecto:
+   ```bash
+   # En Windows (PowerShell o CMD)
+   dir .env
+   
+   # En Linux / macOS
+   ls -la .env
+   ```
 
-# Listar tablas
-SHOW TABLES;
+2. **Verificar que las variables de entorno se cargan correctamente**:
+   ```bash
+   # Conectar a MySQL con las credenciales del .env
+   mysql -u tu_usuario -p pcelmedic_db
+   ```
 
-# Verificar estructura de una tabla
-DESCRIBE clientes;
+3. **Conectar a MySQL y verificar la base de datos**:
+
+   ```bash
+   # Listar tablas
+   SHOW TABLES;
+
+   # Verificar estructura de una tabla
+   DESCRIBE clientes;
+   ```
+
+### Plantilla de variables de entorno (`.env.example`)
+
+Se recomienda crear un archivo `.env.example` **versionado en Git** como referencia para nuevos desarrolladores:
+
+```env
+# Configuración de Base de Datos
+# Cambia estos valores según tu entorno local
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=contraseña_aqui
+DB_DATABASE=pcelmedic_db
 ```
+
+Para configurar tu entorno:
+1. Copia `.env.example` a `.env`
+2. Edita los valores en `.env` con tus credenciales reales
+3. El archivo `.env` está en `.gitignore` y no se versionará
 
 ---
 
