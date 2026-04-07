@@ -3,7 +3,7 @@ from tkinter import messagebox, ttk
 from datetime import datetime 
 import os
 from Modelo.ModeloGarantia import ModeloGarantia
-from Utilidades.TransaccionConexion import TransaccionConexion
+from Config.TransaccionConexion import TransaccionConexion
 from Logica.LogicaCliente import LogicaCliente
 from Logica.LogicaDispositivo import LogicaDispositivo
 from Logica.LogicaReparacion import LogicaReparacion

@@ -1,4 +1,4 @@
-from Utilidades.Conexion import Conexion
+from Config.Conexion import Conexion
 
 class TransaccionConexion:
    

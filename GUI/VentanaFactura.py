@@ -9,7 +9,7 @@ from Logica.LogicaReparacion import LogicaReparacion
 from Logica.LogicaFactura import LogicaFactura
 from Logica.GeneradorPDF import GeneradorPDF
 from Modelo.ModeloFactura import ModeloFactura
-from Utilidades.TransaccionConexion import TransaccionConexion
+from Config.TransaccionConexion import TransaccionConexion
 import os
 
 

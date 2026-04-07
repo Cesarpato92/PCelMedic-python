@@ -1,5 +1,4 @@
 import os
-
 from dotenv import load_dotenv
 
 import mysql.connector
@@ -13,7 +12,7 @@ class Conexion:
     __port = os.getenv("DB_PORT", "3306")
     __host = os.getenv("DB_HOST", "localhost")
     __user = os.getenv("DB_USER", "root")
-    __password = os.getenv("DB_PASSWORD", "password")
+    __password = os.getenv("DB_PASSWORD", "1234")
     __database = os.getenv("DB_DATABASE", "pcelmedic")
 
     # ... __init__ vacío ...

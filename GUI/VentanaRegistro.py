@@ -10,7 +10,7 @@ from Logica.LogicaReparacion import LogicaReparacion
 from Logica.GeneradorPDF import GeneradorPDF
 from datetime import datetime
 import os
-from Utilidades.TransaccionConexion import TransaccionConexion
+from Config.TransaccionConexion import TransaccionConexion
 
 
 class VentanaRegistro(tk.Frame):
