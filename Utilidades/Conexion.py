@@ -1,15 +1,20 @@
+import os
+
+from dotenv import load_dotenv
+
 import mysql.connector
 from mysql.connector import Error
 
 
 class Conexion:
+    load_dotenv()  # Carga las variables de .env al entorno
     __conexion = None
-    # ... resto de atributos de conexión ...
-    __port = 3306        
-    __host = "localhost"
-    __user = "root"
-    __password = "root"
-    __database = "pcelmedic"
+    # atributos de conexión 
+    __port = os.getenv("DB_PORT", "3306")
+    __host = os.getenv("DB_HOST", "localhost")
+    __user = os.getenv("DB_USER", "root")
+    __password = os.getenv("DB_PASSWORD", "password")
+    __database = os.getenv("DB_DATABASE", "pcelmedic")
 
     # ... __init__ vacío ...
 
