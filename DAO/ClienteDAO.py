@@ -1,4 +1,4 @@
-import Utilidades.Conexion as conexion_bd
+import Config.Conexion as conexion_bd
 from tkinter import messagebox
 import mysql.connector
 from Modelo.ModeloCliente import ModeloCliente

@@ -5,7 +5,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from Logica.LogicaFactura import LogicaFactura
 from Logica.LogicaCliente import LogicaCliente
-from Utilidades.TransaccionConexion import TransaccionConexion
+from Config.TransaccionConexion import TransaccionConexion
 from openpyxl import Workbook
 import datetime
 

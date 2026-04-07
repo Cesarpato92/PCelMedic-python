@@ -7,7 +7,7 @@ from Logica.LogicaDispositivo import LogicaDispositivo
 from Logica.LogicaReparacion import LogicaReparacion
 from Logica.LogicaGarantia import LogicaGarantia
 from Logica.GeneradorPDF import GeneradorPDF
-from Utilidades.TransaccionConexion import TransaccionConexion
+from Config.TransaccionConexion import TransaccionConexion
 import os
 
 
