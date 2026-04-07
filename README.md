@@ -100,9 +100,13 @@ El sistema sigue una arquitectura en capas que separa responsabilidades:
 |  ModeloReparacion, ModeloFactura        |
 |  ModeloGarantia                         |
 +-----------------------------------------+
-|         Utilidades (Soporte)            |  Conexion BD, validadores,
-|  Conexion, TransaccionConexion          |  encriptacion
-|  Validador, ManejadorPassword           |
+|         Utilidades (Soporte)            |  Validadores,
+|      Validador, ManejadorPassword       |  encriptacion
++-----------------------------------------+
++-----------------------------------------+
+|         Config (Conexion a DB)          |  Conexion BD
+|  Conexion, TransaccionConexion          |  
+|                                         | 
 +-----------------------------------------+
 ```
 
