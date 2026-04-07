@@ -138,22 +138,14 @@ pip install -r requirements.txt
 2. Edita las credenciales de conexion en `Utilidades/Conexion.py`:
 
    ```python
-   __port = 3306
-   __host = "localhost"
-   __user = "tu_usuario"
-   __password = "tu_password"
-   __database = "pcelmedic"
+   self.config = {
+       'host': 'localhost',
+       'user': 'tu_usuario',
+       'password': 'tu_password',
+       'database': 'pcelmedic_db'
+   }
    ```
-
-3. Crea las tablas necesarias. El sistema utiliza las siguientes tablas:
-
-   | Tabla | Descripcion |
-   |-------|-------------|
-   | `cliente` | Datos de clientes (cedula, nombre, email, celular) |
-   | `dispositivo` | Dispositivos vinculados a clientes (id_dispositivo, marca, version, tipo de reparacion, tipo_contrasena, contrasena, comentarios, referencia a cliente) |
-   | `reparacion` | Registro de reparaciones (id_reparacion, fecha_ingreso, estado, costo_repuesto, precio_reparacion, comentarios, referencia a dispositivo) |
-   | `factura` | Facturas generadas (id_factura, fecha, total, referencia a reparacion) |
-   | `garantia` | Garantias (id_garantia, estado, observaciones, fecha_inicio, fecha_fin, precio_insumos, comentarios finales, referencia a reparacion) |
+4. Asegúrate de ejecutar el script SQL de creación de tablas (si se proporciona) o verificar que los DAOs tengan las tablas correspondientes.
 
 ---
 
