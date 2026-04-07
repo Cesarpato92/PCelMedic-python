@@ -586,7 +586,7 @@ sudo apt-get install python3-tk python3-dev
 
 Este proyecto está bajo licencia **Privada**. Todos los derechos reservados © 2026 PCelMedic.
 
-Para información sobre permisos de uso comercial, contactar a: `info@pcelmedic.local`
+Para información sobre permisos de uso comercial, contactar a: `parcerazo@gmail.com`
 
 ---
 
@@ -594,7 +594,7 @@ Para información sobre permisos de uso comercial, contactar a: `info@pcelmedic.
 
 - **Documentación**: [Wiki del Proyecto](https://github.com/Cesarpato92/PCelMedic-python/wiki)
 - **Issues**: [GitHub Issues](https://github.com/Cesarpato92/PCelMedic-python/issues)
-- **Email**: `soporte@pcelmedic.local`
+- **Email**: `parcerazo@gmail.com`
 
 ---<p align="center">
   &copy; 2026 <strong>PCelMedic</strong> — Eficiencia y transparencia en tu servicio tecnico.
