@@ -7,6 +7,9 @@ class TransaccionConexion:
         self.cursor = None
 
     def __enter__(self):
+        if self.conexion is None:
+            raise ConnectionError("No se pudo establecer la conexión a la base de datos.")
+
         # Verificamos que no haya una conexion en curso
         if not self.conexion.in_transaction:
             self.conexion.start_transaction()

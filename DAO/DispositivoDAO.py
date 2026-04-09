@@ -7,7 +7,7 @@ class DispositivoDAO:
     
     def agregar_dispositivo(self, modelo_dispositivo, cursor):
         
-            sql = """INSERT INTO dispositivo (marca, tipo_reparacion, tipo_contraseña, contraseña, comentarios, id_cliente, version ) 
+            sql = """INSERT INTO dispositivo (marca, tipo_reparacion, tipo_contrasena, contrasena, comentarios, id_cliente, version ) 
                      VALUES (%s, %s, %s, %s, %s, %s, %s)"""
             valores = (modelo_dispositivo.marca, 
                        modelo_dispositivo.tipo_reparacion,
@@ -25,7 +25,7 @@ class DispositivoDAO:
         dispositivo_encontrado = None
         
 
-        sql = "SELECT marca, tipo_reparacion, tipo_contraseña, contraseña, comentarios, id_cliente, version FROM dispositivo WHERE id_dispositivo = %s"
+        sql = "SELECT marca, tipo_reparacion, tipo_contrasena, contrasena, comentarios, id_cliente, version FROM dispositivo WHERE id_dispositivo = %s"
         #Ingresar primero el id_dispositivo al objeto modelo_dispositivo antes de llamar a este metodo
         valores = (id_dispositivo,)
             

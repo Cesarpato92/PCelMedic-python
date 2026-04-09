@@ -1,7 +1,7 @@
 import tkinter
 from tkinter import messagebox, ttk
 from datetime import datetime 
-import os
+from Utilidades.AbrirPDF import AbrirPDF
 from Modelo.ModeloGarantia import ModeloGarantia
 from Config.TransaccionConexion import TransaccionConexion
 from Logica.LogicaCliente import LogicaCliente
@@ -9,6 +9,8 @@ from Logica.LogicaDispositivo import LogicaDispositivo
 from Logica.LogicaReparacion import LogicaReparacion
 from Logica.LogicaGarantia import LogicaGarantia
 from Logica.GeneradorPDF import GeneradorPDF
+
+
 
 class VentanaEntradaGarantia(tkinter.Frame):
 
@@ -362,7 +364,7 @@ class VentanaEntradaGarantia(tkinter.Frame):
                     # Verificar asegurarnos que tenemos los objetos necesarios
                     if self.cliente_obj and self.dispositivo_obj and self.reparacion_obj:
                         ruta = self.generador_pdf.generar_reporte_garantia(self.cliente_obj, self.dispositivo_obj, self.reparacion_obj, modelo_garantia)
-                        os.startfile(ruta)
+                        AbrirPDF.open_file(ruta)
                     else:
                         print("Error: Objetos de datos faltantes para generar PDF")
                     

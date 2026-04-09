@@ -13,7 +13,7 @@ class Conexion:
     __host = os.getenv("DB_HOST", "localhost")
     __user = os.getenv("DB_USER", "root")
     __password = os.getenv("DB_PASSWORD", "1234")
-    __database = os.getenv("DB_DATABASE", "pcelmedic")
+    __database = os.getenv("DB_DATABASE", os.getenv("DB_NAME", "pcelmedic"))
 
     # ... __init__ vacío ...
 
@@ -23,16 +23,15 @@ class Conexion:
         if cls.__conexion is None or not cls.__conexion.is_connected():
             try:
                 cls.__conexion = mysql.connector.connect(
-                    host=cls.__host, 
-                    port=cls.__port, 
-                    user=cls.__user, 
-                    password=cls.__password, 
+                    host=cls.__host,
+                    port=cls.__port,
+                    user=cls.__user,
+                    password=cls.__password,
                     database=cls.__database)
                 if cls.__conexion.is_connected():
                     print("Conexión exitosa a la base de datos.")
             except Error as err:
-                print(f"Error al conectar a la base de datos: {err}")
-                return None
+                raise ConnectionError(f"Error al conectar a la base de datos: {err}") from err
         return cls.__conexion
 
     @classmethod

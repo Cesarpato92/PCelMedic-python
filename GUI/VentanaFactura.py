@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 
 from datetime import datetime
-
+from Utilidades.AbrirPDF import AbrirPDF
 from Logica.LogicaCliente import LogicaCliente
 from Logica.LogicaDispositivo import LogicaDispositivo
 from Logica.LogicaReparacion import LogicaReparacion
@@ -11,6 +11,8 @@ from Logica.GeneradorPDF import GeneradorPDF
 from Modelo.ModeloFactura import ModeloFactura
 from Config.TransaccionConexion import TransaccionConexion
 import os
+
+
 
 
 class VentanaFactura(tk.Frame):
@@ -108,7 +110,7 @@ class VentanaFactura(tk.Frame):
                         nombre_archivo = f"Factura_{factura.id_factura}-{self.cliente_model.cedula}.pdf"
                         ruta = os.path.join("Reportes", nombre_archivo)
                         if os.path.exists(ruta):
-                            os.startfile(ruta)
+                            open_file(ruta)
                         else:
                             messagebox.showwarning("Archivo no encontrado", f"No se encontró el archivo: {nombre_archivo}")
                     return
@@ -138,7 +140,7 @@ class VentanaFactura(tk.Frame):
                     ruta = self.generador_pdf.generar_factura(self.cliente_model, self.dispositivo_model, self.reparacion_model, id_factura)
                     
                     if os.path.exists(ruta):
-                        os.startfile(ruta)
+                        AbrirPDF.open_file(ruta)
                     self.limpiar_campos()
             
         except Exception as e:

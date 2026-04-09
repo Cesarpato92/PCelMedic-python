@@ -1,0 +1,11 @@
+__pycache__
+.pytest_cache/
+*.pyc
+.git
+.gitignore
+README.md
+.venv/
+venv/
+.vscode/
+.idea/
+.configAdmin.backup
