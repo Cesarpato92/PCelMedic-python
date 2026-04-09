@@ -10,7 +10,9 @@ from Logica.LogicaReparacion import LogicaReparacion
 from Logica.GeneradorPDF import GeneradorPDF
 from datetime import datetime
 import os
+
 from Config.TransaccionConexion import TransaccionConexion
+from Utilidades.AbrirPDF import AbrirPDF
 
 
 class VentanaRegistro(tk.Frame):
@@ -260,7 +262,7 @@ class VentanaRegistro(tk.Frame):
                             ruta_pdf = generador.generar_reporte_reparacion(cliente_obj, dispositivo_obj, reparacion_obj)
                             messagebox.showinfo("Éxito", f"Registro {id_rep} guardado.")
                             if os.path.exists(ruta_pdf):
-                                os.startfile(ruta_pdf)
+                                AbrirPDF.open_file(ruta_pdf)
                         except Exception as e_pdf:
                             messagebox.showwarning("Aviso", f"Datos guardados, pero el PDF falló: {e_pdf}")
                         
@@ -269,7 +271,7 @@ class VentanaRegistro(tk.Frame):
         except Exception as e:
             messagebox.showwarning("Aviso", f"Ocurrió un error al guardar: {e}")
         finally:
-            if cursor:
+            if 'cursor' in locals() and cursor:
                 # Liberamos cursor para la memoria del servidor
                 cursor.close()
 

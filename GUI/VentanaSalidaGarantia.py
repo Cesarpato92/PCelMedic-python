@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
 from datetime import datetime
-
+from Utilidades.AbrirPDF import AbrirPDF
 from Logica.LogicaCliente import LogicaCliente
 from Logica.LogicaDispositivo import LogicaDispositivo
 from Logica.LogicaReparacion import LogicaReparacion
@@ -9,6 +9,8 @@ from Logica.LogicaGarantia import LogicaGarantia
 from Logica.GeneradorPDF import GeneradorPDF
 from Config.TransaccionConexion import TransaccionConexion
 import os
+
+
 
 
 class VentanaSalidaGarantia(tk.Frame):
@@ -205,7 +207,7 @@ class VentanaSalidaGarantia(tk.Frame):
                     self.reparacion_model, 
                     self.garantia_actual
                 )
-                os.startfile(ruta)
+                AbrirPDF.open_file(ruta)
             except Exception as e:
                 messagebox.showerror("Error", f"Error al generar PDF: {e}")
         else:

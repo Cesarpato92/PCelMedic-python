@@ -1,9 +1,29 @@
-.venv/
-venv/
-.env
-.idea/
-.vscode/
+# Volumen de MySQL (datos de la base de datos)
+mysql-data/
+
+# Archivos de Python
 __pycache__/
 *.pyc
+*.pyo
+
+# Archivos de configuración sensibles
 .configAdmin
 .configAdmin.backup
+.env
+
+# Reportes generados
+Reportes/*.pdf
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# Archivos temporales de Windows
+Thumbs.db
+desktop.ini
+
+# Archivos de Docker
+*.sock

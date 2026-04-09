@@ -18,7 +18,13 @@ class VentanaPrincipal(tk.Tk):
         
         self.title("SGI PCelMedic")
         self.geometry("1280x720")
-        self.state('zoomed') 
+       
+        try:
+            # Para Linux (Docker)
+            self.attributes('-zoomed', True)
+        except:
+            # Para Windows
+            self.state('zoomed')  # Asegura que la ventana se abra en tamaño normal
        
         self.resizable(True, True)
 
