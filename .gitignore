@@ -5,11 +5,15 @@ mysql-data/
 __pycache__/
 *.pyc
 *.pyo
+.pytest_cache/
 
 # Archivos de configuración sensibles
 .configAdmin
 .configAdmin.backup
 .env
+venv/
+.venv/
+database/
 
 # Reportes generados
 Reportes/*.pdf
