@@ -7,6 +7,7 @@ class AbrirPDF:
     @staticmethod
     def open_file(path):
         try:
+            print(os.name)
             if os.name == "nt":
                 os.startfile(path)
                 return
