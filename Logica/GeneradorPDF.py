@@ -8,7 +8,7 @@ class GeneradorPDF:
             os.makedirs(self.ruta_reportes)
 
     def generar_reporte_reparacion(self, cliente, dispositivo, reparacion):
-        fecha = reparacion.fecha_ingreso.strftime("%Y-%m-%d")
+        fecha = str(reparacion.fecha_ingreso.strftime("%Y-%m-%d"))
         nombre_archivo = f"Orden_{reparacion.id_reparacion}-{cliente.cedula}-{fecha}.pdf"
         ruta_archivo = os.path.join(self.ruta_reportes, nombre_archivo)
         
@@ -87,7 +87,7 @@ class GeneradorPDF:
         return ruta_archivo
 
     def generar_reporte_garantia(self, cliente, dispositivo, reparacion, garantia):
-        fecha = reparacion.fecha_ingreso.strftime("%Y-%m-%d")
+        fecha = str(reparacion.fecha_ingreso.strftime("%Y-%m-%d"))
         nombre_archivo = f"Garantia_{garantia.id_garantia}-{cliente.cedula}-{fecha}.pdf"
         ruta_archivo = os.path.join(self.ruta_reportes, nombre_archivo)
         
@@ -202,7 +202,7 @@ class GeneradorPDF:
         return ruta_archivo
 
     def generar_factura(self, cliente, dispositivo, reparacion, id_factura):
-        fecha = reparacion.fecha_ingreso.strftime("%Y-%m-%d")
+        fecha = str(reparacion.fecha_ingreso.strftime("%Y-%m-%d"))
         nombre_archivo = f"Factura_{id_factura}-{cliente.cedula}-{fecha}.pdf"
         ruta_archivo = os.path.join(self.ruta_reportes, nombre_archivo)
         
