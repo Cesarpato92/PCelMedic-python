@@ -19,7 +19,7 @@
 
 ## Guia Rapida de Inicio
 
-### Instalación en 5 pasos
+### Instalación Local (Recomendado para desarrollo)
 
 ```bash
 # 1. Clonar el repositorio
@@ -40,6 +40,20 @@ mysql -u tu_usuario -p < pcelmedic_database.sql
 python main.py
 ```
 
+### Ejecutar con Docker (Recomendado para aislamiento)
+
+```bash
+# 1. Clonar y entrar al proyecto
+git clone https://github.com/Cesarpato92/PCelMedic-python.git
+cd PCelMedic-python
+
+# 2. Crear archivo .env (ver .env.example)
+cp .env.example .env
+
+# 3. Iniciar contenedores
+docker-compose up --build -d
+```
+
 ---
 
 ## Tabla de Contenidos
@@ -49,6 +63,7 @@ python main.py
 - [Arquitectura del Proyecto](#arquitectura-del-proyecto)
 - [Requisitos Previos](#requisitos-previos)
 - [Instalacion](#instalacion)
+- [Despliegue con Docker](#despliegue-con-docker)
 - [Configuracion de la Base de Datos](#configuracion-de-la-base-de-datos)
 - [Configuracion del Administrador](#configuracion-del-administrador)
 - [Uso](#uso)
@@ -167,6 +182,50 @@ pip install -r requirements.txt
 > - `pillow`: Procesamiento de imágenes
 > - `pytest`: Framework de testing unitario
 > - `python-dotenv`: Biblioteca para lectura de variables de entorno
+
+---
+
+## Despliegue con Docker
+
+El proyecto incluye soporte completo para **Docker** y **Docker Compose**, lo que permite levantar todo el entorno (Aplicación + Base de Datos MySQL) de forma automatizada.
+
+### Requisitos Previos (Docker)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado y en ejecución.
+- Un servidor X (X11 Server) para visualizar la interfaz gráfica desde el contenedor:
+  - **Windows**: [VcXsrv](https://sourceforge.net/projects/vcxsrv/) o [Xming](http://www.straightrunning.com/XmingNotes/).
+  - **Linux**: Generalmente incluido por defecto.
+  - **macOS**: [XQuartz](https://www.xquartz.org/).
+
+### Pasos para el despliegue
+
+1. **Configurar variables de entorno**:
+   Copia el archivo de ejemplo y ajusta las credenciales:
+   ```bash
+   cp .env.example .env
+   ```
+   > **IMPORTANTE**: Para que Docker funcione correctamente, asegúrate de que `DB_HOST` en el `.env` sea `mysql` si estás usando docker-compose, o usa la configuración por defecto del archivo `docker-compose.yml`.
+
+2. **Configurar el servidor X (Solo Windows/macOS)**:
+   - Inicia **VcXsrv** (XLaunch).
+   - Selecciona "Multiple windows".
+   - Selecciona "Start no client".
+   - **IMPORTANTE**: Activa la opción **"Disable access control"**.
+
+3. **Levantar los servicios**:
+   ```bash
+   docker-compose up --build -d
+   ```
+
+4. **Verificar el estado**:
+   ```bash
+   docker-compose ps
+   ```
+
+### Servicios incluidos
+- **mysql**: Base de datos MySQL 8.0 ejecutándose en el puerto interno `3311` (mapeado al `3308` del host).
+- **app**: La aplicación Python con todas las dependencias instaladas y soporte para la GUI vía X11.
+
+---
 
 
 ---
@@ -453,6 +512,9 @@ ptw tests/ -v
 PCelMedic-python/
 |-- main.py                          # Punto de entrada de la aplicacion
 |-- requirements.txt                 # Dependencias del proyecto
+|-- dockerfile                       # Configuración de imagen Docker
+|-- docker-compose.yml               # Orquestación de contenedores
+|-- .dockerIgnore                    # Archivos excluidos de la imagen Docker
 |-- .gitignore                       # Archivos ignorados por Git
 |-- .configAdmin                     # Credenciales del administrador (no versionado)
 |
@@ -575,6 +637,16 @@ sudo apt-get install python3-tk python3-dev
 ```
 
 **En Windows**: Tkinter viene incluido con Python. Si tienes problemas, reinstala Python incluyendo Tkinter.
+
+---
+
+### Problema: "No se puede abrir el DISPLAY" (Docker)
+
+**Solución**:
+1. Asegúrate de que tu servidor X (VcXsrv/Xming) esté corriendo.
+2. Verifica que la opción **"Disable access control"** esté marcada en el servidor X.
+3. Asegúrate de que la variable `DISPLAY` en `docker-compose.yml` sea correcta (generalmente `host.docker.internal:0` en Windows).
+4. Si usas Linux, otorga permisos locales: `xhost +local:root`.
 
 ---
 
