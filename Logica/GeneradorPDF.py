@@ -1,5 +1,6 @@
 from fpdf import FPDF
 import os
+from datetime import datetime
 
 class GeneradorPDF:
     def __init__(self):
@@ -7,8 +8,9 @@ class GeneradorPDF:
         if not os.path.exists(self.ruta_reportes):
             os.makedirs(self.ruta_reportes)
 
+
     def generar_reporte_reparacion(self, cliente, dispositivo, reparacion):
-        fecha = str(reparacion.fecha_ingreso.strftime("%Y-%m-%d"))
+        fecha = datetime.now().strftime("%Y-%m-%d")
         nombre_archivo = f"Orden_{reparacion.id_reparacion}-{cliente.cedula}-{fecha}.pdf"
         ruta_archivo = os.path.join(self.ruta_reportes, nombre_archivo)
         
@@ -22,7 +24,7 @@ class GeneradorPDF:
         pdf.cell(0, 10, f"Orden de Reparación #{reparacion.id_reparacion}", ln=True, align='C')
         pdf.ln(10)
         
-        # Función auxiliar para crear tablas
+        # Función auxiliar para crear tablas (CONVERSIÓN A STRING)
         def agregar_seccion(titulo, datos):
             pdf.set_font("Arial", 'B', 12)
             pdf.cell(0, 10, titulo, ln=True, align='L')
@@ -30,22 +32,22 @@ class GeneradorPDF:
             
             for clave, valor in datos:
                 pdf.set_font("Arial", 'B', 11)
-                pdf.cell(45, 8, clave, border=1)
+                pdf.cell(45, 8, str(clave), border=1)      # ← Convertir a string
                 pdf.set_font("Arial", size=11)
-                pdf.cell(0, 8, valor, border=1, ln=True)
+                pdf.cell(0, 8, str(valor), border=1, ln=True)  # ← Convertir a string
             pdf.ln(5)
         
-        # Datos del Cliente
+        # Datos del Cliente (convertir cédula a string)
         agregar_seccion("Datos del Cliente", [
-            ("Cédula", cliente.cedula),
+            ("Cédula", str(cliente.cedula)),
             ("Nombre", cliente.nombre),
             ("Email", cliente.email),
             ("Celular", cliente.celular)
         ])
         
-        # Datos del Dispositivo
+        # Datos del Dispositivo (convertir ID a string)
         agregar_seccion("Datos del Dispositivo", [
-            ("ID Dispositivo", dispositivo.id_dispositivo),
+            ("ID Dispositivo", str(dispositivo.id_dispositivo)),
             ("Marca", dispositivo.marca),
             ("Modelo", dispositivo.version),
             ("Tipo Reparación", dispositivo.tipo_reparacion),
@@ -87,7 +89,7 @@ class GeneradorPDF:
         return ruta_archivo
 
     def generar_reporte_garantia(self, cliente, dispositivo, reparacion, garantia):
-        fecha = str(reparacion.fecha_ingreso.strftime("%Y-%m-%d"))
+        fecha = datetime.now().strftime("%Y-%m-%d")
         nombre_archivo = f"Garantia_{garantia.id_garantia}-{cliente.cedula}-{fecha}.pdf"
         ruta_archivo = os.path.join(self.ruta_reportes, nombre_archivo)
         
@@ -202,7 +204,7 @@ class GeneradorPDF:
         return ruta_archivo
 
     def generar_factura(self, cliente, dispositivo, reparacion, id_factura):
-        fecha = str(reparacion.fecha_ingreso.strftime("%Y-%m-%d"))
+        fecha = datetime.now().strftime("%Y-%m-%d")
         nombre_archivo = f"Factura_{id_factura}-{cliente.cedula}-{fecha}.pdf"
         ruta_archivo = os.path.join(self.ruta_reportes, nombre_archivo)
         
