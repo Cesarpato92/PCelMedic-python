@@ -9,3 +9,7 @@ venv/
 .vscode/
 .idea/
 .configAdmin.backup
+.dist/
+build/
+*.egg-info/
+main.spec
