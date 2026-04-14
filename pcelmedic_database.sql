@@ -142,12 +142,3 @@ COLLATE = utf8mb4_0900_ai_ci;
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
-
--- -----------------------------------------------------
--- Seguridad: Crear usuario limitado para la aplicación
--- Este usuario solo puede realizar operaciones CRUD
--- -----------------------------------------------------
-CREATE USER IF NOT EXISTS 'user_limited_pcelmedic'@'%' IDENTIFIED BY 'Pass_Secure_XLMS19dXkd8x3AS';
-GRANT SELECT, INSERT, UPDATE, DELETE ON `pcelmedic`.* TO 'user_limited_pcelmedic'@'%';
-FLUSH PRIVILEGES;
-

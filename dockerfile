@@ -1,6 +1,6 @@
 
-# Imagen base de Python 3.13
-FROM python:3.13
+# Imagen base de Python 3.10
+FROM python:3.10-slim
 
 # Establecer directorio de trabajo
 WORKDIR /app
