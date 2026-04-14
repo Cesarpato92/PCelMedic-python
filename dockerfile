@@ -7,9 +7,10 @@ WORKDIR /app
 
 # Instalar dependencias para Tkinter en el contenedor
 RUN apt-get update && apt-get install -y \
-    tk \
-    libx11-6 \
-    xdg-utils \ 
+    python3-tk \
+    libxext6 \
+    libxrender1 \
+    libxtst6 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copiar requirements.txt e instalar dependencias

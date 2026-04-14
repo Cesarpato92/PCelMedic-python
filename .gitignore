@@ -11,10 +11,14 @@ __pycache__/
 .configAdmin
 .configAdmin.backup
 .env
+.env.local
+.env.production
 venv/
 .venv/
 database/
-
+dist/
+build/
+main.spec
 # Reportes generados
 Reportes/*.pdf
 
