@@ -5,23 +5,21 @@ from Modelo.ModeloCliente import ModeloCliente
 from Modelo.ModeloDispositivo import ModeloDispositivo
 from Modelo.ModeloReparacion import ModeloReparacion
 from Logica.LogicaCliente import LogicaCliente
-from Logica.ServicioRegistro import ServicioRegistro
-from DAO.ClienteDAO import ClienteDAO
+from Logica.LogicaDispositivo import LogicaDispositivo
+from Logica.LogicaReparacion import LogicaReparacion
 from Logica.GeneradorPDF import GeneradorPDF
 from datetime import datetime
 import os
 
+from Config.TransaccionConexion import TransaccionConexion
 from Utilidades.AbrirPDF import AbrirPDF
-from Config.UnitOfWork import UnitOfWork
 
 
 class VentanaRegistro(tk.Frame):
     def __init__(self, master, controller, **kwargs):
         super().__init__(master, **kwargs) 
         self.controller = controller
-        # Inyección de dependencias
-        self.cliente_logic = LogicaCliente(ClienteDAO())
-        self.servicio_registro = ServicioRegistro()
+        self.cliente = LogicaCliente()
 
         # Configuración para que el frame se expanda dentro de su padre 
         self.columnconfigure(0, weight=1)
@@ -198,7 +196,11 @@ class VentanaRegistro(tk.Frame):
         comentarios_disp = (self.entrada_comentarios.get('1.0', tk.END) or "").strip()
 
         # Datos de la reparacion
+        estado = "En proceso"
+        fecha_ingreso = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        costo_repuesto = 0
         precio_rep = self.entrada_precio.get().strip()
+        comentarios_rep = ""
 
         # VALIDACIONES BÁSICAS 
         if not (cedula and nombre and email and celular and marca and version and tipo_rep and precio_rep):
@@ -211,38 +213,67 @@ class VentanaRegistro(tk.Frame):
             messagebox.showwarning("Atención", "El precio de reparación debe ser un número válido")
             return
 
-        # 2. PREPARACIÓN DE MODELOS
-        cliente_obj = ModeloCliente()
-        cliente_obj.cedula, cliente_obj.nombre = cedula, nombre
-        cliente_obj.email, cliente_obj.celular = email, celular
-        
-        dispositivo_obj = ModeloDispositivo()
-        dispositivo_obj.marca, dispositivo_obj.version = marca, version
-        dispositivo_obj.tipo_reparacion, dispositivo_obj.tipo_password = tipo_rep, tipo_contra
-        dispositivo_obj.password, dispositivo_obj.comentarios = contra or None, comentarios_disp
-        
-        reparacion_obj = ModeloReparacion()
-        reparacion_obj.fecha_ingreso = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        reparacion_obj.estado, reparacion_obj.precio_reparacion = "En proceso", precio_float
-        reparacion_obj.costo_repuestos, reparacion_obj.comentarios = 0, ""
-
-        # 3. EJECUCIÓN A TRAVÉS DEL SERVICIO (SRP/SOLID)
-        exito, id_rep, mensaje = self.servicio_registro.registrar_ingreso_completo(cliente_obj, dispositivo_obj, reparacion_obj)
-
-        if exito:
-            # 4. GENERACIÓN DE REPORTES (Post-proceso)
-            try:
-                generador = GeneradorPDF()
-                ruta_pdf = generador.generar_reporte_reparacion(cliente_obj, dispositivo_obj, reparacion_obj)
-                messagebox.showinfo("Éxito", f"Registro {id_rep} guardado correctamente.")
-                if os.path.exists(ruta_pdf):
-                    AbrirPDF.open_file(ruta_pdf)
-            except Exception as e_pdf:
-                messagebox.showwarning("Aviso", f"Guardado con éxito, pero falló el PDF: {e_pdf}")
-            
-            self.limpiar_campos()
-        else:
-            messagebox.showerror("Error", f"No se pudo completar el registro: {mensaje}")
+        try:
+            with TransaccionConexion() as (cursor, conexion):
+                cliente_obj = ModeloCliente()
+                cliente_obj.cedula = cedula
+                cliente_obj.nombre = nombre
+                cliente_obj.email = email
+                cliente_obj.celular = celular
+                logica_cliente = LogicaCliente()
+                exito_cli, msg_cli = logica_cliente.agregar_cliente(cliente_obj, cursor)
+                if not exito_cli:
+                    messagebox.showwarning("Aviso", f"Error en datos de cliente: {msg_cli}")
+                    conexion.rollback()
+                    return
+           
+                dispositivo_obj = ModeloDispositivo()
+                dispositivo_obj.id_cliente=cedula
+                dispositivo_obj.marca=marca
+                dispositivo_obj.tipo_reparacion = tipo_rep
+                dispositivo_obj.tipo_password=tipo_contra
+                dispositivo_obj.password=contra or None
+                dispositivo_obj.comentarios=comentarios_disp # Los comentarios son solo los ingresados, sin el modelo
+                dispositivo_obj.version = version
+                
+                logica_disp = LogicaDispositivo()
+                id_disp = logica_disp.agregar_dispositivo(dispositivo_obj, cursor)
+                
+                if id_disp:
+                    dispositivo_obj.id_dispositivo = id_disp
+                    # Guardar la reparación asociada al dispositivo
+                    reparacion_obj = ModeloReparacion()
+                    reparacion_obj.id_dispositivo = id_disp
+                    reparacion_obj.fecha_ingreso = fecha_ingreso
+                    reparacion_obj.estado = estado
+                    reparacion_obj.costo_repuestos = costo_repuesto
+                    reparacion_obj.precio_reparacion = precio_float
+                    reparacion_obj.comentarios = comentarios_rep 
+                    logica_rep= LogicaReparacion()
+                    id_rep = logica_rep.agregar_reparacion(reparacion_obj, cursor)
+                    
+                    if id_rep:
+                        #Aceptamos la transaccion
+                        conexion.commit()
+                        # Generar PDF
+                        try:
+                            reparacion_obj.id_reparacion = id_rep
+                            generador = GeneradorPDF()
+                            ruta_pdf = generador.generar_reporte_reparacion(cliente_obj, dispositivo_obj, reparacion_obj)
+                            messagebox.showinfo("Éxito", f"Registro {id_rep} guardado.")
+                            if os.path.exists(ruta_pdf):
+                                AbrirPDF.open_file(ruta_pdf)
+                        except Exception as e_pdf:
+                            messagebox.showwarning("Aviso", f"Datos guardados, pero el PDF falló: {e_pdf}")
+                        
+                        self.limpiar_campos()
+                            
+        except Exception as e:
+            messagebox.showwarning("Aviso", f"Ocurrió un error al guardar: {e}")
+        finally:
+            if 'cursor' in locals() and cursor:
+                # Liberamos cursor para la memoria del servidor
+                cursor.close()
 
     def limpiar_campos(self):
         # Función para limpiar todos los campos del formulario
@@ -279,11 +310,10 @@ class VentanaRegistro(tk.Frame):
             return
             
         try: 
-            with UnitOfWork() as uow:
-                # Para la búsqueda usamos una conexión simple cargada a través del UoW
-                resultado = self.cliente_logic.obtener_cliente_por_cedula(cedula, uow.cursor)
+            with TransaccionConexion() as (cursor, conexion):
+                resultado = self.cliente.obtener_cliente_por_cedula(cedula, cursor)
                 if resultado:
-                    
+                    conexion.commit()
                     # Rellenamos los campos del formulario
                     self.entrada_nombre.delete(0,tk.END)
                     self.entrada_nombre.insert(0, resultado.nombre)
@@ -298,6 +328,7 @@ class VentanaRegistro(tk.Frame):
                     messagebox.showinfo("Éxito", "Cliente encontrado y datos cargados")
 
                 else:
+                    conexion.rollback()
                     messagebox.showinfo("No encontrado", "El cliente no está registrado en la base de datos")
         
         except Exception as e:

@@ -3,16 +3,12 @@ from tkinter import messagebox, ttk
 from datetime import datetime 
 from Utilidades.AbrirPDF import AbrirPDF
 from Modelo.ModeloGarantia import ModeloGarantia
-from Config.UnitOfWork import UnitOfWork
+from Config.TransaccionConexion import TransaccionConexion
 from Logica.LogicaCliente import LogicaCliente
 from Logica.LogicaDispositivo import LogicaDispositivo
 from Logica.LogicaReparacion import LogicaReparacion
 from Logica.LogicaGarantia import LogicaGarantia
 from Logica.GeneradorPDF import GeneradorPDF
-from DAO.ClienteDAO import ClienteDAO
-from DAO.DispositivoDAO import DispositivoDAO
-from DAO.ReparacionDAO import ReparacionDAO
-from DAO.GarantiaDAO import GarantiaDAO
 
 
 
@@ -23,11 +19,10 @@ class VentanaEntradaGarantia(tkinter.Frame):
         self.controller = controller
 
         # Inicializamos los objetos de cliente, reparacion, dispositivo y garantia
-        # Inicializamos los objetos con inyección de dependencias (SOLID)
-        self.cliente = LogicaCliente(ClienteDAO())
-        self.reparacion = LogicaReparacion(ReparacionDAO())
-        self.dispositivo = LogicaDispositivo(DispositivoDAO())
-        self.garantia = LogicaGarantia(GarantiaDAO())
+        self.cliente = LogicaCliente()
+        self.reparacion = LogicaReparacion()
+        self.dispositivo = LogicaDispositivo()
+        self.garantia = LogicaGarantia()
         self.generador_pdf = GeneradorPDF()
         
         # Objetos para almacenar los modelos actuales
@@ -237,21 +232,21 @@ class VentanaEntradaGarantia(tkinter.Frame):
 
         id_rep = self.entrada_id_reparacion.get().strip()
         try:
-            with UnitOfWork() as uow:
-                reparacion_obj = self.reparacion.obtener_reparacion_por_id(id_rep, uow.cursor)
+            with TransaccionConexion() as (cursor, conexion):
+                reparacion_obj = self.reparacion.obtener_reparacion_por_id(id_rep, cursor)
                 
                 if not reparacion_obj:
                     messagebox.showinfo("No encontrado", "No se encontró ninguna reparación con ese ID")
                     return
 
                 # Obtener dispositivo
-                dispositivo_obj = self.dispositivo.obtener_dispositivo_por_id(reparacion_obj.id_dispositivo, uow.cursor)
+                dispositivo_obj = self.dispositivo.obtener_dispositivo_por_id(reparacion_obj.id_dispositivo, cursor)
                 if not dispositivo_obj:
                     messagebox.showerror("Error", "No se encontró el dispositivo asociado a la reparación")
                     return
 
                 # Obtener cliente
-                cliente_obj = self.cliente.obtener_cliente_por_cedula(dispositivo_obj.id_cliente, uow.cursor)
+                cliente_obj = self.cliente.obtener_cliente_por_cedula(dispositivo_obj.id_cliente, cursor)
                 if not cliente_obj:
                     messagebox.showerror("Error", "No se encontró el cliente asociado al dispositivo")
                     return
@@ -350,21 +345,19 @@ class VentanaEntradaGarantia(tkinter.Frame):
             return
 
         try:
-            with UnitOfWork() as uow:
-                # 2. PREPARACIÓN DE MODELOS
+            with TransaccionConexion() as (cursor, conexion):
                 modelo_garantia = ModeloGarantia()
                 modelo_garantia.id_reparacion = id_rep
                 modelo_garantia.fecha_inicio = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 modelo_garantia.observaciones = comentarios_gar
                 modelo_garantia.estado = "En Garantia" if equipo_reparado == "SI" else "Rechazada"
-
+                
                 # agregar_garantia ahora puede lanzar ValueError y acepta opcionalmente el cursor
-                id_garantia = self.garantia.agregar_garantia(modelo_garantia, uow.cursor)
+                id_garantia = self.garantia.agregar_garantia(modelo_garantia, cursor)
                 
                 if id_garantia:
                     # Aceptamos la transaccion
-                    uow.commit()
-
+                    conexion.commit()
                     modelo_garantia.id_garantia = id_garantia
                     messagebox.showinfo("Éxito", f"Garantía registrada con ID: {id_garantia}")
                     

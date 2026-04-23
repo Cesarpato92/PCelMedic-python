@@ -1,9 +1,9 @@
-from DAO.Interfaces import IClienteDAO
+import Config.Conexion as conexion_bd
+from tkinter import messagebox
 import mysql.connector
-from Config.Conexion import Conexion
 from Modelo.ModeloCliente import ModeloCliente
 
-class ClienteDAO(IClienteDAO):
+class ClienteDAO:
 
     def __init__(self):
         pass
@@ -66,15 +66,15 @@ class ClienteDAO(IClienteDAO):
         local_cursor = None
         clientes = []
         try:
-            conexion = Conexion.get_conexion()
+            conexion = conexion_bd.Conexion.get_conexion()
             local_cursor = conexion.cursor()
             sql = "SELECT nombre, email, celular FROM cliente"
             local_cursor.execute(sql)
             clientes = local_cursor.fetchall()
         except mysql.connector.Error as e:
-            raise Exception(f"Error SQL: {e}")
+            messagebox.showerror("Error", f"Error SQL: {e}")
         except Exception as e:
-            raise Exception(f"Error inesperado: {e}")
+            messagebox.showerror("Error", f"Error inesperado: {e}")
         finally:
             if local_cursor:
                 local_cursor.close()

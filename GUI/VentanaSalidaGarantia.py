@@ -7,11 +7,7 @@ from Logica.LogicaDispositivo import LogicaDispositivo
 from Logica.LogicaReparacion import LogicaReparacion
 from Logica.LogicaGarantia import LogicaGarantia
 from Logica.GeneradorPDF import GeneradorPDF
-from Config.UnitOfWork import UnitOfWork
-from DAO.ClienteDAO import ClienteDAO
-from DAO.DispositivoDAO import DispositivoDAO
-from DAO.ReparacionDAO import ReparacionDAO
-from DAO.GarantiaDAO import GarantiaDAO
+from Config.TransaccionConexion import TransaccionConexion
 import os
 
 
@@ -23,11 +19,10 @@ class VentanaSalidaGarantia(tk.Frame):
         super().__init__(master, **kwargs)
         self.controller = controller
         
-        # Inicializamos los objetos con inyección de dependencias (SOLID)
-        self.garantia = LogicaGarantia(GarantiaDAO())
-        self.reparacion = LogicaReparacion(ReparacionDAO())
-        self.dispositivo = LogicaDispositivo(DispositivoDAO())
-        self.cliente = LogicaCliente(ClienteDAO())
+        self.garantia = LogicaGarantia()
+        self.reparacion = LogicaReparacion()
+        self.dispositivo = LogicaDispositivo()
+        self.cliente = LogicaCliente()
         self.GeneradorPDF = GeneradorPDF()
         
         # Objetos de modelo para el reporte
@@ -120,8 +115,8 @@ class VentanaSalidaGarantia(tk.Frame):
             return
         
         try:
-            with UnitOfWork() as uow:
-                garantia = self.garantia.obtener_garantia_por_id(id_garantia, uow.cursor)
+            with TransaccionConexion() as (cursor, conexion):
+                garantia = self.garantia.obtener_garantia_por_id(id_garantia, cursor)
                 if not garantia:
                     messagebox.showinfo("No encontrado", "No se encontró la garantía")
                     self.limpiar_campos()
@@ -130,9 +125,9 @@ class VentanaSalidaGarantia(tk.Frame):
                 self.garantia_actual = garantia
                 
                 # Obtener datos relacionados
-                reparacion = self.reparacion.obtener_reparacion_por_id(garantia.id_reparacion, uow.cursor)
-                dispositivo = self.dispositivo.obtener_dispositivo_por_id(reparacion.id_dispositivo, uow.cursor)
-                cliente = self.cliente.obtener_cliente_por_cedula(dispositivo.id_cliente, uow.cursor)
+                reparacion = self.reparacion.obtener_reparacion_por_id(garantia.id_reparacion, cursor)
+                dispositivo = self.dispositivo.obtener_dispositivo_por_id(reparacion.id_dispositivo, cursor)
+                cliente = self.cliente.obtener_cliente_por_cedula(dispositivo.id_cliente, cursor)
                 
                 # Guardar modelos para el reporte
                 self.reparacion_model = reparacion
@@ -151,7 +146,8 @@ class VentanaSalidaGarantia(tk.Frame):
                 self.txt_observaciones_entrada.config(state="disabled")
                 
                 self.btn_entregar.config(state="normal")
-             
+                
+                conexion.commit()
                 
         except Exception as e:
             messagebox.showerror("Error", f"Ocurrió un error al buscar la garantía: {e}")
@@ -174,20 +170,20 @@ class VentanaSalidaGarantia(tk.Frame):
                 return
             
             
-            # 2. PREPARACIÓN DE MODELOS
             estado_antiguo = self.garantia_actual.estado
+            # Actualizar objeto
             self.garantia_actual.estado = estado_final
             self.garantia_actual.fecha_fin = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             self.garantia_actual.precio_insumos = precio_float
             self.garantia_actual.comentarios_finales = observaciones_finales
 
             try:
-                with UnitOfWork() as uow:
+                with TransaccionConexion() as (cursor, conexion):
                     # actualizar_garantia ahora puede lanzar ValueError
-                    self.garantia.actualizar_garantia(self.garantia_actual,estado_antiguo, uow.cursor)
+                    self.garantia.actualizar_garantia(self.garantia_actual,estado_antiguo, cursor)
                     
                     # Si no lanzó excepción, aceptamos la transaccion
-                    uow.commit()
+                    conexion.commit()
                     messagebox.showinfo("Exito", "Garantía entregada exitosamente")
                     self.generar_pdf_salida()
                     self.limpiar_campos()

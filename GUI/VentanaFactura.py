@@ -9,11 +9,7 @@ from Logica.LogicaReparacion import LogicaReparacion
 from Logica.LogicaFactura import LogicaFactura
 from Logica.GeneradorPDF import GeneradorPDF
 from Modelo.ModeloFactura import ModeloFactura
-from Config.UnitOfWork import UnitOfWork
-from DAO.ClienteDAO import ClienteDAO
-from DAO.DispositivoDAO import DispositivoDAO
-from DAO.ReparacionDAO import ReparacionDAO
-from DAO.FacturasDAO import FacturasDAO
+from Config.TransaccionConexion import TransaccionConexion
 import os
 
 
@@ -27,17 +23,18 @@ class VentanaFactura(tk.Frame):
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1) 
 
-        # Inicializamos los objetos con inyección de dependencias (SOLID)
-        self.reparacion = LogicaReparacion(ReparacionDAO())
-        self.cliente = LogicaCliente(ClienteDAO())
-        self.dispositivo = LogicaDispositivo(DispositivoDAO())
-        self.factura = LogicaFactura(FacturasDAO())
+        self.reparacion = LogicaReparacion()
+        self.cliente = LogicaCliente()
+        self.dispositivo = LogicaDispositivo()
+        self.factura = LogicaFactura()
         self.generador_pdf = GeneradorPDF()
 
         self.reparacion_model = None
         self.cliente_model = None
         self.dispositivo_model = None
-
+    
+        
+        
         # --- Contenedor Principal de Contenido (usa self como padre) ---
         contenedor = ttk.Frame(self, padding="10")
         contenedor.grid(row=0, column=0, sticky="n") 
@@ -77,8 +74,8 @@ class VentanaFactura(tk.Frame):
         ttk.Label(frame_factura, text="Observaciones del tecnico: ").grid(row=4, column=1, sticky="nw", pady=2)
         self.txt_observaciones_entrada = tk.Text(frame_factura, height=4, width=50, state="disabled")
         self.txt_observaciones_entrada.grid(row=4, column=2, sticky="w", pady=2)
-        ttk.Label(frame_factura, text="Total: ", font=("Helvetica", 14, "bold")).grid(row=5, column=3, sticky="w", pady=5)
-        self.entrada_total = ttk.Label(frame_factura, width=20, foreground="red", font=("Helvetica", 16, "bold"))
+        ttk.Label(frame_factura, text="Total: ").grid(row=5, column=3, sticky="w", pady=5)
+        self.entrada_total = ttk.Label(frame_factura, width=20, foreground="red", font=("Helvetica", 12, "bold"))
         self.entrada_total.grid(row=5, column=4, sticky="w", pady=5)
         ttk.Button(frame_factura, text="Generar", command=self.generar_factura).grid(row=6, column=2, columnspan=2, pady=10)
         ttk.Button(frame_factura, text="Limpiar", command=self.limpiar_campos).grid(row=7, column=2, columnspan=2, pady=10)
@@ -101,8 +98,8 @@ class VentanaFactura(tk.Frame):
             return
 
         try:
-            with UnitOfWork() as uow:
-                factura = self.factura.obtener_factura_por_id_reparacion(self.reparacion_model.id_reparacion, uow.cursor)
+            with TransaccionConexion() as (cursor, conexion):
+                factura = self.factura.obtener_factura_por_id_reparacion(self.reparacion_model.id_reparacion, cursor)
 
                 # validamos si ya existe una factura para esta reparación
                 if factura:
@@ -113,7 +110,7 @@ class VentanaFactura(tk.Frame):
                         nombre_archivo = f"Factura_{factura.id_factura}-{self.cliente_model.cedula}.pdf"
                         ruta = os.path.join("Reportes", nombre_archivo)
                         if os.path.exists(ruta):
-                            AbrirPDF.open_file(ruta)
+                            open_file(ruta)
                         else:
                             messagebox.showwarning("Archivo no encontrado", f"No se encontró el archivo: {nombre_archivo}")
                     return
@@ -134,38 +131,39 @@ class VentanaFactura(tk.Frame):
                     factura_model.total = 0.0
                 
                 # Guardar en BD
-                id_factura = self.factura.agregar_factura(factura_model, uow.cursor)
+                id_factura = self.factura.agregar_factura(factura_model, cursor)
                 
                 if id_factura:
                     #aceptamos la transaccion
-                    uow.commit()
+                    conexion.commit()
                     # Generar PDF
                     ruta = self.generador_pdf.generar_factura(self.cliente_model, self.dispositivo_model, self.reparacion_model, id_factura)
                     
                     if os.path.exists(ruta):
                         AbrirPDF.open_file(ruta)
                     self.limpiar_campos()
-        except ValueError as ve:
-            messagebox.showwarning("Aviso", f"Error de validación: {ve}")
-        except Exception as e:
-            messagebox.showerror("Error", f"Ocurrió un error inesperado: {e}")
             
+        except Exception as e:
+            messagebox.showerror("Error", f"No se pudo generar la factura: {e}")
+
     def buscar_reparacion(self):
         id_reparacion = self.entrada_id_reparacion.get().strip()
         if not id_reparacion:
             messagebox.showwarning("Atencion", "Ingrese un ID de reparacion")
             return
         try:
-            with UnitOfWork() as uow:
-                reparacion = self.reparacion.obtener_reparacion_por_id(id_reparacion, uow.cursor)
+            with TransaccionConexion() as (cursor, conexion):
+                reparacion = self.reparacion.obtener_reparacion_por_id(id_reparacion, cursor)
                 if not reparacion:
                     messagebox.showinfo("No encontrado", "No se encontro la reparacion")
                     return
                 
                 # Obtener datos relacionales
-                dispositivo = self.dispositivo.obtener_dispositivo_por_id(reparacion.id_dispositivo, uow.cursor)
-                cliente = self.cliente.obtener_cliente_por_cedula(dispositivo.id_cliente, uow.cursor)
+                dispositivo = self.dispositivo.obtener_dispositivo_por_id(reparacion.id_dispositivo, cursor)
+                cliente = self.cliente.obtener_cliente_por_cedula(dispositivo.id_cliente, cursor)
                 
+                if cliente:
+                    conexion.commit()
                 # Guardar los datos para el reporte
                 self.reparacion_model = reparacion
                 self.cliente_model = cliente

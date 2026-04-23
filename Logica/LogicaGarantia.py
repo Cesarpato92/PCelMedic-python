@@ -1,8 +1,9 @@
 from Utilidades.Validador import Validador
+import DAO.GarantiaDAO as garantia_dao
 
 class LogicaGarantia:
-    def __init__(self, garantia_dao):
-        self.garantia_dao = garantia_dao
+    def __init__(self):
+        self.garantia_dao = garantia_dao.GarantiaDAO()
 
     def agregar_garantia(self, modelo_garantia, cursor=None):
         valido, mensaje = self.validar_campos_a_insertar(modelo_garantia)

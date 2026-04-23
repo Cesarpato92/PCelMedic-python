@@ -5,9 +5,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from Logica.LogicaFactura import LogicaFactura
 from Logica.LogicaCliente import LogicaCliente
-from Config.UnitOfWork import UnitOfWork
-from DAO.ClienteDAO import ClienteDAO
-from DAO.FacturasDAO import FacturasDAO
+from Config.TransaccionConexion import TransaccionConexion
 from openpyxl import Workbook
 import datetime
 
@@ -17,8 +15,8 @@ class VentanaFinanzas(tk.Frame):
         
         super().__init__(master, **kwargs) 
         self.controller = controller
-        self.logica_factura = LogicaFactura(FacturasDAO())
-        self.logica_cliente = LogicaCliente(ClienteDAO())
+        self.logica_factura = LogicaFactura()
+        self.logica_cliente = LogicaCliente()
         
         # Iniciamos en None para el grafico en Matplotlib
         self.fig = None
@@ -129,14 +127,15 @@ class VentanaFinanzas(tk.Frame):
         for widget in self.frame_datos.winfo_children():
             widget.destroy()
         try:
-            with UnitOfWork() as uow:
+            with TransaccionConexion() as (cursor, conexion):
                 # Obtener datos
-                datos = self.logica_factura.obtener_ventas_por_rango(fecha_inicio, fecha_fin, uow.cursor)
+                datos = self.logica_factura.obtener_ventas_por_rango(fecha_inicio, fecha_fin, cursor)
 
                 if not datos:
                     messagebox.showinfo("Info", "No se encontraron datos en el rango seleccionado.")
                     return
-               
+                else:
+                    conexion.commit()
 
         except Exception as e:
             messagebox.showwarning("Aviso", f"Ocurrió un error al generar el gráfico: {e}")
@@ -159,8 +158,8 @@ class VentanaFinanzas(tk.Frame):
         x = np.arange(len(dias))
         width = 0.35
 
-        ax.bar(x - width/2, ventas, width, label='Ventas', color='#4CAF50') # Verde
-        ax.bar(x + width/2, repuestos, width, label='Repuestos', color='red') # Rojo
+        rects1 = ax.bar(x - width/2, ventas, width, label='Ventas', color='#4CAF50') # Verde
+        rects2 = ax.bar(x + width/2, repuestos, width, label='Repuestos', color='red') # Rojo
 
         ax.set_title(f"Finanzas ({fecha_inicio} a {fecha_fin})")
         ax.set_ylabel("Monto ($)")
@@ -194,8 +193,8 @@ class VentanaFinanzas(tk.Frame):
 
     def exportar_excel(self):
         try:
-            with UnitOfWork() as uow:
-                clientes = self.logica_cliente.obtener_todos_clientes(uow.cursor)
+            with TransaccionConexion() as (cursor, conexion):
+                clientes = self.logica_cliente.obtener_todos_clientes(cursor)
                 if not clientes:
                     messagebox.showinfo("Cero datos", "No hay clientes registrados para exportar.")
                     return

@@ -1,7 +1,7 @@
-from DAO.Interfaces import IReparacionDAO
 from Modelo.ModeloReparacion import ModeloReparacion
 
-class ReparacionDAO(IReparacionDAO):
+
+class ReparacionDAO:
 
     def __init__(self):
         pass

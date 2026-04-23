@@ -1,7 +1,9 @@
+from tkinter import messagebox
+import DAO.FacturasDAO as factura_dao
 
 class LogicaFactura:
-    def __init__(self, factura_dao):
-        self.factura_dao = factura_dao
+    def __init__(self):
+        self.factura_dao = factura_dao.FacturasDAO()
 
     def agregar_factura(self, modelo_factura, cursor):
         return self.factura_dao.agregar_factura(modelo_factura, cursor)
