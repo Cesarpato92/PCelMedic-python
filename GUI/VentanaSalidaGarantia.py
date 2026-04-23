@@ -2,8 +2,16 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 from datetime import datetime
 from Utilidades.AbrirPDF import AbrirPDF
-from Servicios.ServicioGarantia import ServicioGarantia
-from Servicios.ServicioReparacion import ServicioReparacion
+from Logica.LogicaCliente import LogicaCliente
+from Logica.LogicaDispositivo import LogicaDispositivo
+from Logica.LogicaReparacion import LogicaReparacion
+from Logica.LogicaGarantia import LogicaGarantia
+from Logica.GeneradorPDF import GeneradorPDF
+from Config.UnitOfWork import UnitOfWork
+from DAO.ClienteDAO import ClienteDAO
+from DAO.DispositivoDAO import DispositivoDAO
+from DAO.ReparacionDAO import ReparacionDAO
+from DAO.GarantiaDAO import GarantiaDAO
 import os
 
 
@@ -15,9 +23,11 @@ class VentanaSalidaGarantia(tk.Frame):
         super().__init__(master, **kwargs)
         self.controller = controller
         
-        # Inicializamos los servicios (SOLID)
-        self.servicio_garantia = ServicioGarantia()
-        self.servicio_reparacion = ServicioReparacion()
+        # Inicializamos los objetos con inyección de dependencias (SOLID)
+        self.garantia = LogicaGarantia(GarantiaDAO())
+        self.reparacion = LogicaReparacion(ReparacionDAO())
+        self.dispositivo = LogicaDispositivo(DispositivoDAO())
+        self.cliente = LogicaCliente(ClienteDAO())
         self.GeneradorPDF = GeneradorPDF()
         
         # Objetos de modelo para el reporte
@@ -110,35 +120,37 @@ class VentanaSalidaGarantia(tk.Frame):
             return
         
         try:
-            # Obtener datos de la garantía
-            garantia = self.servicio_garantia.obtener_garantia_por_id(id_garantia)
-            if not garantia:
-                messagebox.showinfo("No encontrado", "No se encontró la garantía")
-                self.limpiar_campos()
-                return
-               
-            self.garantia_actual = garantia
-            
-            # Obtener datos relacionados usando ServicioReparacion
-            reparacion, dispositivo, cliente = self.servicio_reparacion.obtener_datos_completos(garantia.id_reparacion)
-            
-            # Guardar modelos para el reporte
-            self.reparacion_model = reparacion
-            self.dispositivo_model = dispositivo
-            self.cliente_model = cliente
-            
-            # Mostrar datos
-            self.lbl_cliente.config(text=f"{cliente.nombre} ({cliente.cedula})")
-            self.lbl_dispositivo.config(text=f"{dispositivo.marca} {dispositivo.version}")
-            self.lbl_fecha_inicio.config(text=garantia.fecha_inicio)
-            self.lbl_estado.config(text=garantia.estado)
-            
-            self.txt_observaciones_entrada.config(state="normal")
-            self.txt_observaciones_entrada.delete("1.0", tk.END)
-            self.txt_observaciones_entrada.insert("1.0", garantia.observaciones)
-            self.txt_observaciones_entrada.config(state="disabled")
-            
-            self.btn_entregar.config(state="normal")
+            with UnitOfWork() as uow:
+                garantia = self.garantia.obtener_garantia_por_id(id_garantia, uow.cursor)
+                if not garantia:
+                    messagebox.showinfo("No encontrado", "No se encontró la garantía")
+                    self.limpiar_campos()
+                    return
+                   
+                self.garantia_actual = garantia
+                
+                # Obtener datos relacionados
+                reparacion = self.reparacion.obtener_reparacion_por_id(garantia.id_reparacion, uow.cursor)
+                dispositivo = self.dispositivo.obtener_dispositivo_por_id(reparacion.id_dispositivo, uow.cursor)
+                cliente = self.cliente.obtener_cliente_por_cedula(dispositivo.id_cliente, uow.cursor)
+                
+                # Guardar modelos para el reporte
+                self.reparacion_model = reparacion
+                self.dispositivo_model = dispositivo
+                self.cliente_model = cliente
+                
+                # Mostrar datos
+                self.lbl_cliente.config(text=f"{cliente.nombre} ({cliente.cedula})")
+                self.lbl_dispositivo.config(text=f"{dispositivo.marca} {dispositivo.version}")
+                self.lbl_fecha_inicio.config(text=garantia.fecha_inicio)
+                self.lbl_estado.config(text=garantia.estado)
+                
+                self.txt_observaciones_entrada.config(state="normal")
+                self.txt_observaciones_entrada.delete("1.0", tk.END)
+                self.txt_observaciones_entrada.insert("1.0", garantia.observaciones)
+                self.txt_observaciones_entrada.config(state="disabled")
+                
+                self.btn_entregar.config(state="normal")
              
                 
         except Exception as e:
@@ -169,18 +181,25 @@ class VentanaSalidaGarantia(tk.Frame):
             self.garantia_actual.precio_insumos = precio_float
             self.garantia_actual.comentarios_finales = observaciones_finales
 
-            # Executar a través del servicio de garantía
-            exito, mensaje = self.servicio_garantia.procesar_salida_garantia(self.garantia_actual, estado_antiguo)
-            
-            if exito:
-                messagebox.showinfo("Éxito", mensaje)
-                self.generar_pdf_salida()
-                self.limpiar_campos()
-            else:
-                messagebox.showerror("Error", mensaje)
+            try:
+                with UnitOfWork() as uow:
+                    # actualizar_garantia ahora puede lanzar ValueError
+                    self.garantia.actualizar_garantia(self.garantia_actual,estado_antiguo, uow.cursor)
+                    
+                    # Si no lanzó excepción, aceptamos la transaccion
+                    uow.commit()
+                    messagebox.showinfo("Exito", "Garantía entregada exitosamente")
+                    self.generar_pdf_salida()
+                    self.limpiar_campos()
+            except ValueError as ve:
+                messagebox.showwarning("Aviso", f"Error de validación: {ve}")
+            except Exception as e:
+                messagebox.showerror("Error", f"Error al actualizar garantía: {e}")
                
+        except ValueError as ve:
+            messagebox.showwarning("Aviso", f"Error de validación: {ve}")
         except Exception as e:
-            messagebox.showerror("Error", f"Error inesperado: {e}")
+            messagebox.showerror("Error", f"Error al actualizar garantía: {e}")
 
 
     def generar_pdf_salida(self):

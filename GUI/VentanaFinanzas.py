@@ -3,7 +3,11 @@ from tkinter import messagebox, ttk, filedialog
 from tkcalendar import DateEntry
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
-from Servicios.ServicioFinanzas import ServicioFinanzas
+from Logica.LogicaFactura import LogicaFactura
+from Logica.LogicaCliente import LogicaCliente
+from Config.UnitOfWork import UnitOfWork
+from DAO.ClienteDAO import ClienteDAO
+from DAO.FacturasDAO import FacturasDAO
 from openpyxl import Workbook
 import datetime
 
@@ -13,8 +17,8 @@ class VentanaFinanzas(tk.Frame):
         
         super().__init__(master, **kwargs) 
         self.controller = controller
-        # Inyección del servicio (SOLID)
-        self.servicio_finanzas = ServicioFinanzas()
+        self.logica_factura = LogicaFactura(FacturasDAO())
+        self.logica_cliente = LogicaCliente(ClienteDAO())
         
         # Iniciamos en None para el grafico en Matplotlib
         self.fig = None
@@ -125,16 +129,17 @@ class VentanaFinanzas(tk.Frame):
         for widget in self.frame_datos.winfo_children():
             widget.destroy()
         try:
-            # Obtener datos a través del servicio
-            datos = self.servicio_finanzas.obtener_reporte_ventas_por_rango(fecha_inicio, fecha_fin)
+            with UnitOfWork() as uow:
+                # Obtener datos
+                datos = self.logica_factura.obtener_ventas_por_rango(fecha_inicio, fecha_fin, uow.cursor)
 
-            if not datos:
-                messagebox.showinfo("Info", "No se encontraron datos en el rango seleccionado.")
-                return
+                if not datos:
+                    messagebox.showinfo("Info", "No se encontraron datos en el rango seleccionado.")
+                    return
+               
 
         except Exception as e:
             messagebox.showwarning("Aviso", f"Ocurrió un error al generar el gráfico: {e}")
-            return
 
         #mostrar formato sin hora
         def formato_fecha(d):
@@ -189,11 +194,11 @@ class VentanaFinanzas(tk.Frame):
 
     def exportar_excel(self):
         try:
-            # Obtener datos del servicio
-            clientes = self.servicio_finanzas.obtener_lista_clientes_completa()
-            if not clientes:
-                messagebox.showinfo("Cero datos", "No hay clientes registrados para exportar.")
-                return
+            with UnitOfWork() as uow:
+                clientes = self.logica_cliente.obtener_todos_clientes(uow.cursor)
+                if not clientes:
+                    messagebox.showinfo("Cero datos", "No hay clientes registrados para exportar.")
+                    return
         except Exception as e:
             messagebox.showerror("Error", f"Error al obtener clientes: {e}")
             return

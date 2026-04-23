@@ -7,8 +7,12 @@ from Config.UnitOfWork import UnitOfWork
 from Logica.LogicaCliente import LogicaCliente
 from Logica.LogicaDispositivo import LogicaDispositivo
 from Logica.LogicaReparacion import LogicaReparacion
-from Servicios.ServicioGarantia import ServicioGarantia
-from Servicios.ServicioReparacion import ServicioReparacion
+from Logica.LogicaGarantia import LogicaGarantia
+from Logica.GeneradorPDF import GeneradorPDF
+from DAO.ClienteDAO import ClienteDAO
+from DAO.DispositivoDAO import DispositivoDAO
+from DAO.ReparacionDAO import ReparacionDAO
+from DAO.GarantiaDAO import GarantiaDAO
 
 
 
@@ -19,9 +23,11 @@ class VentanaEntradaGarantia(tkinter.Frame):
         self.controller = controller
 
         # Inicializamos los objetos de cliente, reparacion, dispositivo y garantia
-        # Inicializamos los servicios (SOLID)
-        self.servicio_garantia = ServicioGarantia()
-        self.servicio_reparacion = ServicioReparacion()
+        # Inicializamos los objetos con inyección de dependencias (SOLID)
+        self.cliente = LogicaCliente(ClienteDAO())
+        self.reparacion = LogicaReparacion(ReparacionDAO())
+        self.dispositivo = LogicaDispositivo(DispositivoDAO())
+        self.garantia = LogicaGarantia(GarantiaDAO())
         self.generador_pdf = GeneradorPDF()
         
         # Objetos para almacenar los modelos actuales
@@ -231,90 +237,104 @@ class VentanaEntradaGarantia(tkinter.Frame):
 
         id_rep = self.entrada_id_reparacion.get().strip()
         try:
-            # Usar el servicio de reparación para obtener todos los datos
-            reparacion_obj, dispositivo_obj, cliente_obj = self.servicio_reparacion.obtener_datos_completos(id_rep)
-            
-            if not reparacion_obj:
-                messagebox.showinfo("No encontrado", "No se encontró ninguna reparación con ese ID")
-                return
+            with UnitOfWork() as uow:
+                reparacion_obj = self.reparacion.obtener_reparacion_por_id(id_rep, uow.cursor)
+                
+                if not reparacion_obj:
+                    messagebox.showinfo("No encontrado", "No se encontró ninguna reparación con ese ID")
+                    return
 
-            # Llenar campos
-            self.btn_limpiar(mantener_id=True)
-            
-            # Guardar objetos en variables de instancia para uso posterior (PDF)
-            self.cliente_obj = cliente_obj
-            self.dispositivo_obj = dispositivo_obj
-            self.reparacion_obj = reparacion_obj
-            
-            # Cliente
-            self.entrada_cedula.config(state="normal")
-            self.entrada_cedula.insert(0, cliente_obj.cedula)
-            self.entrada_cedula.config(state="disabled")
-            
-            self.entrada_nombre.config(state="normal")
-            self.entrada_nombre.insert(0, cliente_obj.nombre)
-            self.entrada_nombre.config(state="disabled")
-            
-            self.entrada_email.config(state="normal")
-            self.entrada_email.insert(0, cliente_obj.email)
-            self.entrada_email.config(state="disabled")
-            
-            self.entrada_celular.config(state="normal")
-            self.entrada_celular.insert(0, cliente_obj.celular)
-            self.entrada_celular.config(state="disabled")
+                # Obtener dispositivo
+                dispositivo_obj = self.dispositivo.obtener_dispositivo_por_id(reparacion_obj.id_dispositivo, uow.cursor)
+                if not dispositivo_obj:
+                    messagebox.showerror("Error", "No se encontró el dispositivo asociado a la reparación")
+                    return
 
-            # Dispositivo
-            self.entrada_marca.config(state="normal")
-            self.entrada_marca.insert(0, dispositivo_obj.marca)
-            self.entrada_marca.config(state="disabled")
-            
-            self.entrada_modelo.config(state="normal")
-            self.entrada_modelo.insert(0, dispositivo_obj.version)
-            self.entrada_modelo.config(state="disabled")
-            
-            self.entrada_tipo_rep.config(state="normal")
-            self.entrada_tipo_rep.insert(0, dispositivo_obj.tipo_reparacion)
-            self.entrada_tipo_rep.config(state="disabled")
-            
-            self.entrada_tipo_password.config(state="normal")
-            self.entrada_tipo_password.insert(0, dispositivo_obj.tipo_password)
-            self.entrada_tipo_password.config(state="disabled")
-            
-            self.entrada_password.config(state="normal")
-            self.entrada_password.insert(0, dispositivo_obj.password or "N/A")
-            self.entrada_password.config(state="disabled")
+                # Obtener cliente
+                cliente_obj = self.cliente.obtener_cliente_por_cedula(dispositivo_obj.id_cliente, uow.cursor)
+                if not cliente_obj:
+                    messagebox.showerror("Error", "No se encontró el cliente asociado al dispositivo")
+                    return
 
-            self.entrada_comentarios.config(state="normal")
-            self.entrada_comentarios.insert("1.0", dispositivo_obj.comentarios)
-            self.entrada_comentarios.config(state="disabled")
+                # Llenar campos
+                self.btn_limpiar(mantener_id=True)
+                
+                # Guardar objetos en variables de instancia para uso posterior (PDF)
+                self.cliente_obj = cliente_obj
+                self.dispositivo_obj = dispositivo_obj
+                self.reparacion_obj = reparacion_obj
+                
+                # Cliente
+                self.entrada_cedula.config(state="normal")
+                self.entrada_cedula.insert(0, cliente_obj.cedula)
+                self.entrada_cedula.config(state="disabled")
+                
+                self.entrada_nombre.config(state="normal")
+                self.entrada_nombre.insert(0, cliente_obj.nombre)
+                self.entrada_nombre.config(state="disabled")
+                
+                self.entrada_email.config(state="normal")
+                self.entrada_email.insert(0, cliente_obj.email)
+                self.entrada_email.config(state="disabled")
+                
+                self.entrada_celular.config(state="normal")
+                self.entrada_celular.insert(0, cliente_obj.celular)
+                self.entrada_celular.config(state="disabled")
 
-            # Reparacion
-            self.entrada_precio.config(state="normal")
-            self.entrada_precio.insert(0, reparacion_obj.precio_reparacion)
-            self.entrada_precio.config(state="disabled")
-            
-            self.entrada_ingreso.config(state="normal")
-            self.entrada_ingreso.insert(0, reparacion_obj.fecha_ingreso)
-            self.entrada_ingreso.config(state="disabled")
-            
-            self.entrada_comentarios_tec.config(state="normal")
-            self.entrada_comentarios_tec.insert("1.0", reparacion_obj.comentarios)
-            self.entrada_comentarios_tec.config(state="disabled")
-            
-            self.entrada_estado.config(state="normal")
-            self.entrada_estado.insert(0, reparacion_obj.estado)
-            self.entrada_estado.config(state="disabled")
-            
-            self.entrada_refaccion.config(state="normal")
-            self.entrada_refaccion.insert(0, reparacion_obj.costo_repuestos)
-            self.entrada_refaccion.config(state="disabled")
-            
-            self.entrada_tipo.config(state="disabled")
-            
-            # Habilitar campos de entrada de garantía
-            self.entrada_comentarios_gar.config(state="normal")
-            self.Btn_guardar.config(state="normal")
+                # Dispositivo
+                self.entrada_marca.config(state="normal")
+                self.entrada_marca.insert(0, dispositivo_obj.marca)
+                self.entrada_marca.config(state="disabled")
+                
+                self.entrada_modelo.config(state="normal")
+                self.entrada_modelo.insert(0, dispositivo_obj.version)
+                self.entrada_modelo.config(state="disabled")
+                
+                self.entrada_tipo_rep.config(state="normal")
+                self.entrada_tipo_rep.insert(0, dispositivo_obj.tipo_reparacion)
+                self.entrada_tipo_rep.config(state="disabled")
+                
+                self.entrada_tipo_password.config(state="normal")
+                self.entrada_tipo_password.insert(0, dispositivo_obj.tipo_password)
+                self.entrada_tipo_password.config(state="disabled")
+                
+                self.entrada_password.config(state="normal")
+                self.entrada_password.insert(0, dispositivo_obj.password or "N/A")
+                self.entrada_password.config(state="disabled")
 
+                self.entrada_comentarios.config(state="normal")
+                self.entrada_comentarios.insert("1.0", dispositivo_obj.comentarios)
+                self.entrada_comentarios.config(state="disabled")
+
+                # Reparacion
+                self.entrada_precio.config(state="normal")
+                self.entrada_precio.insert(0, reparacion_obj.precio_reparacion)
+                self.entrada_precio.config(state="disabled")
+                
+                self.entrada_ingreso.config(state="normal")
+                self.entrada_ingreso.insert(0, reparacion_obj.fecha_ingreso)
+                self.entrada_ingreso.config(state="disabled")
+                
+                self.entrada_comentarios_tec.config(state="normal")
+                self.entrada_comentarios_tec.insert("1.0", reparacion_obj.comentarios)
+                self.entrada_comentarios_tec.config(state="disabled")
+                
+                self.entrada_estado.config(state="normal")
+                self.entrada_estado.insert(0, reparacion_obj.estado)
+                self.entrada_estado.config(state="disabled")
+                
+                self.entrada_refaccion.config(state="normal")
+                self.entrada_refaccion.insert(0, reparacion_obj.costo_repuestos)
+                self.entrada_refaccion.config(state="disabled")
+                
+                self.entrada_tipo.config(state="disabled")
+                
+                # Habilitar campos de entrada de garantía
+                self.entrada_comentarios_gar.config(state="normal")
+                self.Btn_guardar.config(state="normal")
+                
+                # Aceptamos la transaccion
+                # The context manager handles commit on successful exit
         except Exception as e:
             messagebox.showerror("Error", f"Error al buscar la reparación: {e}")
         # The context manager handles cursor closing
@@ -330,31 +350,37 @@ class VentanaEntradaGarantia(tkinter.Frame):
             return
 
         try:
-            # 2. PREPARACIÓN DE MODELOS
-            modelo_garantia = ModeloGarantia()
-            modelo_garantia.id_reparacion = id_rep
-            modelo_garantia.fecha_inicio = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            modelo_garantia.observaciones = comentarios_gar
-            modelo_garantia.estado = "En Garantia" if equipo_reparado == "SI" else "Rechazada"
+            with UnitOfWork() as uow:
+                # 2. PREPARACIÓN DE MODELOS
+                modelo_garantia = ModeloGarantia()
+                modelo_garantia.id_reparacion = id_rep
+                modelo_garantia.fecha_inicio = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                modelo_garantia.observaciones = comentarios_gar
+                modelo_garantia.estado = "En Garantia" if equipo_reparado == "SI" else "Rechazada"
 
-            # Ejecutar a través del servicio de garantía
-            exito, id_garantia, mensaje = self.servicio_garantia.registrar_entrada_garantia(modelo_garantia)
-            
-            if exito:
-                modelo_garantia.id_garantia = id_garantia
-                messagebox.showinfo("Éxito", f"Garantía registrada con ID: {id_garantia}")
+                # agregar_garantia ahora puede lanzar ValueError y acepta opcionalmente el cursor
+                id_garantia = self.garantia.agregar_garantia(modelo_garantia, uow.cursor)
                 
-                # Generar PDF
-                if self.cliente_obj and self.dispositivo_obj and self.reparacion_obj:
-                    ruta = self.generador_pdf.generar_reporte_garantia(self.cliente_obj, self.dispositivo_obj, self.reparacion_obj, modelo_garantia)
-                    AbrirPDF.open_file(ruta)
-                
-                self.btn_limpiar()
-            else:
-                messagebox.showerror("Error", f"Error al guardar garantía: {mensaje}")
+                if id_garantia:
+                    # Aceptamos la transaccion
+                    uow.commit()
 
+                    modelo_garantia.id_garantia = id_garantia
+                    messagebox.showinfo("Éxito", f"Garantía registrada con ID: {id_garantia}")
+                    
+                    # Verificar asegurarnos que tenemos los objetos necesarios
+                    if self.cliente_obj and self.dispositivo_obj and self.reparacion_obj:
+                        ruta = self.generador_pdf.generar_reporte_garantia(self.cliente_obj, self.dispositivo_obj, self.reparacion_obj, modelo_garantia)
+                        AbrirPDF.open_file(ruta)
+                    else:
+                        print("Error: Objetos de datos faltantes para generar PDF")
+                    
+                    self.btn_limpiar()
+
+        except ValueError as ve:
+            messagebox.showwarning("Aviso", f"Error de validación: {ve}")
         except Exception as e:
-            messagebox.showerror("Error", f"Error inesperado: {e}")
+            messagebox.showerror("Error", f"Error al guardar garantía: {e}")
         
 
     def btn_limpiar(self, mantener_id=False):

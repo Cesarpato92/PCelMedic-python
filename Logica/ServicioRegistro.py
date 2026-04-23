@@ -44,14 +44,3 @@ class ServicioRegistro:
 
         except Exception as e:
             return False, None, str(e)
-
-    def buscar_cliente(self, cedula):
-        """
-        Busca un cliente por su cédula para autocompletar en la GUI.
-        """
-        try:
-            with self.uow_factory() as uow:
-                log_cliente = LogicaCliente(uow.clientes)
-                return log_cliente.obtener_cliente_por_cedula(cedula, uow.cursor)
-        except Exception:
-            return None
