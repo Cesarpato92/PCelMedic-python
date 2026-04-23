@@ -4,23 +4,18 @@ from tkinter import messagebox, ttk
 from Modelo.ModeloCliente import ModeloCliente
 from Modelo.ModeloDispositivo import ModeloDispositivo
 from Modelo.ModeloReparacion import ModeloReparacion
-from Logica.LogicaCliente import LogicaCliente
-from Logica.ServicioRegistro import ServicioRegistro
-from DAO.ClienteDAO import ClienteDAO
+from Servicios.ServicioRegistro import ServicioRegistro
 from Logica.GeneradorPDF import GeneradorPDF
 from datetime import datetime
 import os
 
 from Utilidades.AbrirPDF import AbrirPDF
-from Config.UnitOfWork import UnitOfWork
-
 
 class VentanaRegistro(tk.Frame):
     def __init__(self, master, controller, **kwargs):
         super().__init__(master, **kwargs) 
         self.controller = controller
         # Inyección de dependencias
-        self.cliente_logic = LogicaCliente(ClienteDAO())
         self.servicio_registro = ServicioRegistro()
 
         # Configuración para que el frame se expanda dentro de su padre 
@@ -279,26 +274,25 @@ class VentanaRegistro(tk.Frame):
             return
             
         try: 
-            with UnitOfWork() as uow:
-                # Para la búsqueda usamos una conexión simple cargada a través del UoW
-                resultado = self.cliente_logic.obtener_cliente_por_cedula(cedula, uow.cursor)
-                if resultado:
-                    
-                    # Rellenamos los campos del formulario
-                    self.entrada_nombre.delete(0,tk.END)
-                    self.entrada_nombre.insert(0, resultado.nombre)
-                    self.entrada_email.delete(0, tk.END)
-                    self.entrada_email.insert(0, resultado.email)
-                    self.entrada_celular.delete(0, tk.END)
-                    self.entrada_celular.insert(0, resultado.celular)
-                    
-                    # Deshabilitar campos de cliente si ya existe?
-                    self.entrada_cedula.config(state=tk.DISABLED)
+            # Para la búsqueda usamos el servicio que ya gestiona el UnitOfWork internamente
+            resultado = self.servicio_registro.buscar_cliente(cedula)
+            if resultado:
+                
+                # Rellenamos los campos del formulario
+                self.entrada_nombre.delete(0,tk.END)
+                self.entrada_nombre.insert(0, resultado.nombre)
+                self.entrada_email.delete(0, tk.END)
+                self.entrada_email.insert(0, resultado.email)
+                self.entrada_celular.delete(0, tk.END)
+                self.entrada_celular.insert(0, resultado.celular)
+                
+                # Deshabilitar campos de cliente si ya existe
+                self.entrada_cedula.config(state=tk.DISABLED)
 
-                    messagebox.showinfo("Éxito", "Cliente encontrado y datos cargados")
+                messagebox.showinfo("Éxito", "Cliente encontrado y datos cargados")
 
-                else:
-                    messagebox.showinfo("No encontrado", "El cliente no está registrado en la base de datos")
+            else:
+                messagebox.showinfo("No encontrado", "El cliente no está registrado en la base de datos")
         
         except Exception as e:
             messagebox.showerror("ERROR", f"Error al buscar cliente : {e}")

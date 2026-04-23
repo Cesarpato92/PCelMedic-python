@@ -1,23 +1,15 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
-from Logica.LogicaCliente import LogicaCliente
-from Config.UnitOfWork import UnitOfWork
-from Logica.LogicaDispositivo import LogicaDispositivo
-from Logica.LogicaReparacion import LogicaReparacion
-from DAO.ClienteDAO import ClienteDAO
-from DAO.DispositivoDAO import DispositivoDAO
-from DAO.ReparacionDAO import ReparacionDAO
 from Modelo.ModeloReparacion import ModeloReparacion
+from Servicios.ServicioReparacion import ServicioReparacion
 
 class VentanaReparacion(tk.Frame):
     def __init__(self, master, controller, **kwargs):
         super().__init__(master, **kwargs) 
         self.controller = controller
 
-        # Inicializamos los objetos con inyección de dependencias (SOLID)
-        self.cliente =  LogicaCliente(ClienteDAO())
-        self.dispositivo =  LogicaDispositivo(DispositivoDAO())
-        self.reparacion = LogicaReparacion(ReparacionDAO())
+        # Inicializamos el servicio (SOLID - Capa de Aplicación)
+        self.servicio_reparacion = ServicioReparacion()
 
         # Contenedor Principal de Contenido 
         contenedor = ttk.Frame(self, padding="10")
@@ -200,28 +192,27 @@ class VentanaReparacion(tk.Frame):
             messagebox.showwarning("Advertencia", "El campo de costo de repuestos no puede ser negativo")
             return
         try:
-            with UnitOfWork() as uow:
-                # 2. PREPARACIÓN DE MODELOS
-                reparacion_obj = ModeloReparacion()
-                reparacion_obj.id_reparacion = id_reparacion
-                reparacion_obj.comentarios = comen_tec
-                reparacion_obj.costo_repuestos = costo_float
-                reparacion_obj.estado = "Completada"
-                
-                estado_antiguo = self.entrada_estado.get().strip()
-
-                # Llamar al método de actualización
-                self.reparacion.actualizar_estado_reparacion(reparacion_obj, estado_antiguo, uow.cursor)
-                uow.commit()
+            # 2. PREPARACIÓN DE MODELOS
+            reparacion_obj = ModeloReparacion()
+            reparacion_obj.id_reparacion = id_reparacion
+            reparacion_obj.comentarios = comen_tec
+            reparacion_obj.costo_repuestos = costo_float
+            reparacion_obj.estado = "Completada"
             
-                messagebox.showinfo("Éxito", "Reparación actualizada exitosamente.")
+            estado_antiguo = self.entrada_estado.get().strip()
+
+            # Llamar al servicio (que ya gestiona el UoW y commit)
+            exito, mensaje = self.servicio_reparacion.actualizar_detalle_reparacion(reparacion_obj, estado_antiguo)
+            
+            if exito:
+                messagebox.showinfo("Éxito", mensaje)
                 self.btn_limpiar()
                 self.deshabilitar_entradas()
+            else:
+                messagebox.showerror("Error", mensaje)
                 
-        except ValueError as ve:
-            messagebox.showwarning("Aviso", f"Ocurrió un error de validación: {ve}")
         except Exception as e:
-            messagebox.showerror("Error", f"No se pudo actualizar la reparación. Error: {str(e)}")
+            messagebox.showerror("Error", f"No se pudo completar la acción. Error: {str(e)}")
 
     def buscar_id_reparacion(self):
         if not self.verificar_id_reparacion():
@@ -232,59 +223,44 @@ class VentanaReparacion(tk.Frame):
         # Limpiar campos antes de buscar
         self.limpiar_campos()
         try:
-            with UnitOfWork() as uow:
-                resultado_reparacion = self.reparacion.obtener_reparacion_por_id(id_rep, uow.cursor)
-                if not resultado_reparacion:
-                    messagebox.showinfo("No encontrado", f"La reparación con ID {id_rep} no se encuentra en la base de datos.")
-                    return
+            # Usamos el servicio para obtener todos los datos relacionados orquestadamente
+            resultado_reparacion, resultado_dispositivo, resultado_cliente = self.servicio_reparacion.obtener_datos_completos(id_rep)
+            
+            if not resultado_reparacion:
+                messagebox.showinfo("No encontrado", f"La reparación con ID {id_rep} no se encuentra.")
+                return
 
-                # HABILITAR TEMPORALMENTE todos los campos para poder insertar
-                self.habilitar_temporalmente()
+            # HABILITAR TEMPORALMENTE todos los campos para poder insertar
+            self.habilitar_temporalmente()
 
-                # Insertar datos de la reparación
-                self.insertar_valor_seguro(self.entrada_ingreso, resultado_reparacion.fecha_ingreso)
-                self.insertar_valor_seguro(self.entrada_estado, resultado_reparacion.estado)
-                self.insertar_valor_seguro(self.entrada_precio, resultado_reparacion.precio_reparacion)
-                self.insertar_valor_seguro(self.entrada_refaccion, resultado_reparacion.costo_repuestos)
-                self.insertar_texto_seguro(self.entrada_comentarios_tec, resultado_reparacion.comentarios)
-                
-                id_disp = resultado_reparacion.id_dispositivo
-                
-                resultado_dispositivo = self.dispositivo.obtener_dispositivo_por_id(id_disp, uow.cursor)
-                if resultado_dispositivo:
-                                   
-                    # Insertar datos del dispositivo
-                    self.insertar_valor_seguro(self.entrada_marca, resultado_dispositivo.marca)
-                    self.insertar_valor_seguro(self.entrada_modelo, resultado_dispositivo.version)
-                    self.insertar_valor_seguro(self.entrada_tipo_rep, resultado_dispositivo.tipo_reparacion)
-                    self.insertar_valor_seguro(self.entrada_tipo_password, resultado_dispositivo.tipo_password)
-                    self.insertar_valor_seguro(self.entrada_password, resultado_dispositivo.password)
-                    
-                    # Para el campo Text (comentarios)
-                    self.insertar_texto_seguro(self.entrada_comentarios, resultado_dispositivo.comentarios)
+            # Insertar datos de la reparación
+            self.insertar_valor_seguro(self.entrada_ingreso, resultado_reparacion.fecha_ingreso)
+            self.insertar_valor_seguro(self.entrada_estado, resultado_reparacion.estado)
+            self.insertar_valor_seguro(self.entrada_precio, resultado_reparacion.precio_reparacion)
+            self.insertar_valor_seguro(self.entrada_refaccion, resultado_reparacion.costo_repuestos)
+            self.insertar_texto_seguro(self.entrada_comentarios_tec, resultado_reparacion.comentarios)
+            
+            if resultado_dispositivo:
+                # Insertar datos del dispositivo
+                self.insertar_valor_seguro(self.entrada_marca, resultado_dispositivo.marca)
+                self.insertar_valor_seguro(self.entrada_modelo, resultado_dispositivo.version)
+                self.insertar_valor_seguro(self.entrada_tipo_rep, resultado_dispositivo.tipo_reparacion)
+                self.insertar_valor_seguro(self.entrada_tipo_password, resultado_dispositivo.tipo_password)
+                self.insertar_valor_seguro(self.entrada_password, resultado_dispositivo.password)
+                self.insertar_texto_seguro(self.entrada_comentarios, resultado_dispositivo.comentarios)
 
-                    id_cliente = resultado_dispositivo.id_cliente
-                    resultado_cliente = self.cliente.obtener_cliente_por_cedula(id_cliente, uow.cursor)
+                if resultado_cliente:
+                    # Insertar datos del cliente
+                    self.insertar_valor_seguro(self.entrada_cedula, resultado_cliente.cedula)
+                    self.insertar_valor_seguro(self.entrada_nombre, resultado_cliente.nombre)
+                    self.insertar_valor_seguro(self.entrada_celular, resultado_cliente.celular)
+                    self.insertar_valor_seguro(self.entrada_email, resultado_cliente.email)
+                    self.deshabilitar_entradas()
+            
+            # Restaurar el estado original de los campos
+            if resultado_reparacion.estado.strip() != "Completada":
+                self.habilitar_entrada()
 
-                    if resultado_cliente:
-                                      
-                        # Insertar datos del cliente
-                        self.insertar_valor_seguro(self.entrada_cedula, resultado_cliente.cedula)
-                        self.insertar_valor_seguro(self.entrada_nombre, resultado_cliente.nombre)
-                        self.insertar_valor_seguro(self.entrada_celular, resultado_cliente.celular)
-                        self.insertar_valor_seguro(self.entrada_email, resultado_cliente.email)
-                        self.deshabilitar_entradas()
-                    else:
-                        messagebox.showwarning("Cliente no encontrado", f"No se encontró el cliente con cédula {id_cliente}.")
-                else:
-                    messagebox.showwarning("Dispositivo no encontrado", f"No se encontró el dispositivo con ID {id_disp}.")
-                
-                # Restaurar el estado original de los campos (deshabilitar los que correspondan)
-                if resultado_reparacion.estado.strip() != "Completada":
-                    self.habilitar_entrada()
-
-        except ValueError as ve:
-            messagebox.showwarning("Aviso", f"Error de validación: {ve}")
         except Exception as e:
             messagebox.showerror("ERROR", f"Error al cargar los datos: {e}")
 
