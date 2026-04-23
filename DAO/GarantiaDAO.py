@@ -1,6 +1,7 @@
+from DAO.Interfaces import IGarantiaDAO
 from Modelo.ModeloGarantia import ModeloGarantia
 
-class GarantiaDAO:
+class GarantiaDAO(IGarantiaDAO):
     def __init__(self):
         pass
     

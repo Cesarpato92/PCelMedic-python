@@ -1,9 +1,12 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
 from Logica.LogicaCliente import LogicaCliente
-from Config.TransaccionConexion import TransaccionConexion
+from Config.UnitOfWork import UnitOfWork
 from Logica.LogicaDispositivo import LogicaDispositivo
 from Logica.LogicaReparacion import LogicaReparacion
+from DAO.ClienteDAO import ClienteDAO
+from DAO.DispositivoDAO import DispositivoDAO
+from DAO.ReparacionDAO import ReparacionDAO
 from Modelo.ModeloReparacion import ModeloReparacion
 
 class VentanaReparacion(tk.Frame):
@@ -11,10 +14,10 @@ class VentanaReparacion(tk.Frame):
         super().__init__(master, **kwargs) 
         self.controller = controller
 
-        # Inicializamos los objetos cliente, reparacion y dispositivo
-        self.cliente =  LogicaCliente()
-        self.dispositivo =  LogicaDispositivo()
-        self.reparacion = LogicaReparacion()
+        # Inicializamos los objetos con inyección de dependencias (SOLID)
+        self.cliente =  LogicaCliente(ClienteDAO())
+        self.dispositivo =  LogicaDispositivo(DispositivoDAO())
+        self.reparacion = LogicaReparacion(ReparacionDAO())
 
         # Contenedor Principal de Contenido 
         contenedor = ttk.Frame(self, padding="10")
@@ -176,6 +179,7 @@ class VentanaReparacion(tk.Frame):
         id_reparacion = self.entrada_id_reparacion.get().strip()
         comen_tec = self.entrada_comentarios_tec.get("1.0", tk.END).strip()
         costo_refaccion = self.entrada_refaccion.get().strip()
+        precio_reparacion = self.entrada_precio.get().strip()
 
         if not (comen_tec and costo_refaccion):
             messagebox.showwarning("Advertencia", "Por favor, complete el costo de repuestos y los comentarios del técnico.")
@@ -188,24 +192,28 @@ class VentanaReparacion(tk.Frame):
         except ValueError:
             messagebox.showwarning("Advertencia", "El campo de costo de repuestos debe ser un número válido")
             return
-
+        
+        if costo_float >= float(precio_reparacion):
+            messagebox.showwarning("Advertencia", "El campo de costo de repuestos no puede ser mayor al precio de reparacion")
+            return
+        if costo_float < 0:
+            messagebox.showwarning("Advertencia", "El campo de costo de repuestos no puede ser negativo")
+            return
         try:
-            with TransaccionConexion() as (cursor, conexion):
-                # Crear y configurar el objeto
+            with UnitOfWork() as uow:
+                # 2. PREPARACIÓN DE MODELOS
                 reparacion_obj = ModeloReparacion()
                 reparacion_obj.id_reparacion = id_reparacion
                 reparacion_obj.comentarios = comen_tec
                 reparacion_obj.costo_repuestos = costo_float
-                # guardamos el estado antiguo
-                estado_antiguo = reparacion_obj.estado
-                print(estado_antiguo)
                 reparacion_obj.estado = "Completada"
-                    
+                
+                estado_antiguo = self.entrada_estado.get().strip()
+
                 # Llamar al método de actualización
-                self.reparacion.actualizar_estado_reparacion(reparacion_obj, estado_antiguo, cursor)
-                    
-                # Aceptamos la transaccion
-                conexion.commit()
+                self.reparacion.actualizar_estado_reparacion(reparacion_obj, estado_antiguo, uow.cursor)
+                uow.commit()
+            
                 messagebox.showinfo("Éxito", "Reparación actualizada exitosamente.")
                 self.btn_limpiar()
                 self.deshabilitar_entradas()
@@ -224,8 +232,8 @@ class VentanaReparacion(tk.Frame):
         # Limpiar campos antes de buscar
         self.limpiar_campos()
         try:
-            with TransaccionConexion() as (cursor, conexion):
-                resultado_reparacion = self.reparacion.obtener_reparacion_por_id(id_rep, cursor)
+            with UnitOfWork() as uow:
+                resultado_reparacion = self.reparacion.obtener_reparacion_por_id(id_rep, uow.cursor)
                 if not resultado_reparacion:
                     messagebox.showinfo("No encontrado", f"La reparación con ID {id_rep} no se encuentra en la base de datos.")
                     return
@@ -237,10 +245,12 @@ class VentanaReparacion(tk.Frame):
                 self.insertar_valor_seguro(self.entrada_ingreso, resultado_reparacion.fecha_ingreso)
                 self.insertar_valor_seguro(self.entrada_estado, resultado_reparacion.estado)
                 self.insertar_valor_seguro(self.entrada_precio, resultado_reparacion.precio_reparacion)
+                self.insertar_valor_seguro(self.entrada_refaccion, resultado_reparacion.costo_repuestos)
+                self.insertar_texto_seguro(self.entrada_comentarios_tec, resultado_reparacion.comentarios)
                 
                 id_disp = resultado_reparacion.id_dispositivo
                 
-                resultado_dispositivo = self.dispositivo.obtener_dispositivo_por_id(id_disp, cursor)
+                resultado_dispositivo = self.dispositivo.obtener_dispositivo_por_id(id_disp, uow.cursor)
                 if resultado_dispositivo:
                                    
                     # Insertar datos del dispositivo
@@ -254,23 +264,24 @@ class VentanaReparacion(tk.Frame):
                     self.insertar_texto_seguro(self.entrada_comentarios, resultado_dispositivo.comentarios)
 
                     id_cliente = resultado_dispositivo.id_cliente
-                    resultado_cliente = self.cliente.obtener_cliente_por_cedula(id_cliente, cursor)
+                    resultado_cliente = self.cliente.obtener_cliente_por_cedula(id_cliente, uow.cursor)
 
                     if resultado_cliente:
-                        # aceptamos la transaccion
-                        conexion.commit()                 
+                                      
                         # Insertar datos del cliente
                         self.insertar_valor_seguro(self.entrada_cedula, resultado_cliente.cedula)
                         self.insertar_valor_seguro(self.entrada_nombre, resultado_cliente.nombre)
                         self.insertar_valor_seguro(self.entrada_celular, resultado_cliente.celular)
                         self.insertar_valor_seguro(self.entrada_email, resultado_cliente.email)
+                        self.deshabilitar_entradas()
                     else:
                         messagebox.showwarning("Cliente no encontrado", f"No se encontró el cliente con cédula {id_cliente}.")
                 else:
                     messagebox.showwarning("Dispositivo no encontrado", f"No se encontró el dispositivo con ID {id_disp}.")
                 
                 # Restaurar el estado original de los campos (deshabilitar los que correspondan)
-                self.habilitar_entrada()
+                if resultado_reparacion.estado.strip() != "Completada":
+                    self.habilitar_entrada()
 
         except ValueError as ve:
             messagebox.showwarning("Aviso", f"Error de validación: {ve}")
@@ -427,3 +438,5 @@ class VentanaReparacion(tk.Frame):
         self.entrada_comentarios.config(state="disabled") 
         self.entrada_estado.config(state="disabled")
         self.entrada_ingreso.config(state="disabled")
+        self.entrada_refaccion.config(state="disabled")
+        self.entrada_comentarios_tec.config(state="disabled")
