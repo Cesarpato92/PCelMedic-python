@@ -3,17 +3,8 @@ from tkinter import messagebox, ttk
 
 from datetime import datetime
 from Utilidades.AbrirPDF import AbrirPDF
-from Logica.LogicaCliente import LogicaCliente
-from Logica.LogicaDispositivo import LogicaDispositivo
-from Logica.LogicaReparacion import LogicaReparacion
-from Logica.LogicaFactura import LogicaFactura
-from Logica.GeneradorPDF import GeneradorPDF
-from Modelo.ModeloFactura import ModeloFactura
-from Config.UnitOfWork import UnitOfWork
-from DAO.ClienteDAO import ClienteDAO
-from DAO.DispositivoDAO import DispositivoDAO
-from DAO.ReparacionDAO import ReparacionDAO
-from DAO.FacturasDAO import FacturasDAO
+from Servicios.ServicioFacturacion import ServicioFacturacion
+from Servicios.ServicioReparacion import ServicioReparacion
 import os
 
 
@@ -27,11 +18,9 @@ class VentanaFactura(tk.Frame):
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1) 
 
-        # Inicializamos los objetos con inyección de dependencias (SOLID)
-        self.reparacion = LogicaReparacion(ReparacionDAO())
-        self.cliente = LogicaCliente(ClienteDAO())
-        self.dispositivo = LogicaDispositivo(DispositivoDAO())
-        self.factura = LogicaFactura(FacturasDAO())
+        # Inicializamos los servicios (SOLID)
+        self.servicio_facturacion = ServicioFacturacion()
+        self.servicio_reparacion = ServicioReparacion()
         self.generador_pdf = GeneradorPDF()
 
         self.reparacion_model = None
@@ -101,52 +90,57 @@ class VentanaFactura(tk.Frame):
             return
 
         try:
-            with UnitOfWork() as uow:
-                factura = self.factura.obtener_factura_por_id_reparacion(self.reparacion_model.id_reparacion, uow.cursor)
+            # Validamos si ya existe una factura para esta reparación
+            factura = self.servicio_facturacion.obtener_factura_por_reparacion(self.reparacion_model.id_reparacion)
 
-                # validamos si ya existe una factura para esta reparación
-                if factura:
-                    # Si ya existe una factura para esta reparación, preguntar si se desea abrir el PDF
-                    respuesta = messagebox.askyesno("Factura existente", "Ya se generó una factura para esta reparación. ¿Desea abrir una copia del archivo PDF?")
-                    if respuesta:
-                        # Reconstruir ruta del PDF
-                        nombre_archivo = f"Factura_{factura.id_factura}-{self.cliente_model.cedula}.pdf"
-                        ruta = os.path.join("Reportes", nombre_archivo)
-                        if os.path.exists(ruta):
-                            AbrirPDF.open_file(ruta)
-                        else:
-                            messagebox.showwarning("Archivo no encontrado", f"No se encontró el archivo: {nombre_archivo}")
-                    return
-                
-                # Crear modelo de factura
-                factura_model = ModeloFactura()
-                factura_model.id_reparacion = self.reparacion_model.id_reparacion
-                factura_model.fecha = datetime.now()
-                # Asegurarse de que el total sea float
-                try:
-                    if isinstance(self.reparacion_model.precio_reparacion, str):
-                        # Limpiar string de precio si tiene caracteres no numéricos
-                        precio_limpio = ''.join(c for c in self.reparacion_model.precio_reparacion if c.isdigit() or c == '.')
-                        factura_model.total = float(precio_limpio)
-                    else:
-                        factura_model.total = float(self.reparacion_model.precio_reparacion)
-                except ValueError:
-                    factura_model.total = 0.0
-                
-                # Guardar en BD
-                id_factura = self.factura.agregar_factura(factura_model, uow.cursor)
-                
-                if id_factura:
-                    #aceptamos la transaccion
-                    uow.commit()
-                    # Generar PDF
-                    ruta = self.generador_pdf.generar_factura(self.cliente_model, self.dispositivo_model, self.reparacion_model, id_factura)
-                    
+            if factura:
+                respuesta = messagebox.askyesno("Factura existente", "Ya se generó una factura para esta reparación. ¿Desea abrir una copia del archivo PDF?")
+                if respuesta:
+                    nombre_archivo = f"Factura_{factura.id_factura}-{self.cliente_model.cedula}.pdf"
+                    ruta = os.path.join("Reportes", nombre_archivo)
                     if os.path.exists(ruta):
                         AbrirPDF.open_file(ruta)
-                    self.limpiar_campos()
-        except ValueError as ve:
-            messagebox.showwarning("Aviso", f"Error de validación: {ve}")
+                    else:
+                        messagebox.showwarning("Archivo no encontrado", f"No se encontró el archivo: {nombre_archivo}")
+                return
+            
+            # Crear modelo de factura
+            factura_model = ModeloFactura()
+            factura_model.id_reparacion = self.reparacion_model.id_reparacion
+            factura_model.fecha = datetime.now()
+            
+            try:
+                if isinstance(self.reparacion_model.precio_reparacion, str):
+                    precio_limpio = ''.join(c for c in self.reparacion_model.precio_reparacion if c.isdigit() or c == '.')
+                    factura_model.total = float(precio_limpio)
+                else:
+                    factura_model.total = float(self.reparacion_model.precio_reparacion)
+            except ValueError:
+                factura_model.total = 0.0
+            
+            # Clonar el objeto reparación para actualizar su estado a 'Entregada'
+            reparacion_entregada = self.reparacion_model
+            estado_antiguo = self.reparacion_model.estado
+            reparacion_entregada.estado = "Entregada"
+            
+            # Ejecutar a través del servicio
+            exito, mensaje = self.servicio_facturacion.registrar_pago_y_entrega(factura_model, reparacion_entregada, estado_antiguo)
+            
+            if exito:
+                # El servicio ya hizo commit. Ahora generamos el PDF.
+                # Necesitamos el ID de la factura generada. El servicio podría devolverlo, 
+                # pero para no cambiar la firma del servicio de nuevo, lo buscamos.
+                factura_nueva = self.servicio_facturacion.obtener_factura_por_reparacion(self.reparacion_model.id_reparacion)
+                if factura_nueva:
+                    ruta = self.generador_pdf.generar_factura(self.cliente_model, self.dispositivo_model, self.reparacion_model, factura_nueva.id_factura)
+                    if os.path.exists(ruta):
+                        AbrirPDF.open_file(ruta)
+                
+                messagebox.showinfo("Éxito", mensaje)
+                self.limpiar_campos()
+            else:
+                messagebox.showerror("Error", mensaje)
+                
         except Exception as e:
             messagebox.showerror("Error", f"Ocurrió un error inesperado: {e}")
             
@@ -156,36 +150,32 @@ class VentanaFactura(tk.Frame):
             messagebox.showwarning("Atencion", "Ingrese un ID de reparacion")
             return
         try:
-            with UnitOfWork() as uow:
-                reparacion = self.reparacion.obtener_reparacion_por_id(id_reparacion, uow.cursor)
-                if not reparacion:
-                    messagebox.showinfo("No encontrado", "No se encontro la reparacion")
-                    return
-                
-                # Obtener datos relacionales
-                dispositivo = self.dispositivo.obtener_dispositivo_por_id(reparacion.id_dispositivo, uow.cursor)
-                cliente = self.cliente.obtener_cliente_por_cedula(dispositivo.id_cliente, uow.cursor)
-                
-                # Guardar los datos para el reporte
-                self.reparacion_model = reparacion
-                self.cliente_model = cliente
-                self.dispositivo_model = dispositivo
-                
-                # Actualizar los campos de la interfaz
-                self.entrada_cliente.config(text=f"{cliente.nombre}, Cedula: {cliente.cedula}")
-                self.entrada_fecha_inicio.config(text=f"{reparacion.fecha_ingreso}")
-                self.entrada_id_dispositivo.config(text=f"{dispositivo.id_dispositivo}")
-                self.entrada_dispositivo.config(text=f"{dispositivo.marca} {dispositivo.version}")
-                self.entrada_estado.config(text=f"{reparacion.estado}")
-                self.entrada_total.config(text=f"{reparacion.precio_reparacion}")
-                self.entrada_tipo_reparacion.config(text=f"{dispositivo.tipo_reparacion}")
-                self.txt_observaciones_entrada.config(state="normal")
-                self.txt_observaciones_entrada.delete(1.0, tk.END)
-                # Validamos que no sea None
-                comentarios = reparacion.comentarios if reparacion.comentarios is not None else "SIN COMENTARIOS ESCRITOS POR EL TECNICO AUN"
-                self.txt_observaciones_entrada.insert("1.0", str(comentarios))
-               
-                self.txt_observaciones_entrada.config(state="disabled")
+            # Usar el servicio de reparación para obtener todos los datos
+            reparacion, dispositivo, cliente = self.servicio_reparacion.obtener_datos_completos(id_reparacion)
+            
+            if not reparacion:
+                messagebox.showinfo("No encontrado", "No se encontró la reparación")
+                return
+            
+            # Guardar los datos para el reporte
+            self.reparacion_model = reparacion
+            self.cliente_model = cliente
+            self.dispositivo_model = dispositivo
+            
+            # Actualizar los campos de la interfaz
+            self.entrada_cliente.config(text=f"{cliente.nombre}, Cedula: {cliente.cedula}")
+            self.entrada_fecha_inicio.config(text=f"{reparacion.fecha_ingreso}")
+            self.entrada_id_dispositivo.config(text=f"{dispositivo.id_dispositivo}")
+            self.entrada_dispositivo.config(text=f"{dispositivo.marca} {dispositivo.version}")
+            self.entrada_estado.config(text=f"{reparacion.estado}")
+            self.entrada_total.config(text=f"{reparacion.precio_reparacion}")
+            self.entrada_tipo_reparacion.config(text=f"{dispositivo.tipo_reparacion}")
+            self.txt_observaciones_entrada.config(state="normal")
+            self.txt_observaciones_entrada.delete(1.0, tk.END)
+            
+            comentarios = reparacion.comentarios if reparacion.comentarios is not None else "SIN COMENTARIOS ESCRITOS POR EL TECNICO AUN"
+            self.txt_observaciones_entrada.insert("1.0", str(comentarios))
+            self.txt_observaciones_entrada.config(state="disabled")
 
         except Exception as e:
             messagebox.showerror(f"Error al buscar la reparacion {id_reparacion}", str(e))
