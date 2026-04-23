@@ -9,6 +9,7 @@ class ServicioRegistro:
         # (Idealmente esto lo haría un contenedor de IoC, pero en Python manual es aceptable)
         self.uow_factory = UnitOfWork
 
+
     def registrar_ingreso_completo(self, cliente_obj, dispositivo_obj, reparacion_obj):
         """
         Orquesta el registro de un cliente, su dispositivo y la reparación inicial
