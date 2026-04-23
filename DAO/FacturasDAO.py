@@ -1,6 +1,7 @@
+from DAO.Interfaces import IFacturaDAO
 from Modelo.ModeloFactura import ModeloFactura
 
-class FacturasDAO:
+class FacturasDAO(IFacturaDAO):
     def __init__(self):
         pass
 
