@@ -63,8 +63,7 @@ class LogicaGarantia:
         return True, ""
 
     def validar_campos_a_insertar(self, modelo_garantia):
-        res, msg = self.validar_estado(modelo_garantia.estado)
-        if not res: return False, msg
+        
         res, msg = self.validar_observaciones(modelo_garantia.observaciones)
         if not res: return False, msg
         res, msg = self.validar_fecha_inicio(modelo_garantia.fecha_inicio)
