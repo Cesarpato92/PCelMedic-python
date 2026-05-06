@@ -130,18 +130,27 @@ class VentanaReparacion(tk.Frame):
         self.entrada_comentarios_tec = tk.Text(contenido_derecha_der, height=6) 
         self.entrada_comentarios_tec.grid(row=7, column=0, sticky="nsew", pady=3)
         
-        ttk.Label(contenido_derecha_der, text="¿Equipo reparado?").grid(row=8, column=0, sticky="w", pady=(5, 0))
-        opciones_rep = ["SI", "NO"]
-        self.var_tipo_rep = tk.StringVar(self) 
-        self.var_tipo_rep.set(opciones_rep) 
-        self.var_tipo_rep.set(opciones_rep[0])
+        ttk.Label(contenido_derecha_der, text="Se finaliza el proceso").grid(row=8, column=0, sticky="w", pady=(5, 0))
+        opciones_equipo = ["SI", "NO"]
+        self.var_equipo_reparado = tk.StringVar(self) 
+        self.var_equipo_reparado.set(opciones_equipo[0])
+        self.entrada_equipo_reparado = ttk.Combobox(contenido_derecha_der, 
+                                                     textvariable=self.var_equipo_reparado,
+                                                     values=opciones_equipo,
+                                                     state="readonly",
+                                                     width=10)
+        self.entrada_equipo_reparado.grid(row=9, column=0, sticky="w", pady=3)
 
+        ttk.Label(contenido_derecha_der, text="Estado de reparacion").grid(row=10, column=0, sticky="w", pady=(5, 0))
+        opciones_estado = ["Completada", "Rechazada"]
+        self.var_estado_reparacion = tk.StringVar(self) 
+        self.var_estado_reparacion.set(opciones_estado[0])
         self.entrada_tipo = ttk.Combobox(contenido_derecha_der, 
-                                         textvariable=self.var_tipo_rep,
-                                         values=opciones_rep,
+                                         textvariable=self.var_estado_reparacion,
+                                         values=opciones_estado,
                                          state="readonly",
-                                         width=8)
-        self.entrada_tipo.grid(row=9, column=0, sticky="w", pady=3)
+                                         width=10)
+        self.entrada_tipo.grid(row=11, column=0, sticky="w", pady=3)
         
         contenido_derecha_der.rowconfigure(1, weight=1) 
         contenido_derecha_der.rowconfigure(7, weight=1) 
@@ -173,22 +182,48 @@ class VentanaReparacion(tk.Frame):
 
     # Métodos de la clase 
     def btn_guardar(self):
+        estado_nuevo_reparacion = self.var_estado_reparacion.get()
+        # guardamos el estado antiguo
+        estado_antiguo = self.entrada_estado.get().strip()
         id_reparacion = self.entrada_id_reparacion.get().strip()
         comen_tec = self.entrada_comentarios_tec.get("1.0", tk.END).strip()
         costo_refaccion = self.entrada_refaccion.get().strip()
 
-        if not (comen_tec and costo_refaccion):
-            messagebox.showwarning("Advertencia", "Por favor, complete el costo de repuestos y los comentarios del técnico.")
+        # Validar comentarios (siempre requerido)
+        if not comen_tec:
+            messagebox.showwarning("Advertencia", "Los comentarios del técnico son obligatorios.")
             return
-        if self.var_tipo_rep.get() == "NO":
-            messagebox.showwarning("Advertencia", "Solo se puede guardar si el equipo esta reparado")
+        
+        # Validar costo según el estado
+        if estado_nuevo_reparacion == "Completada":
+            if not costo_refaccion:
+                messagebox.showwarning("Advertencia", "El costo de repuestos es obligatorio para reparaciones completadas.")
+                return
+        elif estado_nuevo_reparacion == "Rechazada":
+            # Para rechazadas, el costo es opcional (puede ser 0)
+            if costo_refaccion == "":
+                costo_refaccion = "0"
+        
+        # Validar que el estado y equipo reparado sean coherentes
+        if estado_nuevo_reparacion == "Completada" and self.var_equipo_reparado.get() == "NO":
+            messagebox.showwarning("Advertencia", "No se puede marcar como completada si el equipo no está reparado")
+            return
+        
+        if estado_nuevo_reparacion == "Rechazada" and self.var_equipo_reparado.get() == "SI":
+            messagebox.showwarning("Advertencia", "No se puede rechazar la reparación si el equipo está reparado")
             return
         try:
             costo_float = float(costo_refaccion)
         except ValueError:
             messagebox.showwarning("Advertencia", "El campo de costo de repuestos debe ser un número válido")
             return
-
+        
+        # Validación adicional: Si es Rechazada, el costo debe ser 0
+        if estado_nuevo_reparacion == "Rechazada":
+            if costo_float > 0:
+                messagebox.showwarning("Advertencia", "El costo de repuestos debe ser 0 para reparaciones rechazadas")
+                return
+            
         try:
             with TransaccionConexion() as (cursor, conexion):
                 # Crear y configurar el objeto
@@ -196,10 +231,7 @@ class VentanaReparacion(tk.Frame):
                 reparacion_obj.id_reparacion = id_reparacion
                 reparacion_obj.comentarios = comen_tec
                 reparacion_obj.costo_repuestos = costo_float
-                # guardamos el estado antiguo
-                estado_antiguo = reparacion_obj.estado
-                print(estado_antiguo)
-                reparacion_obj.estado = "Completada"
+                reparacion_obj.estado = estado_nuevo_reparacion
                     
                 # Llamar al método de actualización
                 self.reparacion.actualizar_estado_reparacion(reparacion_obj, estado_antiguo, cursor)
@@ -293,7 +325,8 @@ class VentanaReparacion(tk.Frame):
             self.entrada_estado,
             self.entrada_refaccion,
             self.entrada_comentarios,
-            self.entrada_comentarios_tec
+            self.entrada_comentarios_tec,
+            self.entrada_tipo
         ]
     
         for campo in campos:
@@ -364,7 +397,8 @@ class VentanaReparacion(tk.Frame):
         
         # Resetear Combobox
         try:
-            self.entrada_tipo.set('SI')
+            self.entrada_equipo_reparado.set('SI')
+            self.entrada_tipo.set('Completada')
         except:
             pass
 
@@ -374,6 +408,7 @@ class VentanaReparacion(tk.Frame):
         campos_habilitados = [
             self.entrada_refaccion,
             self.entrada_comentarios_tec,
+            self.entrada_equipo_reparado,
             self.entrada_tipo
         ]
         
@@ -427,3 +462,4 @@ class VentanaReparacion(tk.Frame):
         self.entrada_comentarios.config(state="disabled") 
         self.entrada_estado.config(state="disabled")
         self.entrada_ingreso.config(state="disabled")
+        self.entrada_tipo.config(state="disabled")
