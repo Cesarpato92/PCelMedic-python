@@ -84,6 +84,8 @@ class GeneradorPDF:
         pdf.set_font("Arial", 'B', 12)
         pdf.cell(0, 8, f"${reparacion.precio_reparacion:,.2f}", border=1, ln=True, fill=True)
         
+        pdf.set_font("Arial", 'B', 8)
+        pdf.cell(0, 10, "Este documento es un comprobante de recepción. No válido como factura legal.", ln=True, align='L')
         # Guardar
         pdf.output(ruta_archivo)
         return ruta_archivo
@@ -199,6 +201,9 @@ class GeneradorPDF:
             pdf.cell(40, 7, key, border=1)
             pdf.set_font("Arial", size=10)
             pdf.cell(0, 7, value, border=1, ln=True)
+
+        pdf.set_font("Arial", 'B', 8)
+        pdf.cell(0, 10, "Este documento es un comprobante de recepción. No válido como factura legal.", ln=True, align='L')
         
         pdf.output(ruta_archivo)
         return ruta_archivo
@@ -263,5 +268,7 @@ class GeneradorPDF:
         pdf.cell(0, 5, "Gracias por confiar en PCelMedic.", ln=True, align='C')
         pdf.cell(0, 5, "Pertenezco al regimen de No Responsables de IVA (Art. 437 del Estatuto Tributario).", ln=True, align='C')
 
+        pdf.set_font("Arial", 'B', 8)
+        pdf.cell(0, 10, "Este documento es un comprobante de recepción. No válido como factura legal.", ln=True, align='L')
         pdf.output(ruta_archivo)
         return ruta_archivo

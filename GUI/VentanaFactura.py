@@ -89,8 +89,8 @@ class VentanaFactura(tk.Frame):
             return
         
         if self.cliente_model is None or self.dispositivo_model is None:
-             messagebox.showwarning("Atención", "Faltan datos del cliente o dispositivo")
-             return
+            messagebox.showwarning("Atención", "Faltan datos del cliente o dispositivo")
+            return
 
         if self.entrada_estado.cget("text") != "Completada":
             messagebox.showwarning("Atención", "La reparación no ha sido completada, no se puede generar la factura")
@@ -106,11 +106,12 @@ class VentanaFactura(tk.Frame):
                     # Si ya existe una factura para esta reparación, preguntar si se desea abrir el PDF
                     respuesta = messagebox.askyesno("Factura existente", "Ya se generó una factura para esta reparación. ¿Desea abrir una copia del archivo PDF?")
                     if respuesta:
+                        fecha = datetime.now().strftime("%Y-%m-%d")
                         # Reconstruir ruta del PDF
-                        nombre_archivo = f"Factura_{factura.id_factura}-{self.cliente_model.cedula}.pdf"
+                        nombre_archivo = f"Factura_{factura.id_factura}-{self.cliente_model.cedula}-{fecha}.pdf"
                         ruta = os.path.join("Reportes", nombre_archivo)
                         if os.path.exists(ruta):
-                            open_file(ruta)
+                            AbrirPDF.open_file(ruta)
                         else:
                             messagebox.showwarning("Archivo no encontrado", f"No se encontró el archivo: {nombre_archivo}")
                     return
@@ -134,8 +135,7 @@ class VentanaFactura(tk.Frame):
                 id_factura = self.factura.agregar_factura(factura_model, cursor)
                 
                 if id_factura:
-                    #aceptamos la transaccion
-                    conexion.commit()
+                    messagebox.showinfo("Factura generada exitosamente", "Se abrirá el archivo PDF de la factura existente.")
                     # Generar PDF
                     ruta = self.generador_pdf.generar_factura(self.cliente_model, self.dispositivo_model, self.reparacion_model, id_factura)
                     

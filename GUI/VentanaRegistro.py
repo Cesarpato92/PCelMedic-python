@@ -214,6 +214,7 @@ class VentanaRegistro(tk.Frame):
             return
 
         try:
+            
             with TransaccionConexion() as (cursor, conexion):
                 cliente_obj = ModeloCliente()
                 cliente_obj.cedula = cedula
@@ -226,7 +227,7 @@ class VentanaRegistro(tk.Frame):
                     messagebox.showwarning("Aviso", f"Error en datos de cliente: {msg_cli}")
                     conexion.rollback()
                     return
-           
+
                 dispositivo_obj = ModeloDispositivo()
                 dispositivo_obj.id_cliente=cedula
                 dispositivo_obj.marca=marca
@@ -270,13 +271,9 @@ class VentanaRegistro(tk.Frame):
                             
         except Exception as e:
             messagebox.showwarning("Aviso", f"Ocurrió un error al guardar: {e}")
-        finally:
-            if 'cursor' in locals() and cursor:
-                # Liberamos cursor para la memoria del servidor
-                cursor.close()
-
+        
+    # Función para limpiar todos los campos del formulario
     def limpiar_campos(self):
-        # Función para limpiar todos los campos del formulario
         self.entrada_cedula.config(state=tk.NORMAL)
         self.entrada_cedula.delete(0, tk.END)
         self.entrada_nombre.delete(0, tk.END)

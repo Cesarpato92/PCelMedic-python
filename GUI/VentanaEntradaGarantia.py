@@ -29,6 +29,7 @@ class VentanaEntradaGarantia(tkinter.Frame):
         self.cliente_obj = None
         self.dispositivo_obj = None
         self.reparacion_obj = None
+        self.var_tipo_rep = tkinter.StringVar(value="SI")
 
         # Configuración principal del frame
         self.columnconfigure(0, weight=1)
@@ -177,11 +178,12 @@ class VentanaEntradaGarantia(tkinter.Frame):
         self.entrada_refaccion = ttk.Entry(contenido_derecha_der)
         self.entrada_refaccion.grid(row=5, column=0, sticky="w", pady=3)
 
-        ttk.Label(contenido_derecha_der, text="Comentarios de garantia", font=("Helvetica", 14, "bold")).grid(row=6, column=0, sticky="w", pady=(5, 0))
+        
+        ttk.Label(contenido_derecha_der, text="Comentarios de garantia", font=("Helvetica", 14, "bold")).grid(row=8, column=0, sticky="w", pady=(5, 0))
         self.entrada_comentarios_gar = tkinter.Text(contenido_derecha_der, height=6) 
-        self.entrada_comentarios_gar.grid(row=7, column=0, sticky="nsew", pady=3)
+        self.entrada_comentarios_gar.grid(row=9, column=0, sticky="nsew", pady=3)
         contenido_derecha_der.rowconfigure(1, weight=1) 
-        contenido_derecha_der.rowconfigure(7, weight=1) 
+        contenido_derecha_der.rowconfigure(9, weight=1) 
 
 
         # Footer: Contenedor para los botones 
@@ -324,21 +326,22 @@ class VentanaEntradaGarantia(tkinter.Frame):
             messagebox.showerror("Error", f"Error al guardar garantía: {e}")
         
     def habilitar_entradas(self):
-        self.entrada_cedula.config(state="enabled") 
-        self.entrada_nombre.config(state="enabled") 
-        self.entrada_email.config(state="enabled") 
-        self.entrada_celular.config(state="enabled") 
-        self.entrada_modelo.config(state="enabled") 
-        self.entrada_marca.config(state="enabled") 
-        self.entrada_tipo_rep.config(state="enabled") 
-        self.entrada_tipo_password.config(state="enabled") 
-        self.entrada_password.config(state="enabled") 
-        self.entrada_precio.config(state="enabled") 
-        self.entrada_comentarios.config(state="enabled") 
-        self.entrada_estado.config(state="enabled")
-        self.entrada_ingreso.config(state="enabled")
-        self.entrada_refaccion.config(state="enabled")
-        self.entrada_comentarios_tec.config(state="enabled") 
+        self.entrada_cedula.config(state="normal") 
+        self.entrada_nombre.config(state="normal") 
+        self.entrada_email.config(state="normal") 
+        self.entrada_celular.config(state="normal") 
+        self.entrada_modelo.config(state="normal") 
+        self.entrada_marca.config(state="normal") 
+        self.entrada_tipo_rep.config(state="normal") 
+        self.entrada_tipo_password.config(state="normal") 
+        self.entrada_password.config(state="normal") 
+        self.entrada_precio.config(state="normal") 
+        self.entrada_comentarios.config(state="normal") 
+        self.entrada_estado.config(state="normal")
+        self.entrada_ingreso.config(state="normal")
+        self.entrada_refaccion.config(state="normal")
+        self.entrada_comentarios_tec.config(state="normal") 
+        
 
     def btn_limpiar(self, mantener_id=False):
         if not mantener_id:
