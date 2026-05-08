@@ -3,12 +3,16 @@ from tkinter import messagebox, ttk
 from datetime import datetime 
 from Utilidades.AbrirPDF import AbrirPDF
 from Modelo.ModeloGarantia import ModeloGarantia
-from Config.TransaccionConexion import TransaccionConexion
+from Config.UnitOfWork import UnitOfWork
 from Logica.LogicaCliente import LogicaCliente
 from Logica.LogicaDispositivo import LogicaDispositivo
 from Logica.LogicaReparacion import LogicaReparacion
 from Logica.LogicaGarantia import LogicaGarantia
 from Logica.GeneradorPDF import GeneradorPDF
+from DAO.ClienteDAO import ClienteDAO
+from DAO.DispositivoDAO import DispositivoDAO
+from DAO.ReparacionDAO import ReparacionDAO
+from DAO.GarantiaDAO import GarantiaDAO
 
 
 
@@ -19,16 +23,18 @@ class VentanaEntradaGarantia(tkinter.Frame):
         self.controller = controller
 
         # Inicializamos los objetos de cliente, reparacion, dispositivo y garantia
-        self.cliente = LogicaCliente()
-        self.reparacion = LogicaReparacion()
-        self.dispositivo = LogicaDispositivo()
-        self.garantia = LogicaGarantia()
+        # Inicializamos los objetos con inyección de dependencias (SOLID)
+        self.cliente = LogicaCliente(ClienteDAO())
+        self.reparacion = LogicaReparacion(ReparacionDAO())
+        self.dispositivo = LogicaDispositivo(DispositivoDAO())
+        self.garantia = LogicaGarantia(GarantiaDAO())
         self.generador_pdf = GeneradorPDF()
         
         # Objetos para almacenar los modelos actuales
         self.cliente_obj = None
         self.dispositivo_obj = None
         self.reparacion_obj = None
+        self.var_tipo_rep = tkinter.StringVar(value="SI")
 
         # Configuración principal del frame
         self.columnconfigure(0, weight=1)
@@ -106,7 +112,7 @@ class VentanaEntradaGarantia(tkinter.Frame):
 
         self.entrada_cedula = ttk.Entry(cedula_frame, width=20) 
         self.entrada_cedula.grid(row=0, column=0, sticky="ew") 
-               
+        
         ttk.Label(contenido_izquierda, text="Nombre").grid(row=3, column=0, sticky="w", pady=(8, 0)) 
         self.entrada_nombre = ttk.Entry(contenido_izquierda) 
         self.entrada_nombre.grid(row=4, column=0, sticky="ew", pady=3)
@@ -151,7 +157,6 @@ class VentanaEntradaGarantia(tkinter.Frame):
         self.entrada_precio = ttk.Entry(contenido_centro) 
         self.entrada_precio.grid(row=12, column=0, sticky="ew", pady=3)
 
-       
         ttk.Label(contenido_centro, text="Fecha ingreso").grid(row=13, column=0, sticky="w", pady=(5, 0))
         self.entrada_ingreso = ttk.Entry(contenido_centro) 
         self.entrada_ingreso.grid(row=14, column=0, sticky="ew", pady=3)
@@ -173,30 +178,17 @@ class VentanaEntradaGarantia(tkinter.Frame):
         self.entrada_estado = ttk.Entry(contenido_derecha_der)       
         self.entrada_estado.grid(row=3, column=0, sticky="w", pady=3)
         
-        ttk.Label(contenido_derecha_der, text="¿Equipo reparado?").grid(row=4, column=0, sticky="w", pady=(5, 0))
-        opciones_rep = ["SI", "NO"]
-        self.var_tipo_rep = tkinter.StringVar(self) 
-        self.var_tipo_rep.set(opciones_rep[0]) # Set initial value to "SI"
-
-        self.entrada_tipo = ttk.Combobox(contenido_derecha_der, 
-                                         textvariable=self.var_tipo_rep,
-                                         values=opciones_rep,
-                                         state="readonly",
-                                         width=8)
-        self.entrada_tipo.grid(row=5, column=0, sticky="w", pady=3)
-       
-        ttk.Label(contenido_derecha_der, text="Precio refaccion").grid(row=6, column=0, sticky="w", pady=(5,0))
+        
+        ttk.Label(contenido_derecha_der, text="Precio refaccion").grid(row=4, column=0, sticky="w", pady=(5,0))
         self.entrada_refaccion = ttk.Entry(contenido_derecha_der)
-        self.entrada_refaccion.grid(row=7, column=0, sticky="w", pady=3)
-       
+        self.entrada_refaccion.grid(row=5, column=0, sticky="w", pady=3)
+
+        
         ttk.Label(contenido_derecha_der, text="Comentarios de garantia", font=("Helvetica", 14, "bold")).grid(row=8, column=0, sticky="w", pady=(5, 0))
         self.entrada_comentarios_gar = tkinter.Text(contenido_derecha_der, height=6) 
         self.entrada_comentarios_gar.grid(row=9, column=0, sticky="nsew", pady=3)
-        
-        
-        
         contenido_derecha_der.rowconfigure(1, weight=1) 
-        contenido_derecha_der.rowconfigure(7, weight=1) 
+        contenido_derecha_der.rowconfigure(9, weight=1) 
 
 
         # Footer: Contenedor para los botones 
@@ -208,7 +200,7 @@ class VentanaEntradaGarantia(tkinter.Frame):
         # Botones
         frame_btn = ttk.Frame(footer_frame)
         frame_btn.grid(row=0, column=0, sticky="e")        
-       
+
         ttk.Button(frame_btn, text="Cancelar", command=lambda: self.btn_cancelar()).grid(row=0, column=0, padx=5, pady=5)
         frame_btn.columnconfigure(0, weight=1)
         self.Btn_guardar = ttk.Button(frame_btn, text="Insertar", command=lambda: self.btn_guardar())
@@ -232,21 +224,21 @@ class VentanaEntradaGarantia(tkinter.Frame):
 
         id_rep = self.entrada_id_reparacion.get().strip()
         try:
-            with TransaccionConexion() as (cursor, conexion):
-                reparacion_obj = self.reparacion.obtener_reparacion_por_id(id_rep, cursor)
+            with UnitOfWork() as uow:
+                reparacion_obj = self.reparacion.obtener_reparacion_por_id(id_rep, uow.cursor)
                 
                 if not reparacion_obj:
                     messagebox.showinfo("No encontrado", "No se encontró ninguna reparación con ese ID")
                     return
 
                 # Obtener dispositivo
-                dispositivo_obj = self.dispositivo.obtener_dispositivo_por_id(reparacion_obj.id_dispositivo, cursor)
+                dispositivo_obj = self.dispositivo.obtener_dispositivo_por_id(reparacion_obj.id_dispositivo, uow.cursor)
                 if not dispositivo_obj:
                     messagebox.showerror("Error", "No se encontró el dispositivo asociado a la reparación")
                     return
 
                 # Obtener cliente
-                cliente_obj = self.cliente.obtener_cliente_por_cedula(dispositivo_obj.id_cliente, cursor)
+                cliente_obj = self.cliente.obtener_cliente_por_cedula(dispositivo_obj.id_cliente, uow.cursor)
                 if not cliente_obj:
                     messagebox.showerror("Error", "No se encontró el cliente asociado al dispositivo")
                     return
@@ -258,84 +250,47 @@ class VentanaEntradaGarantia(tkinter.Frame):
                 self.cliente_obj = cliente_obj
                 self.dispositivo_obj = dispositivo_obj
                 self.reparacion_obj = reparacion_obj
-                
+                #habilitar campos de entrada para mostrar datos
+                self.habilitar_entradas()
                 # Cliente
-                self.entrada_cedula.config(state="normal")
                 self.entrada_cedula.insert(0, cliente_obj.cedula)
-                self.entrada_cedula.config(state="disabled")
-                
-                self.entrada_nombre.config(state="normal")
                 self.entrada_nombre.insert(0, cliente_obj.nombre)
-                self.entrada_nombre.config(state="disabled")
-                
-                self.entrada_email.config(state="normal")
                 self.entrada_email.insert(0, cliente_obj.email)
-                self.entrada_email.config(state="disabled")
-                
-                self.entrada_celular.config(state="normal")
                 self.entrada_celular.insert(0, cliente_obj.celular)
-                self.entrada_celular.config(state="disabled")
+                
 
                 # Dispositivo
-                self.entrada_marca.config(state="normal")
                 self.entrada_marca.insert(0, dispositivo_obj.marca)
-                self.entrada_marca.config(state="disabled")
-                
-                self.entrada_modelo.config(state="normal")
                 self.entrada_modelo.insert(0, dispositivo_obj.version)
-                self.entrada_modelo.config(state="disabled")
-                
-                self.entrada_tipo_rep.config(state="normal")
                 self.entrada_tipo_rep.insert(0, dispositivo_obj.tipo_reparacion)
-                self.entrada_tipo_rep.config(state="disabled")
-                
-                self.entrada_tipo_password.config(state="normal")
                 self.entrada_tipo_password.insert(0, dispositivo_obj.tipo_password)
-                self.entrada_tipo_password.config(state="disabled")
-                
-                self.entrada_password.config(state="normal")
                 self.entrada_password.insert(0, dispositivo_obj.password or "N/A")
-                self.entrada_password.config(state="disabled")
-
-                self.entrada_comentarios.config(state="normal")
                 self.entrada_comentarios.insert("1.0", dispositivo_obj.comentarios)
-                self.entrada_comentarios.config(state="disabled")
-
+                
                 # Reparacion
-                self.entrada_precio.config(state="normal")
                 self.entrada_precio.insert(0, reparacion_obj.precio_reparacion)
-                self.entrada_precio.config(state="disabled")
-                
-                self.entrada_ingreso.config(state="normal")
                 self.entrada_ingreso.insert(0, reparacion_obj.fecha_ingreso)
-                self.entrada_ingreso.config(state="disabled")
-                
-                self.entrada_comentarios_tec.config(state="normal")
                 self.entrada_comentarios_tec.insert("1.0", reparacion_obj.comentarios)
-                self.entrada_comentarios_tec.config(state="disabled")
-                
-                self.entrada_estado.config(state="normal")
                 self.entrada_estado.insert(0, reparacion_obj.estado)
-                self.entrada_estado.config(state="disabled")
-                
-                self.entrada_refaccion.config(state="normal")
                 self.entrada_refaccion.insert(0, reparacion_obj.costo_repuestos)
-                self.entrada_refaccion.config(state="disabled")
-                
-                self.entrada_tipo.config(state="disabled")
-                
+
                 # Habilitar campos de entrada de garantía
                 self.entrada_comentarios_gar.config(state="normal")
-                self.Btn_guardar.config(state="normal")
                 
-                # Aceptamos la transaccion
-                # The context manager handles commit on successful exit
+                self.deshabilitar_entradas()
+                self.Btn_guardar.config(state="normal")
         except Exception as e:
             messagebox.showerror("Error", f"Error al buscar la reparación: {e}")
-        # The context manager handles cursor closing
         
 
     def btn_guardar(self):
+
+        
+        estado_reparacion = self.entrada_estado.get().strip()
+        if estado_reparacion != "Completada":
+            messagebox.showwarning("Atención", "Solo se pueden registrar garantías para reparaciones completadas")
+            return
+        
         id_rep = self.entrada_id_reparacion.get().strip()
         comentarios_gar = self.entrada_comentarios_gar.get("1.0", "end").strip()
         equipo_reparado = self.var_tipo_rep.get()
@@ -345,19 +300,21 @@ class VentanaEntradaGarantia(tkinter.Frame):
             return
 
         try:
-            with TransaccionConexion() as (cursor, conexion):
+            with UnitOfWork() as uow:
+                # 2. PREPARACIÓN DE MODELOS
                 modelo_garantia = ModeloGarantia()
                 modelo_garantia.id_reparacion = id_rep
                 modelo_garantia.fecha_inicio = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 modelo_garantia.observaciones = comentarios_gar
                 modelo_garantia.estado = "En Garantia" if equipo_reparado == "SI" else "Rechazada"
-                
+
                 # agregar_garantia ahora puede lanzar ValueError y acepta opcionalmente el cursor
-                id_garantia = self.garantia.agregar_garantia(modelo_garantia, cursor)
+                id_garantia = self.garantia.agregar_garantia(modelo_garantia, uow.cursor)
                 
                 if id_garantia:
                     # Aceptamos la transaccion
-                    conexion.commit()
+                    uow.commit()
+
                     modelo_garantia.id_garantia = id_garantia
                     messagebox.showinfo("Éxito", f"Garantía registrada con ID: {id_garantia}")
                     
@@ -374,6 +331,23 @@ class VentanaEntradaGarantia(tkinter.Frame):
             messagebox.showwarning("Aviso", f"Error de validación: {ve}")
         except Exception as e:
             messagebox.showerror("Error", f"Error al guardar garantía: {e}")
+        
+    def habilitar_entradas(self):
+        self.entrada_cedula.config(state="normal") 
+        self.entrada_nombre.config(state="normal") 
+        self.entrada_email.config(state="normal") 
+        self.entrada_celular.config(state="normal") 
+        self.entrada_modelo.config(state="normal") 
+        self.entrada_marca.config(state="normal") 
+        self.entrada_tipo_rep.config(state="normal") 
+        self.entrada_tipo_password.config(state="normal") 
+        self.entrada_password.config(state="normal") 
+        self.entrada_precio.config(state="normal") 
+        self.entrada_comentarios.config(state="normal") 
+        self.entrada_estado.config(state="normal")
+        self.entrada_ingreso.config(state="normal")
+        self.entrada_refaccion.config(state="normal")
+        self.entrada_comentarios_tec.config(state="normal") 
         
 
     def btn_limpiar(self, mantener_id=False):
@@ -407,8 +381,7 @@ class VentanaEntradaGarantia(tkinter.Frame):
         self.entrada_comentarios_gar.delete("1.0", "end")
         self.entrada_comentarios_gar.config(state="disabled") 
 
-        self.var_tipo_rep.set("SI")
-        self.entrada_tipo.config(state="disabled") 
+       
         self.Btn_guardar.config(state="disabled") 
         
     def btn_cancelar(self):
@@ -431,5 +404,6 @@ class VentanaEntradaGarantia(tkinter.Frame):
         self.entrada_ingreso.config(state="disabled")
         self.entrada_refaccion.config(state="disabled")
         self.entrada_comentarios_tec.config(state="disabled") 
-        self.entrada_tipo.config(state="disabled") 
         self.Btn_guardar.config(state="disabled") 
+        
+        

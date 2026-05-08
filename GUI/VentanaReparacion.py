@@ -1,9 +1,12 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
 from Logica.LogicaCliente import LogicaCliente
-from Config.TransaccionConexion import TransaccionConexion
+from Config.UnitOfWork import UnitOfWork
 from Logica.LogicaDispositivo import LogicaDispositivo
 from Logica.LogicaReparacion import LogicaReparacion
+from DAO.ClienteDAO import ClienteDAO
+from DAO.DispositivoDAO import DispositivoDAO
+from DAO.ReparacionDAO import ReparacionDAO
 from Modelo.ModeloReparacion import ModeloReparacion
 
 class VentanaReparacion(tk.Frame):
@@ -11,10 +14,10 @@ class VentanaReparacion(tk.Frame):
         super().__init__(master, **kwargs) 
         self.controller = controller
 
-        # Inicializamos los objetos cliente, reparacion y dispositivo
-        self.cliente =  LogicaCliente()
-        self.dispositivo =  LogicaDispositivo()
-        self.reparacion = LogicaReparacion()
+        # Inicializamos los objetos con inyección de dependencias (SOLID)
+        self.cliente =  LogicaCliente(ClienteDAO())
+        self.dispositivo =  LogicaDispositivo(DispositivoDAO())
+        self.reparacion = LogicaReparacion(ReparacionDAO())
 
         # Contenedor Principal de Contenido 
         contenedor = ttk.Frame(self, padding="10")
@@ -130,18 +133,27 @@ class VentanaReparacion(tk.Frame):
         self.entrada_comentarios_tec = tk.Text(contenido_derecha_der, height=6) 
         self.entrada_comentarios_tec.grid(row=7, column=0, sticky="nsew", pady=3)
         
-        ttk.Label(contenido_derecha_der, text="¿Equipo reparado?").grid(row=8, column=0, sticky="w", pady=(5, 0))
-        opciones_rep = ["SI", "NO"]
-        self.var_tipo_rep = tk.StringVar(self) 
-        self.var_tipo_rep.set(opciones_rep) 
-        self.var_tipo_rep.set(opciones_rep[0])
+        ttk.Label(contenido_derecha_der, text="Se finaliza el proceso").grid(row=8, column=0, sticky="w", pady=(5, 0))
+        opciones_equipo = ["SI", "NO"]
+        self.var_equipo_reparado = tk.StringVar(self) 
+        self.var_equipo_reparado.set(opciones_equipo[0])
+        self.entrada_equipo_reparado = ttk.Combobox(contenido_derecha_der, 
+                                                     textvariable=self.var_equipo_reparado,
+                                                     values=opciones_equipo,
+                                                     state="readonly",
+                                                     width=10)
+        self.entrada_equipo_reparado.grid(row=9, column=0, sticky="w", pady=3)
 
+        ttk.Label(contenido_derecha_der, text="Estado de reparacion").grid(row=10, column=0, sticky="w", pady=(5, 0))
+        opciones_estado = ["Completada", "Rechazada"]
+        self.var_estado_reparacion = tk.StringVar(self) 
+        self.var_estado_reparacion.set(opciones_estado[0])
         self.entrada_tipo = ttk.Combobox(contenido_derecha_der, 
-                                         textvariable=self.var_tipo_rep,
-                                         values=opciones_rep,
+                                         textvariable=self.var_estado_reparacion,
+                                         values=opciones_estado,
                                          state="readonly",
-                                         width=8)
-        self.entrada_tipo.grid(row=9, column=0, sticky="w", pady=3)
+                                         width=10)
+        self.entrada_tipo.grid(row=11, column=0, sticky="w", pady=3)
         
         contenido_derecha_der.rowconfigure(1, weight=1) 
         contenido_derecha_der.rowconfigure(7, weight=1) 
@@ -173,15 +185,36 @@ class VentanaReparacion(tk.Frame):
 
     # Métodos de la clase 
     def btn_guardar(self):
+        estado_nuevo_reparacion = self.var_estado_reparacion.get()
+        # guardamos el estado antiguo
+        estado_antiguo = self.entrada_estado.get().strip()
         id_reparacion = self.entrada_id_reparacion.get().strip()
         comen_tec = self.entrada_comentarios_tec.get("1.0", tk.END).strip()
         costo_refaccion = self.entrada_refaccion.get().strip()
+        precio_reparacion = self.entrada_precio.get().strip()
 
-        if not (comen_tec and costo_refaccion):
-            messagebox.showwarning("Advertencia", "Por favor, complete el costo de repuestos y los comentarios del técnico.")
+        # Validar comentarios (siempre requerido)
+        if not comen_tec:
+            messagebox.showwarning("Advertencia", "Los comentarios del técnico son obligatorios.")
             return
-        if self.var_tipo_rep.get() == "NO":
-            messagebox.showwarning("Advertencia", "Solo se puede guardar si el equipo esta reparado")
+        
+        # Validar costo según el estado
+        if estado_nuevo_reparacion == "Completada":
+            if not costo_refaccion:
+                messagebox.showwarning("Advertencia", "El costo de repuestos es obligatorio para reparaciones completadas.")
+                return
+        elif estado_nuevo_reparacion == "Rechazada":
+            # Para rechazadas, el costo es opcional (puede ser 0)
+            if costo_refaccion == "":
+                costo_refaccion = "0"
+        
+        # Validar que el estado y equipo reparado sean coherentes
+        if estado_nuevo_reparacion == "Completada" and self.var_equipo_reparado.get() == "NO":
+            messagebox.showwarning("Advertencia", "No se puede marcar como completada si el equipo no está reparado")
+            return
+        
+        if estado_nuevo_reparacion == "Rechazada" and self.var_equipo_reparado.get() == "SI":
+            messagebox.showwarning("Advertencia", "No se puede rechazar la reparación si el equipo está reparado")
             return
         try:
             costo_float = float(costo_refaccion)
@@ -189,23 +222,40 @@ class VentanaReparacion(tk.Frame):
             messagebox.showwarning("Advertencia", "El campo de costo de repuestos debe ser un número válido")
             return
 
+        if costo_float < 0:
+            messagebox.showwarning("Advertencia", "El campo de costo de repuestos no puede ser negativo")
+            return
+
+        # Para reparaciones completadas, el costo de repuestos no puede superar el precio de reparación
+        if estado_nuevo_reparacion == "Completada" and precio_reparacion:
+            try:
+                if costo_float >= float(precio_reparacion):
+                    messagebox.showwarning("Advertencia", "El campo de costo de repuestos no puede ser mayor al precio de reparacion")
+                    return
+            except ValueError:
+                messagebox.showwarning("Advertencia", "El precio de reparación no es un número válido")
+                return
+
+        # Si es Rechazada, el costo debe ser 0
+        if estado_nuevo_reparacion == "Rechazada" and costo_float > 0:
+            messagebox.showwarning("Advertencia", "El costo de repuestos debe ser 0 para reparaciones rechazadas")
+            return
+
         try:
-            with TransaccionConexion() as (cursor, conexion):
-                # Crear y configurar el objeto
+            with UnitOfWork() as uow:
+                # Preparación del modelo
                 reparacion_obj = ModeloReparacion()
                 reparacion_obj.id_reparacion = id_reparacion
                 reparacion_obj.comentarios = comen_tec
                 reparacion_obj.costo_repuestos = costo_float
-                # guardamos el estado antiguo
-                estado_antiguo = reparacion_obj.estado
-                print(estado_antiguo)
-                reparacion_obj.estado = "Completada"
-                    
+                reparacion_obj.estado = estado_nuevo_reparacion
+
                 # Llamar al método de actualización
-                self.reparacion.actualizar_estado_reparacion(reparacion_obj, estado_antiguo, cursor)
-                    
+                self.reparacion.actualizar_estado_reparacion(reparacion_obj, estado_antiguo, uow.cursor)
+
                 # Aceptamos la transaccion
-                conexion.commit()
+                uow.commit()
+
                 messagebox.showinfo("Éxito", "Reparación actualizada exitosamente.")
                 self.btn_limpiar()
                 self.deshabilitar_entradas()
@@ -224,8 +274,8 @@ class VentanaReparacion(tk.Frame):
         # Limpiar campos antes de buscar
         self.limpiar_campos()
         try:
-            with TransaccionConexion() as (cursor, conexion):
-                resultado_reparacion = self.reparacion.obtener_reparacion_por_id(id_rep, cursor)
+            with UnitOfWork() as uow:
+                resultado_reparacion = self.reparacion.obtener_reparacion_por_id(id_rep, uow.cursor)
                 if not resultado_reparacion:
                     messagebox.showinfo("No encontrado", f"La reparación con ID {id_rep} no se encuentra en la base de datos.")
                     return
@@ -237,10 +287,12 @@ class VentanaReparacion(tk.Frame):
                 self.insertar_valor_seguro(self.entrada_ingreso, resultado_reparacion.fecha_ingreso)
                 self.insertar_valor_seguro(self.entrada_estado, resultado_reparacion.estado)
                 self.insertar_valor_seguro(self.entrada_precio, resultado_reparacion.precio_reparacion)
+                self.insertar_valor_seguro(self.entrada_refaccion, resultado_reparacion.costo_repuestos)
+                self.insertar_texto_seguro(self.entrada_comentarios_tec, resultado_reparacion.comentarios)
                 
                 id_disp = resultado_reparacion.id_dispositivo
                 
-                resultado_dispositivo = self.dispositivo.obtener_dispositivo_por_id(id_disp, cursor)
+                resultado_dispositivo = self.dispositivo.obtener_dispositivo_por_id(id_disp, uow.cursor)
                 if resultado_dispositivo:
                                    
                     # Insertar datos del dispositivo
@@ -254,23 +306,24 @@ class VentanaReparacion(tk.Frame):
                     self.insertar_texto_seguro(self.entrada_comentarios, resultado_dispositivo.comentarios)
 
                     id_cliente = resultado_dispositivo.id_cliente
-                    resultado_cliente = self.cliente.obtener_cliente_por_cedula(id_cliente, cursor)
+                    resultado_cliente = self.cliente.obtener_cliente_por_cedula(id_cliente, uow.cursor)
 
                     if resultado_cliente:
-                        # aceptamos la transaccion
-                        conexion.commit()                 
+                                      
                         # Insertar datos del cliente
                         self.insertar_valor_seguro(self.entrada_cedula, resultado_cliente.cedula)
                         self.insertar_valor_seguro(self.entrada_nombre, resultado_cliente.nombre)
                         self.insertar_valor_seguro(self.entrada_celular, resultado_cliente.celular)
                         self.insertar_valor_seguro(self.entrada_email, resultado_cliente.email)
+                        self.deshabilitar_entradas()
                     else:
                         messagebox.showwarning("Cliente no encontrado", f"No se encontró el cliente con cédula {id_cliente}.")
                 else:
                     messagebox.showwarning("Dispositivo no encontrado", f"No se encontró el dispositivo con ID {id_disp}.")
                 
                 # Restaurar el estado original de los campos (deshabilitar los que correspondan)
-                self.habilitar_entrada()
+                if resultado_reparacion.estado.strip() != "Completada":
+                    self.habilitar_entrada()
 
         except ValueError as ve:
             messagebox.showwarning("Aviso", f"Error de validación: {ve}")
@@ -293,7 +346,8 @@ class VentanaReparacion(tk.Frame):
             self.entrada_estado,
             self.entrada_refaccion,
             self.entrada_comentarios,
-            self.entrada_comentarios_tec
+            self.entrada_comentarios_tec,
+            self.entrada_tipo
         ]
     
         for campo in campos:
@@ -364,7 +418,8 @@ class VentanaReparacion(tk.Frame):
         
         # Resetear Combobox
         try:
-            self.entrada_tipo.set('SI')
+            self.entrada_equipo_reparado.set('SI')
+            self.entrada_tipo.set('Completada')
         except:
             pass
 
@@ -374,6 +429,7 @@ class VentanaReparacion(tk.Frame):
         campos_habilitados = [
             self.entrada_refaccion,
             self.entrada_comentarios_tec,
+            self.entrada_equipo_reparado,
             self.entrada_tipo
         ]
         
@@ -427,3 +483,7 @@ class VentanaReparacion(tk.Frame):
         self.entrada_comentarios.config(state="disabled") 
         self.entrada_estado.config(state="disabled")
         self.entrada_ingreso.config(state="disabled")
+        self.entrada_refaccion.config(state="disabled")
+        self.entrada_comentarios_tec.config(state="disabled")
+        self.entrada_tipo.config(state="disabled")
+        self.Btn_guardar.config(state="disabled")

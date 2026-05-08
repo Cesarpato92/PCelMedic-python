@@ -1,9 +1,8 @@
 from Utilidades.Validador import Validador
-import DAO.GarantiaDAO as garantia_dao
 
 class LogicaGarantia:
-    def __init__(self):
-        self.garantia_dao = garantia_dao.GarantiaDAO()
+    def __init__(self, garantia_dao):
+        self.garantia_dao = garantia_dao
 
     def agregar_garantia(self, modelo_garantia, cursor=None):
         valido, mensaje = self.validar_campos_a_insertar(modelo_garantia)
@@ -63,8 +62,7 @@ class LogicaGarantia:
         return True, ""
 
     def validar_campos_a_insertar(self, modelo_garantia):
-        res, msg = self.validar_estado(modelo_garantia.estado)
-        if not res: return False, msg
+        
         res, msg = self.validar_observaciones(modelo_garantia.observaciones)
         if not res: return False, msg
         res, msg = self.validar_fecha_inicio(modelo_garantia.fecha_inicio)

@@ -1,9 +1,8 @@
 from Utilidades.Validador import Validador
-import DAO.ClienteDAO as cliente_dao
 
 class LogicaCliente:
-    def __init__(self):
-        self.cliente_dao = cliente_dao.ClienteDAO()
+    def __init__(self, cliente_dao):
+        self.cliente_dao = cliente_dao
 
     def agregar_cliente(self, modelo_cliente, cursor=None):
         valido, mensaje = self.validacion_datos(modelo_cliente)
