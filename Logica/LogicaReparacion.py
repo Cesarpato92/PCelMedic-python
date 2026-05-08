@@ -48,9 +48,11 @@ class LogicaReparacion:
         if modelo_reparacion.estado == "Completada":
             if modelo_reparacion.costo_repuestos is None or modelo_reparacion.costo_repuestos < 0:
                 return False, "El costo de repuestos debe ser un valor válido para reparaciones completadas."
-            res, msg = Validador.validar_precio(modelo_reparacion.costo_repuestos)
-            if not res:
-                return False, msg
+            # Validar precio solo si es mayor a 0 (0 es valido cuando no se usaron repuestos)
+            if modelo_reparacion.costo_repuestos > 0:
+                res, msg = Validador.validar_precio(modelo_reparacion.costo_repuestos)
+                if not res:
+                    return False, msg
         
         # Si es Rechazada, el costo puede ser 0 o None
         elif modelo_reparacion.estado == "Rechazada":

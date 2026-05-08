@@ -106,14 +106,25 @@ class VentanaFactura(tk.Frame):
                     # Si ya existe una factura para esta reparación, preguntar si se desea abrir el PDF
                     respuesta = messagebox.askyesno("Factura existente", "Ya se generó una factura para esta reparación. ¿Desea abrir una copia del archivo PDF?")
                     if respuesta:
-                        fecha = datetime.now().strftime("%Y-%m-%d")
-                        # Reconstruir ruta del PDF
+                        # Reconstruir ruta del PDF usando la fecha original almacenada en la BD
+                        fecha_factura = factura.fecha
+                        if hasattr(fecha_factura, "strftime"):
+                            fecha = fecha_factura.strftime("%Y-%m-%d")
+                        else:
+                            fecha = str(fecha_factura)[:10]
                         nombre_archivo = f"Factura_{factura.id_factura}-{self.cliente_model.cedula}-{fecha}.pdf"
                         ruta = os.path.join("Reportes", nombre_archivo)
                         if os.path.exists(ruta):
                             AbrirPDF.open_file(ruta)
                         else:
-                            messagebox.showwarning("Archivo no encontrado", f"No se encontró el archivo: {nombre_archivo}")
+                            # Fallback: buscar cualquier PDF que coincida con el patrón (por compatibilidad con archivos previos)
+                            import glob
+                            patron = os.path.join("Reportes", f"Factura_{factura.id_factura}-{self.cliente_model.cedula}-*.pdf")
+                            coincidencias = glob.glob(patron)
+                            if coincidencias:
+                                AbrirPDF.open_file(coincidencias[0])
+                            else:
+                                messagebox.showwarning("Archivo no encontrado", f"No se encontró el archivo: {nombre_archivo}")
                     return
                 
                 # Crear modelo de factura
@@ -135,6 +146,8 @@ class VentanaFactura(tk.Frame):
                 id_factura = self.factura.agregar_factura(factura_model, cursor)
                 
                 if id_factura:
+                    # Aceptamos la transaccion
+                    conexion.commit()
                     messagebox.showinfo("Factura generada exitosamente", "Se abrirá el archivo PDF de la factura existente.")
                     # Generar PDF
                     ruta = self.generador_pdf.generar_factura(self.cliente_model, self.dispositivo_model, self.reparacion_model, id_factura)

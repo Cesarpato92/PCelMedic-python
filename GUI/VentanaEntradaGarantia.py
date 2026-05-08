@@ -397,5 +397,6 @@ class VentanaEntradaGarantia(tkinter.Frame):
         self.entrada_ingreso.config(state="disabled")
         self.entrada_refaccion.config(state="disabled")
         self.entrada_comentarios_tec.config(state="disabled") 
+        self.Btn_guardar.config(state="disabled") 
         
         

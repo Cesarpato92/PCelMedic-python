@@ -235,8 +235,9 @@ class VentanaReparacion(tk.Frame):
                     
                 # Llamar al método de actualización
                 self.reparacion.actualizar_estado_reparacion(reparacion_obj, estado_antiguo, cursor)
-                    
-                
+
+                # Aceptamos la transaccion
+                conexion.commit()
                 messagebox.showinfo("Éxito", "Reparación actualizada exitosamente.")
                 self.btn_limpiar()
                 self.deshabilitar_entradas()
