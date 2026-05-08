@@ -7,6 +7,8 @@ __pycache__/
 *.pyo
 .pytest_cache/
 
+
+ implement core business logic, DAO layers, and GUI modules for financial, repair, and warranty management systems
 # Archivos de configuración sensibles
 .configAdmin
 .configAdmin.backup

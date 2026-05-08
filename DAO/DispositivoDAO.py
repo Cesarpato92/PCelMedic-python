@@ -1,6 +1,7 @@
+from DAO.Interfaces import IDispositivoDAO
 from Modelo.ModeloDispositivo import ModeloDispositivo
 
-class DispositivoDAO:
+class DispositivoDAO(IDispositivoDAO):
 
     def __init__(self):
         pass

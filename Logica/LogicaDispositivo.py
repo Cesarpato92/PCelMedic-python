@@ -1,9 +1,8 @@
 from Utilidades.Validador import Validador
-import DAO.DispositivoDAO as dispositivo_dao
 
 class LogicaDispositivo:
-    def __init__(self):
-        self.dispositivo_dao = dispositivo_dao.DispositivoDAO()
+    def __init__(self, dispositivo_dao):
+        self.dispositivo_dao = dispositivo_dao
         
     def agregar_dispositivo(self, modelo_dispositivo, cursor):
         valido, mensaje = self.validacion_datos(modelo_dispositivo)

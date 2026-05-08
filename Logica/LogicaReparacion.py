@@ -1,9 +1,8 @@
 from Utilidades.Validador import Validador
-import DAO.ReparacionDAO as reparacion_dao
 
 class LogicaReparacion:
-    def __init__(self):
-        self.reparacion_dao = reparacion_dao.ReparacionDAO()
+    def __init__(self, reparacion_dao):
+        self.reparacion_dao = reparacion_dao
 
     def agregar_reparacion(self, modelo_reparacion, cursor):
         valido, mensaje = self.validacion_datos_para_agregar(modelo_reparacion)
@@ -35,11 +34,11 @@ class LogicaReparacion:
         # Validar que el estado nuevo sea válido
         if modelo_reparacion.estado not in ["Completada", "Rechazada"]:
             return False, "El estado de la reparación no es válido."
-        
+
         # Validar que el estado antiguo sea "En proceso"
         if estado_antiguo != "En proceso":
             return False, f"No se puede cambiar de estado {estado_antiguo}. Solo se pueden modificar reparaciones en estado 'En proceso'."
-        
+
         # Validar comentarios del técnico (siempre requerido)
         if not modelo_reparacion.comentarios:
             return False, "El comentario del técnico es obligatorio."
