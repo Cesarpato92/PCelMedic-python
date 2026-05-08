@@ -31,19 +31,32 @@ class LogicaReparacion:
 
 
     def validacion_datos_cambiar_estado(self, modelo_reparacion, estado_antiguo):
-        res, msg = Validador.validar_precio(modelo_reparacion.costo_repuestos) if (modelo_reparacion.costo_repuestos is not None and modelo_reparacion.costo_repuestos != 0) else (True, "")
-        estados = ["En proceso", "Completada", "Entregada"]
-       
-        if not res: return False, msg
-            
-        if modelo_reparacion.estado not in estados:
+        # Validar que el estado nuevo sea válido
+        if modelo_reparacion.estado not in ["Completada", "Rechazada"]:
             return False, "El estado de la reparación no es válido."
-        if estado_antiguo not in estados:
-            return False, f"El estado {estado_antiguo} no es válido."
-        if estado_antiguo == "Completada":
-            return False, "Reparacion Completada no puede ser modificada"
+
+        # Validar que el estado antiguo sea "En proceso"
+        if estado_antiguo != "En proceso":
+            return False, f"No se puede cambiar de estado {estado_antiguo}. Solo se pueden modificar reparaciones en estado 'En proceso'."
+
+        # Validar comentarios del técnico (siempre requerido)
         if not modelo_reparacion.comentarios:
             return False, "El comentario del técnico es obligatorio."
+        
+        # Si es Completada, validar costo de repuestos
+        if modelo_reparacion.estado == "Completada":
+            if modelo_reparacion.costo_repuestos is None or modelo_reparacion.costo_repuestos < 0:
+                return False, "El costo de repuestos debe ser un valor válido para reparaciones completadas."
+            # Validar precio solo si es mayor a 0 (0 es valido cuando no se usaron repuestos)
+            if modelo_reparacion.costo_repuestos > 0:
+                res, msg = Validador.validar_precio(modelo_reparacion.costo_repuestos)
+                if not res:
+                    return False, msg
+        
+        # Si es Rechazada, el costo puede ser 0 o None
+        elif modelo_reparacion.estado == "Rechazada":
+            if modelo_reparacion.costo_repuestos is not None and modelo_reparacion.costo_repuestos < 0:
+                return False, "El costo de repuestos no puede ser negativo."
             
         return True, ""
 
